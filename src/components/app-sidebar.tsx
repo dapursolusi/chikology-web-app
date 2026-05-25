@@ -1,6 +1,6 @@
 'use client';
 
-import * as React from 'react';
+import { useEffect, useState } from 'react';
 
 import {
   BookOpenIcon,
@@ -8,6 +8,8 @@ import {
   NotebookPen,
   Settings2Icon,
 } from 'lucide-react';
+
+import { createClient } from '@/lib/supabase/client';
 
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
@@ -21,89 +23,99 @@ import {
 
 import Logo from './logo';
 
-// Dashboard URL helper - avoids repeating /dashboard/ prefix
 const DASHBOARD_PREFIX = '/dashboard';
 const dashboardLink = (path: string = '') =>
   path ? `${DASHBOARD_PREFIX}/${path}` : DASHBOARD_PREFIX;
 
-// This is sample data.
-const data = {
-  user: {
-    name: 'shadcn',
-    email: 'm@example.com',
-    avatar: '/avatars/shadcn.jpg',
+const navMain = [
+  {
+    title: 'Jurnal Pribadi',
+    url: '#',
+    icon: <NotebookPen />,
+    items: [
+      {
+        title: 'Isi Jurnal',
+        url: dashboardLink('journal'),
+      },
+    ],
   },
-  navMain: [
-    {
-      title: 'Jurnal Pribadi',
-      url: '#',
-      icon: <NotebookPen />,
-      items: [
-        {
-          title: 'Isi Jurnal',
-          url: dashboardLink('journal'),
-        },
-      ],
-    },
-    {
-      title: 'Mood Checker',
-      url: '#',
-      icon: <BotIcon />,
-      items: [
-        {
-          title: 'Deteksi Wajah',
-          url: dashboardLink('face-detection'),
-        },
-      ],
-    },
-    {
-      title: 'E-Book',
-      url: '#',
-      icon: <BookOpenIcon />,
-      items: [
-        {
-          title: 'Baca E-Book',
-          url: 'e-book',
-        },
-      ],
-    },
-    {
-      title: 'Settings',
-      url: '#',
-      icon: <Settings2Icon />,
-      items: [
-        {
-          title: 'General',
-          url: dashboardLink('settings/general'),
-        },
-        {
-          title: 'Team',
-          url: dashboardLink('settings/team'),
-        },
-        {
-          title: 'Billing',
-          url: dashboardLink('settings/billing'),
-        },
-        {
-          title: 'Limits',
-          url: dashboardLink('settings/limits'),
-        },
-      ],
-    },
-  ],
-};
+  {
+    title: 'Mood Checker',
+    url: '#',
+    icon: <BotIcon />,
+    items: [
+      {
+        title: 'Deteksi Wajah',
+        url: dashboardLink('scanner'),
+      },
+    ],
+  },
+  {
+    title: 'E-Book',
+    url: '#',
+    icon: <BookOpenIcon />,
+    items: [
+      {
+        title: 'Baca E-Book',
+        url: dashboardLink('book'),
+      },
+    ],
+  },
+  {
+    title: 'Settings',
+    url: '#',
+    icon: <Settings2Icon />,
+    items: [
+      {
+        title: 'General',
+        url: dashboardLink('settings/general'),
+      },
+      {
+        title: 'Team',
+        url: dashboardLink('settings/team'),
+      },
+      {
+        title: 'Billing',
+        url: dashboardLink('settings/billing'),
+      },
+      {
+        title: 'Limits',
+        url: dashboardLink('settings/limits'),
+      },
+    ],
+  },
+];
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const [user, setUser] = useState<{
+    name: string;
+    email: string;
+    avatar: string;
+  } | null>(null);
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user) {
+        setUser({
+          name: data.user.user_metadata?.full_name ?? data.user.email?.split('@')[0] ?? 'User',
+          email: data.user.email ?? '',
+          avatar: data.user.user_metadata?.avatar_url ?? '',
+        });
+      }
+    });
+  }, []);
+
   return (
     <Sidebar collapsible="icon" {...props} className="mobile:w-64">
       <SidebarHeader>
         <Logo />
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
+        <NavMain items={navMain} />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        {user && <NavUser user={user} />}
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

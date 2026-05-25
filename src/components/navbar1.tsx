@@ -1,8 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
-
 import Link from 'next/link';
+import React, { useEffect, useState } from 'react';
 
 import {
   Book,
@@ -37,6 +36,8 @@ import {
 } from '@/components/ui/sheet';
 
 import { cn } from '@/lib/utils';
+
+import { createClient } from '@/lib/supabase/client';
 
 import { LoginForm } from './login-form';
 import Logo from './logo';
@@ -133,6 +134,23 @@ const Navbar1 = ({
   className,
 }: Navbar1Props) => {
   const [activeAuth, setActiveAuth] = useState<'login' | 'signup' | null>(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => {
+      setIsLoggedIn(!!data.user);
+    });
+
+    const params = new URLSearchParams(window.location.search);
+    if (params.has('auth')) {
+      if (params.get('auth') === 'error') {
+        alert('Gagal masuk. Silakan coba lagi.');
+      }
+      setActiveAuth('login');
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, []);
 
   const handleOpenLogin = () => setActiveAuth('login');
   const handleOpenSignup = () => setActiveAuth('signup');
@@ -166,12 +184,20 @@ const Navbar1 = ({
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" onClick={handleOpenLogin}>
-              {auth.login.title}
-            </Button>
-            <Button size="sm" onClick={handleOpenSignup}>
-              {auth.signup.title}
-            </Button>
+            {isLoggedIn ? (
+              <Link href="/dashboard">
+                <Button size="sm">Dashboard</Button>
+              </Link>
+            ) : (
+              <>
+                <Button variant="ghost" size="sm" onClick={handleOpenLogin}>
+                  {auth.login.title}
+                </Button>
+                <Button size="sm" onClick={handleOpenSignup}>
+                  {auth.signup.title}
+                </Button>
+              </>
+            )}
             <Modal
               trigger={null}
               open={activeAuth !== null}
@@ -235,25 +261,37 @@ const Navbar1 = ({
                       {/* Auth Section */}
                       <div className="border-t p-4 pt-4">
                         <div className="flex flex-col gap-2">
-                          <Button
-                            variant="outline"
-                            className="w-full justify-center"
-                            size="lg"
-                            onClick={() => {
-                              handleOpenLogin();
-                            }}
-                          >
-                            {auth.login.title}
-                          </Button>
-                          <Button
-                            className="w-full justify-center"
-                            size="lg"
-                            onClick={() => {
-                              handleOpenSignup();
-                            }}
-                          >
-                            {auth.signup.title}
-                          </Button>
+                        {isLoggedIn ? (
+                          <SheetClose asChild>
+                            <Link href="/dashboard">
+                              <Button className="w-full justify-center" size="lg">
+                                Dashboard
+                              </Button>
+                            </Link>
+                          </SheetClose>
+                        ) : (
+                          <>
+                            <Button
+                              variant="outline"
+                              className="w-full justify-center"
+                              size="lg"
+                              onClick={() => {
+                                handleOpenLogin();
+                              }}
+                            >
+                              {auth.login.title}
+                            </Button>
+                            <Button
+                              className="w-full justify-center"
+                              size="lg"
+                              onClick={() => {
+                                handleOpenSignup();
+                              }}
+                            >
+                              {auth.signup.title}
+                            </Button>
+                          </>
+                        )}
                         </div>
                       </div>
                     </div>

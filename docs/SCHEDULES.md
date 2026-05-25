@@ -111,11 +111,12 @@ src/
 | --- | ----------------------------------------------------------------------------- | ------ | ----- |
 | 1   | Add loading state ("Analyzing...") with spinner/animation                     | 15 min | ✓     |
 | 2   | Add canvas overlay showing face detection box (optional)                      | 30 min | ☐     |
-| 3   | Push Drizzle schema to Supabase: `bunx --bun drizzle-kit push`                | 15 min | ☐     |
-| 4   | Create `app/api/journal/route.ts` — POST endpoint saves mood + recommendation | 30 min | ☐     |
-| 5   | Add "Save to Journal" button → calls API → shows success toast                | 30 min | ☐     |
-| 6   | Add auth guard (redirect to login if not logged in)                           | 20 min | ☐     |
-| 7   | Style the whole component (colors, spacing, mobile-responsive)                | 45 min | ☐     |
+| 3   | Push Drizzle schema to Supabase: `bunx --bun drizzle-kit push`                | 15 min | ✓     |
+| 4   | Create Server Action saves mood + recommendation (journal.ts)                 | 30 min | ✓     |
+| 5   | Add "Save to Journal" button → calls Server Action → shows success message    | 30 min | ✓     |
+| 6   | Add auth guard (redirect to login if not logged in)                           | 20 min | ✓     |
+| 6a  | [Prereq] Wire Supabase auth: client/server/middleware, proxy, OAuth, login/signup forms | 2 hr | ✓ |
+| 7   | Style the whole component (colors, spacing, mobile-responsive, spinner)       | 45 min | ✓     |
 | 8   | Test full flow: open camera → analyze → save → check Supabase table           | 20 min | ☐     |
 | 9   | Deploy to Vercel, test on phone                                               | 15 min | ☐     |
 
@@ -254,9 +255,9 @@ src/
 ## The Full Calendar View
 
 ```
-Mon May 25 — PHASE 0 FOUNDATION ✓ + PHASE 1, DAY 1 (Groq integration) ✓
-Tue May 26 ░░░░░░░░ Phase 1, Day 2 - Polish + Save + Ship ← DEADLINE
-Wed May 27 ░░░░░░░░ Phase 1, Day 2 - Polish + Save + Ship ← DEADLINE
+Mon May 25 — PHASE 0 FOUNDATION ✓ + PHASE 1, DAY 1 (Groq) ✓ + Auth module ✓
+Tue May 26 ░░░░░░░░ Phase 1, Day 2 - Style, Save, Deploy ← DEADLINE
+Wed May 27 ░░░░░░░░ Phase 1, Day 2 - Test + Deploy
 Thu May 28 ░░░░░░░░ Phase 2, Day 1 - Schema + Editor
 Fri May 29 ░░░░░░░░ Phase 2, Day 2 - Mood + History
 Sat May 30 ░░░░░░░░ Phase 2, Day 3 - Polish + Connect  ← DEADLINE

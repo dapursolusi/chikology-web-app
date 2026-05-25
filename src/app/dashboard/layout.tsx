@@ -1,3 +1,5 @@
+import { redirect } from 'next/navigation';
+
 import { AppSidebar } from '@/components/app-sidebar';
 import {
   Breadcrumb,
@@ -13,12 +15,22 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from '@/components/ui/sidebar';
+import { createClient } from '@/lib/supabase/server';
 
-export default function DashboardLayout({
+export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect('/?auth=login');
+  }
+
   return (
     <SidebarProvider>
       <AppSidebar />
