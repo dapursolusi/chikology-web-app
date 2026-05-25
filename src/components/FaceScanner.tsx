@@ -82,6 +82,18 @@ export default function FaceScanner() {
         return;
       }
 
+      // Capture a still frame — may give better expression results than live video
+      const screenshot = webcamRef.current?.getScreenshot();
+      if (!screenshot) {
+        console.warn('Failed to capture screenshot');
+        setNoFace(true);
+        return;
+      }
+
+      const img = new Image();
+      img.src = screenshot;
+      await img.decode();
+
       const TIMEOUT = Symbol('timeout');
 
       const options = new faceapi.TinyFaceDetectorOptions({
@@ -90,7 +102,7 @@ export default function FaceScanner() {
       });
 
       const detectionPromise = faceapi
-        .detectSingleFace(video, options)
+        .detectSingleFace(img, options)
         .withFaceLandmarks()
         .withFaceExpressions();
 
