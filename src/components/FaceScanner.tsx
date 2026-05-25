@@ -70,7 +70,10 @@ export default function FaceScanner() {
       });
 
       if (!response.ok) {
-        setError('Gagal mendapatkan respons');
+        const err = await response
+          .json()
+          .catch(() => ({ error: 'Unknown error' }));
+        setError(err.error || 'Gagal mendapatkan respons');
         return;
       }
 

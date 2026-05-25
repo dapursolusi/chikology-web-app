@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
             {
               parts: [
                 {
-                  text: 'Analyze this person\'s facial expression. Return ONLY valid JSON: {"tier": <1-5>}. Tier 1 = relaxed/happy, 2 = mild tension, 3 = moderate stress, 4 = high stress, 5 = severe distress. Base it purely on visible facial expression. No other text, only JSON.',
+                  text: 'Analyze this person\'s facial expression. Rate stress level 1-5. Return ONLY valid JSON: {"tier": <1-5>}. Tier 1 = relaxed/happy, 2 = mild tension, 3 = moderate stress, 4 = high stress, 5 = severe distress. No other text, no markdown, no backticks.',
                 },
                 {
                   inline_data: {
@@ -41,7 +41,6 @@ export async function POST(request: NextRequest) {
           generationConfig: {
             maxOutputTokens: 50,
             temperature: 0.2,
-            responseMimeType: 'application/json',
           },
         }),
       }
@@ -51,7 +50,7 @@ export async function POST(request: NextRequest) {
       const errText = await geminiResponse.text();
       console.error('Gemini API error:', geminiResponse.status, errText);
       return NextResponse.json(
-        { error: 'AI analysis failed' },
+        { error: `Gemini error: ${geminiResponse.status}` },
         { status: 502 }
       );
     }
@@ -60,15 +59,24 @@ export async function POST(request: NextRequest) {
     const content = geminiData.candidates?.[0]?.content?.parts?.[0]?.text;
 
     if (!content) {
-      return NextResponse.json({ error: 'Empty AI response' }, { status: 502 });
+      return NextResponse.json(
+        { error: 'Gemini returned empty response' },
+        { status: 502 }
+      );
     }
+
+    const cleaned = content
+      .replace(/```json\s*/g, '')
+      .replace(/```\s*/g, '')
+      .trim();
 
     let result: { tier: number };
     try {
-      result = JSON.parse(content.trim());
+      result = JSON.parse(cleaned);
     } catch {
+      console.error('Gemini raw output:', content);
       return NextResponse.json(
-        { error: 'Invalid AI response format' },
+        { error: 'Invalid JSON from Gemini' },
         { status: 502 }
       );
     }
