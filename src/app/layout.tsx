@@ -1,5 +1,6 @@
 import { Geist_Mono, Inter } from 'next/font/google';
 
+import { Toaster } from '@/components/ui/sonner';
 import { ThemeProvider } from '@/components/theme-provider';
 import { TooltipProvider } from '@/components/ui/tooltip';
 
@@ -33,6 +34,7 @@ export default function RootLayout({
       <body>
         <ThemeProvider>
           <TooltipProvider>{children}</TooltipProvider>
+          <Toaster richColors position="top-center" />
         </ThemeProvider>
       </body>
     </html>
