@@ -9,8 +9,6 @@ import {
   Settings2Icon,
 } from 'lucide-react';
 
-import { createClient } from '@/lib/supabase/client';
-
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
 import {
@@ -20,6 +18,8 @@ import {
   SidebarHeader,
   SidebarRail,
 } from '@/components/ui/sidebar';
+
+import { createClient } from '@/lib/supabase/client';
 
 import Logo from './logo';
 
@@ -98,7 +98,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     supabase.auth.getUser().then(({ data }) => {
       if (data.user) {
         setUser({
-          name: data.user.user_metadata?.full_name ?? data.user.email?.split('@')[0] ?? 'User',
+          name:
+            data.user.user_metadata?.full_name ??
+            data.user.email?.split('@')[0] ??
+            'User',
           email: data.user.email ?? '',
           avatar: data.user.user_metadata?.avatar_url ?? '',
         });
@@ -114,9 +117,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarContent>
         <NavMain items={navMain} />
       </SidebarContent>
-      <SidebarFooter>
-        {user && <NavUser user={user} />}
-      </SidebarFooter>
+      <SidebarFooter>{user && <NavUser user={user} />}</SidebarFooter>
       <SidebarRail />
     </Sidebar>
   );

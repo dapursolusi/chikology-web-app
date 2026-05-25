@@ -38,4 +38,5 @@ Prefer Next.js Server Actions (`'use server'` in `src/actions/`) over API routes
 ## UI / UX
 
 ### Components
+
 All components must use shadcn, try to find it first, or modify what available instead of installing any new dependendcies

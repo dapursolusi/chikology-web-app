@@ -2,11 +2,11 @@
 
 import { useCallback, useRef, useState, useTransition } from 'react';
 
-import { LoaderCircle } from 'lucide-react';
-import { toast } from 'sonner';
-import Webcam from 'react-webcam';
-
 import { saveJournalEntry } from '@/actions/journal';
+import { LoaderCircle } from 'lucide-react';
+import Webcam from 'react-webcam';
+import { toast } from 'sonner';
+
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -15,6 +15,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+
 import { getStressLevel } from '@/lib/stressAnalyzer';
 
 type AnalysisResult = {

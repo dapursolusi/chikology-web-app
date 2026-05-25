@@ -4,8 +4,9 @@ import { revalidatePath } from 'next/cache';
 
 import { db } from '@/db';
 import { journalEntries } from '@/db/schema';
-import { createClient } from '@/lib/supabase/server';
+
 import { mapToMood } from '@/lib/stressAnalyzer';
+import { createClient } from '@/lib/supabase/server';
 
 export async function saveJournalEntry(data: {
   stressTier: number;
@@ -20,7 +21,12 @@ export async function saveJournalEntry(data: {
     return { error: 'Not authenticated' };
   }
 
-  const tier = Math.max(1, Math.min(5, Math.round(data.stressTier))) as 1 | 2 | 3 | 4 | 5;
+  const tier = Math.max(1, Math.min(5, Math.round(data.stressTier))) as
+    | 1
+    | 2
+    | 3
+    | 4
+    | 5;
 
   await db.insert(journalEntries).values({
     userId: user.id,

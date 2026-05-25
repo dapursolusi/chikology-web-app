@@ -107,18 +107,18 @@ src/
 
 **Goal: "Feature complete. User can scan face, see result, save to journal."**
 
-| #   | Task                                                                          | Est.   | Done? |
-| --- | ----------------------------------------------------------------------------- | ------ | ----- |
-| 1   | Add loading state ("Analyzing...") with spinner/animation                     | 15 min | ✓     |
-| 2   | Add canvas overlay showing face detection box (optional)                      | 30 min | ☐     |
-| 3   | Push Drizzle schema to Supabase: `bunx --bun drizzle-kit push`                | 15 min | ✓     |
-| 4   | Create Server Action saves mood + recommendation (journal.ts)                 | 30 min | ✓     |
-| 5   | Add "Save to Journal" button → calls Server Action → shows success message    | 30 min | ✓     |
-| 6   | Add auth guard (redirect to login if not logged in)                           | 20 min | ✓     |
-| 6a  | [Prereq] Wire Supabase auth: client/server/middleware, proxy, OAuth, login/signup forms | 2 hr | ✓ |
-| 7   | Style the whole component (colors, spacing, mobile-responsive, spinner)       | 45 min | ✓     |
-| 8   | Test full flow: open camera → analyze → save → check Supabase table           | 20 min | ✓     |
-| 9   | Deploy to Vercel, test on phone                                               | 15 min | ✓     |
+| #   | Task                                                                                    | Est.   | Done? |
+| --- | --------------------------------------------------------------------------------------- | ------ | ----- |
+| 1   | Add loading state ("Analyzing...") with spinner/animation                               | 15 min | ✓     |
+| 2   | Add canvas overlay showing face detection box (optional)                                | 30 min | ☐     |
+| 3   | Push Drizzle schema to Supabase: `bunx --bun drizzle-kit push`                          | 15 min | ✓     |
+| 4   | Create Server Action saves mood + recommendation (journal.ts)                           | 30 min | ✓     |
+| 5   | Add "Save to Journal" button → calls Server Action → shows success message              | 30 min | ✓     |
+| 6   | Add auth guard (redirect to login if not logged in)                                     | 20 min | ✓     |
+| 6a  | [Prereq] Wire Supabase auth: client/server/middleware, proxy, OAuth, login/signup forms | 2 hr   | ✓     |
+| 7   | Style the whole component (colors, spacing, mobile-responsive, spinner)                 | 45 min | ✓     |
+| 8   | Test full flow: open camera → analyze → save → check Supabase table                     | 20 min | ✓     |
+| 9   | Deploy to Vercel, test on phone                                                         | 15 min | ✓     |
 
 **End-of-day checkpoint:** Deployed. Works on phone. Data saves to Supabase. Phase 1 DONE ✓
 

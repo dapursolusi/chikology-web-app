@@ -1,7 +1,8 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+
+import { useRouter } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -18,6 +19,7 @@ import {
   FieldLabel,
 } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
+
 import { createClient } from '@/lib/supabase/client';
 
 export function SignupForm({
@@ -133,9 +135,7 @@ export function SignupForm({
                 Minimal 8 karakter
               </FieldDescription>
             </Field>
-            {error && (
-              <p className="text-sm text-destructive">{error}</p>
-            )}
+            {error && <p className="text-sm text-destructive">{error}</p>}
             <Field>
               <Button
                 type="submit"

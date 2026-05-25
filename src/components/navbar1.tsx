@@ -1,7 +1,8 @@
 'use client';
 
-import Link from 'next/link';
 import React, { useEffect, useState } from 'react';
+
+import Link from 'next/link';
 
 import {
   Book,
@@ -35,9 +36,8 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet';
 
-import { cn } from '@/lib/utils';
-
 import { createClient } from '@/lib/supabase/client';
+import { cn } from '@/lib/utils';
 
 import { LoginForm } from './login-form';
 import Logo from './logo';
@@ -261,37 +261,40 @@ const Navbar1 = ({
                       {/* Auth Section */}
                       <div className="border-t p-4 pt-4">
                         <div className="flex flex-col gap-2">
-                        {isLoggedIn ? (
-                          <SheetClose asChild>
-                            <Link href="/dashboard">
-                              <Button className="w-full justify-center" size="lg">
-                                Dashboard
+                          {isLoggedIn ? (
+                            <SheetClose asChild>
+                              <Link href="/dashboard">
+                                <Button
+                                  className="w-full justify-center"
+                                  size="lg"
+                                >
+                                  Dashboard
+                                </Button>
+                              </Link>
+                            </SheetClose>
+                          ) : (
+                            <>
+                              <Button
+                                variant="outline"
+                                className="w-full justify-center"
+                                size="lg"
+                                onClick={() => {
+                                  handleOpenLogin();
+                                }}
+                              >
+                                {auth.login.title}
                               </Button>
-                            </Link>
-                          </SheetClose>
-                        ) : (
-                          <>
-                            <Button
-                              variant="outline"
-                              className="w-full justify-center"
-                              size="lg"
-                              onClick={() => {
-                                handleOpenLogin();
-                              }}
-                            >
-                              {auth.login.title}
-                            </Button>
-                            <Button
-                              className="w-full justify-center"
-                              size="lg"
-                              onClick={() => {
-                                handleOpenSignup();
-                              }}
-                            >
-                              {auth.signup.title}
-                            </Button>
-                          </>
-                        )}
+                              <Button
+                                className="w-full justify-center"
+                                size="lg"
+                                onClick={() => {
+                                  handleOpenSignup();
+                                }}
+                              >
+                                {auth.signup.title}
+                              </Button>
+                            </>
+                          )}
                         </div>
                       </div>
                     </div>

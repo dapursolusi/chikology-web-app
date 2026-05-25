@@ -1,7 +1,8 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+
+import { useRouter } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -18,8 +19,8 @@ import {
   FieldLabel,
 } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
-import { createClient } from '@/lib/supabase/client';
 
+import { createClient } from '@/lib/supabase/client';
 import { cn } from '@/lib/utils';
 
 export function LoginForm({
@@ -42,7 +43,10 @@ export function LoginForm({
     setLoading(true);
     setError(null);
 
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
 
     if (error) {
       setError(error.message);
@@ -111,9 +115,7 @@ export function LoginForm({
                   onChange={(e) => setPassword(e.target.value)}
                 />
               </Field>
-              {error && (
-                <p className="text-sm text-destructive">{error}</p>
-              )}
+              {error && <p className="text-sm text-destructive">{error}</p>}
               <Field>
                 <Button
                   type="submit"

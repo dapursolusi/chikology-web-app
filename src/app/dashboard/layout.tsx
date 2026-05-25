@@ -15,6 +15,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from '@/components/ui/sidebar';
+
 import { createClient } from '@/lib/supabase/server';
 
 export default async function DashboardLayout({

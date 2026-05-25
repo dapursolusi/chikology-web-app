@@ -8,5 +8,8 @@ function getBaseUrl() {
 }
 
 export function createClient() {
-  return createBrowserClient(getBaseUrl(), process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
+  return createBrowserClient(
+    getBaseUrl(),
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
 }
