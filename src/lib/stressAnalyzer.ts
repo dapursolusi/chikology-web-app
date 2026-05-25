@@ -83,13 +83,15 @@ const stressLevels: Record<StressTier, StressLevel> = {
 };
 
 export function mapEmotionsToStress(emotions: Emotions): StressTier {
-  const { sad, angry, fearful } = emotions;
+  const { happy, sad, angry, fearful, neutral } = emotions;
+
+  const positiveSignal = happy + neutral;
   const negativeSignal = sad + angry + fearful;
 
-  if (negativeSignal < 0.12) return 1;
-  if (negativeSignal < 0.25) return 2;
-  if (negativeSignal < 0.42) return 3;
-  if (negativeSignal < 0.62) return 4;
+  if (positiveSignal > 0.8) return 1;
+  if (positiveSignal > 0.6 && negativeSignal < 0.2) return 2;
+  if (negativeSignal < 0.4) return 3;
+  if (negativeSignal < 0.7) return 4;
   return 5;
 }
 
