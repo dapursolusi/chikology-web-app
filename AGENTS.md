@@ -26,3 +26,7 @@ Uses default label names. See `docs/agents/triage-labels.md`.
 ### Domain docs
 
 Single-context repo. See `docs/agents/domain.md`.
+
+### Schedule tracking
+
+Update `docs/SCHEDULES.md` after every session — mark tasks done/blocked/skipped, adjust dates if schedule drifts, and update tech stack decisions if they change. The schedule is the source of truth for what's shipped vs pending.

@@ -11,7 +11,7 @@ Here's your full sprint plan, broken into **bite-sized tasks per day.** Each tas
 | Database        | Supabase (Postgres)                   |
 | ORM             | Drizzle ORM + `postgres` driver       |
 | Auth            | Supabase Auth (Google OAuth only)     |
-| Face Detection  | face-api.js (client-side)             |
+| Face Detection  | Groq (Llama 4 Scout) server-side      |
 | Storage         | Supabase Storage (book PDFs, Phase 3) |
 | Deploy          | Vercel                                |
 | Payment         | **Mock** (real gateway deferred)      |
@@ -37,9 +37,11 @@ src/
 ├── components/
 │   ├── ui/                   ← shadcn components
 │   ├── FaceScanner.tsx       ← Phase 1
-│   ├── JournalEditor.tsx     ← Phase 2
-│   ├── MoodSelector.tsx      ← Phase 2
-│   └── JournalHistory.tsx    ← Phase 2
+│   ├── login-form.tsx        ← Phase 1 (UI only, no logic)
+│   ├── signup-form.tsx       ← Phase 1 (UI only, no logic)
+│   ├── JournalEditor.tsx     ← Phase 2 (not yet created)
+│   ├── MoodSelector.tsx      ← Phase 2 (not yet created)
+│   └── JournalHistory.tsx    ← Phase 2 (not yet created)
 ├── lib/
 │   ├── db/
 │   │   ├── index.ts          ← drizzle client
@@ -72,38 +74,42 @@ src/
 
 ---
 
-## PHASE 1: Face Detection (May 26–28)
+## PHASE 1: Face Detection (May 25–28)
 
-### Day 1 — Tuesday, May 26: Skeleton + Camera Works
+### Day 1 — Monday, May 25: Groq Integration + API Route
 
-**Goal: "Camera works on phone, models load, wire up the analyze button"**
+**Goal: "Webcam works, analyze button calls Groq, result displays — better than face-api.js"**
 
-| #   | Task                                                                                | Est.   | Done? |
-| --- | ----------------------------------------------------------------------------------- | ------ | ----- |
-| 1   | Add "Analyze Face" button to `FaceScanner`                                          | 10 min | ☐     |
-| 2   | Implement `analyzeFace()` — call `faceapi.detectSingleFace().withFaceExpressions()` | 45 min | ☐     |
-| 3   | Console.log the raw emotions object — verify it returns numbers                     | 15 min | ☐     |
-| 4   | Wire `mapEmotionsToStress()` — log the stress tier (1–5)                            | 20 min | ☐     |
-| 5   | Wire `getRandomRecommendation()` — log the recommendation string                    | 10 min | ☐     |
-| 6   | Display results in UI: stress label + recommendation text                           | 30 min | ☐     |
-| 7   | Add "No face detected" error handling (show message if detection returns null)      | 15 min | ☐     |
-| 8   | Test with different expressions: smile, frown, neutral — does tier change?          | 20 min | ☐     |
-| 9   | Tweak `mapEmotionsToStress()` thresholds if results feel off                        | 30 min | ☐     |
-| 10  | Test on phone browser (HTTPS required) — deploy to Vercel preview                   | 30 min | ☐     |
+**Context:** face-api.js was inaccurate (couldn't detect stress on flat faces). Switched to cloud API approach.
 
-**End-of-day checkpoint:** Click "Analyze" → see "😟 Stressed" + "Try a 5-minute meditation 🧘‍♀️". Change expression → different result.
+| #   | Task                                                                                       | Est.   | Done? |
+| --- | ------------------------------------------------------------------------------------------ | ------ | ----- |
+| 1   | Create `/api/analyze-face` route — proxy to Groq (Llama 4 Scout 17B)                       | 30 min | ✓     |
+| 2   | Write `STRESS_PROMPT` for micro-expression / muscle tension detection                      | 20 min | ✓     |
+| 3   | Wire "Analyze Face" button → POST screenshot to `/api/analyze-face`                        | 15 min | ✓     |
+| 4   | Display result card: tier, emoji, label, "Pesan dari Chikology", intervention              | 30 min | ✓     |
+| 5   | Add loading state ("Menganalisis...") + error handling                                     | 15 min | ✓     |
+| 6   | Add center 70% face crop to remove background before sending                               | 20 min | ✓     |
+| 7   | Fix Groq model name (was decommissioned → Llama 4 Scout)                                   | 5 min  | ✓     |
+| 8   | Refine prompt: tier 3 anchor bias → flat face with no tension = tier 1, not 3              | 20 min | ✓     |
+| 9   | Test: smile→2, flat→1-2, mad→4 — tier 4-5 still needs exaggerated expression (known limit) | 20 min | ~     |
+| 10  | [Deferred] Test on phone + deploy to Vercel preview                                        | 30 min | ☐     |
 
-**Total: ~3.5 hours active work**
+**End-of-day checkpoint:** Camera → click analyze → see result with color-coded tier + message. Groq works, no 429 errors. But detection needs visible expression for high tiers.
+
+**Known limitation:** Vision LLM can't detect hidden physiological stress. Tier 4-5 requires exaggerated expression. Future: DeepFace Python backend.
+
+**Total: ~3 hours active work**
 
 ---
 
-### Day 2 — Wednesday, May 27: Polish + Save + Ship
+### Day 2 — Tuesday, May 26: Polish + Save + Ship
 
 **Goal: "Feature complete. User can scan face, see result, save to journal."**
 
 | #   | Task                                                                          | Est.   | Done? |
 | --- | ----------------------------------------------------------------------------- | ------ | ----- |
-| 1   | Add loading state ("Analyzing...") with spinner/animation                     | 15 min | ☐     |
+| 1   | Add loading state ("Analyzing...") with spinner/animation                     | 15 min | ✓     |
 | 2   | Add canvas overlay showing face detection box (optional)                      | 30 min | ☐     |
 | 3   | Push Drizzle schema to Supabase: `bunx --bun drizzle-kit push`                | 15 min | ☐     |
 | 4   | Create `app/api/journal/route.ts` — POST endpoint saves mood + recommendation | 30 min | ☐     |
@@ -248,8 +254,8 @@ src/
 ## The Full Calendar View
 
 ```
-Mon May 25 — PHASE 0 FOUNDATION ✓
-Tue May 26 ░░░░░░░░ Phase 1, Day 1 - Detection + Analyze
+Mon May 25 — PHASE 0 FOUNDATION ✓ + PHASE 1, DAY 1 (Groq integration) ✓
+Tue May 26 ░░░░░░░░ Phase 1, Day 2 - Polish + Save + Ship ← DEADLINE
 Wed May 27 ░░░░░░░░ Phase 1, Day 2 - Polish + Save + Ship ← DEADLINE
 Thu May 28 ░░░░░░░░ Phase 2, Day 1 - Schema + Editor
 Fri May 29 ░░░░░░░░ Phase 2, Day 2 - Mood + History
@@ -285,5 +291,7 @@ Jun 12                GO LIVE (external deadline to Mas Chiko)
 - Always use `bun` — `bunx --bun` for package execution, never `npx`
 - Run `bunx --bun drizzle-kit push` to push schema changes to Supabase
 - Route convention: everything behind `/dashboard/` (auth shell with sidebar)
-- Face detection is fully client-side (face-api.js). No API endpoint needed.
+- Face detection uses Groq API (Llama 4 Scout) via `/api/analyze-face`. Requires `GROQ_API_KEY` in `.env.local`
+- face-api.js models remain in `public/models/` for optional future client-side face detection (bounding box only)
+- `mapEmotionsToStress()` in `stressAnalyzer.ts` is unused — the Groq API returns a tier directly. But the function stays for future DeepFace integration
 - Book pricing model needs Mas Chiko's input before Phase 3 starts
