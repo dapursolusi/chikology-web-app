@@ -2,32 +2,81 @@ Here's your full sprint plan, broken into **bite-sized tasks per day.** Each tas
 
 ---
 
-## PHASE 1: Face Detection (May 26–28)
+## Tech Stack Decisions (Locked)
 
-### Day 1 — Monday, May 26: Skeleton + Camera Works
+| Layer           | Choice                                |
+| --------------- | ------------------------------------- |
+| Framework       | Next.js 16 (App Router)               |
+| UI              | Tailwind CSS v4 + shadcn/ui           |
+| Database        | Supabase (Postgres)                   |
+| ORM             | Drizzle ORM + `postgres` driver       |
+| Auth            | Supabase Auth (Google OAuth only)     |
+| Face Detection  | face-api.js (client-side)             |
+| Storage         | Supabase Storage (book PDFs, Phase 3) |
+| Deploy          | Vercel                                |
+| Payment         | **Mock** (real gateway deferred)      |
+| Book Pricing    | Waiting on Mas Chiko                  |
+| Email Marketing | Deferred until 500+ users             |
+| Package Manager | **bun** — `bunx --bun`, not `npx`     |
 
-**Goal: "I can see my face on screen and models are loaded"**
+### File structure
 
-| #   | Task                                                                                        | Est.   | Done? |
-| --- | ------------------------------------------------------------------------------------------- | ------ | ----- |
-| 1   | `npm install face-api.js`                                                                   | 5 min  | ☐     |
-| 2   | Run the bash script to download model files to `public/models/`                             | 10 min | ☐     |
-| 3   | Create `lib/stressAnalyzer.ts` (copy the stress mapping + recommendations code)             | 15 min | ☐     |
-| 4   | Create `components/FaceScanner.tsx` — just the video element + "Start Camera" button        | 30 min | ☐     |
-| 5   | Wire up `navigator.mediaDevices.getUserMedia` — confirm your face shows on screen           | 30 min | ☐     |
-| 6   | Add `useEffect` to load face-api models on mount + show "Models loaded ✓" in console        | 30 min | ☐     |
-| 7   | Create `app/scanner/page.tsx` that renders `<FaceScanner />`                                | 10 min | ☐     |
-| 8   | Test on phone browser (HTTPS required for camera) — deploy to Vercel preview or use `ngrok` | 30 min | ☐     |
-
-**End-of-day checkpoint:** Camera shows your face. Console logs "Models loaded." Nothing else needs to work yet.
-
-**Total: ~2.5 hours active work**
+```
+src/
+├── app/
+│   ├── (main)/              ← public landing page
+│   ├── api/                  ← API routes
+│   ├── dashboard/
+│   │   ├── layout.tsx        ← auth shell (sidebar)
+│   │   ├── page.tsx          ← dashboard home
+│   │   ├── scanner/          ← Phase 1
+│   │   ├── journal/          ← Phase 2
+│   │   └── book/             ← Phase 3
+│   ├── layout.tsx            ← root layout (theme, fonts)
+│   └── globals.css
+├── components/
+│   ├── ui/                   ← shadcn components
+│   ├── FaceScanner.tsx       ← Phase 1
+│   ├── JournalEditor.tsx     ← Phase 2
+│   ├── MoodSelector.tsx      ← Phase 2
+│   └── JournalHistory.tsx    ← Phase 2
+├── lib/
+│   ├── db/
+│   │   ├── index.ts          ← drizzle client
+│   │   └── schema.ts         ← all tables
+│   ├── stressAnalyzer.ts     ← Phase 1
+│   └── utils.ts
+└── types/
+    └── face-api.d.ts
+```
 
 ---
 
-### Day 2 — Tuesday, May 27: Detection + Stress Logic
+## PHASE 0: Foundation (May 25 — done)
 
-**Goal: "I click Analyze, it detects my face, shows my stress level + recommendation"**
+| #   | Task                                                                  | Done? |
+| --- | --------------------------------------------------------------------- | ----- |
+| 1   | Grill all tech stack decisions                                        | ✓     |
+| 2   | `bun add face-api.js drizzle-orm postgres @supabase/supabase-js`      | ✓     |
+| 3   | `bun add -D drizzle-kit`                                              | ✓     |
+| 4   | Create `drizzle.config.ts` + `src/lib/db/index.ts`                    | ✓     |
+| 5   | Create `src/lib/db/schema.ts` (users, journal_entries, mood enum)     | ✓     |
+| 6   | Create `src/lib/stressAnalyzer.ts` (emotion→stress→recommendation)    | ✓     |
+| 7   | Create `src/components/FaceScanner.tsx` (webcam + model load + start) | ✓     |
+| 8   | Create `src/app/dashboard/scanner/page.tsx`                           | ✓     |
+| 9   | Download face-api.js models to `public/models/`                       | ✓     |
+| 10  | Create `src/types/face-api.d.ts`                                      | ✓     |
+| 11  | Delete demo pages (face-detection, journal, e-book, api/test)         | ✓     |
+| 12  | Fix dashboard links (home page quick actions)                         | ✓     |
+| 13  | Build passes ✅                                                       | ✓     |
+
+---
+
+## PHASE 1: Face Detection (May 26–28)
+
+### Day 1 — Tuesday, May 26: Skeleton + Camera Works
+
+**Goal: "Camera works on phone, models load, wire up the analyze button"**
 
 | #   | Task                                                                                | Est.   | Done? |
 | --- | ----------------------------------------------------------------------------------- | ------ | ----- |
@@ -40,6 +89,7 @@ Here's your full sprint plan, broken into **bite-sized tasks per day.** Each tas
 | 7   | Add "No face detected" error handling (show message if detection returns null)      | 15 min | ☐     |
 | 8   | Test with different expressions: smile, frown, neutral — does tier change?          | 20 min | ☐     |
 | 9   | Tweak `mapEmotionsToStress()` thresholds if results feel off                        | 30 min | ☐     |
+| 10  | Test on phone browser (HTTPS required) — deploy to Vercel preview                   | 30 min | ☐     |
 
 **End-of-day checkpoint:** Click "Analyze" → see "😟 Stressed" + "Try a 5-minute meditation 🧘‍♀️". Change expression → different result.
 
@@ -47,19 +97,19 @@ Here's your full sprint plan, broken into **bite-sized tasks per day.** Each tas
 
 ---
 
-### Day 3 — Wednesday, May 28: Polish + Save + Ship
+### Day 2 — Wednesday, May 27: Polish + Save + Ship
 
 **Goal: "Feature complete. User can scan face, see result, save to journal."**
 
 | #   | Task                                                                          | Est.   | Done? |
 | --- | ----------------------------------------------------------------------------- | ------ | ----- |
 | 1   | Add loading state ("Analyzing...") with spinner/animation                     | 15 min | ☐     |
-| 2   | Add canvas overlay showing face detection box (optional, looks cool)          | 30 min | ☐     |
-| 3   | Create Supabase table `journal_entries` (run SQL migration)                   | 15 min | ☐     |
+| 2   | Add canvas overlay showing face detection box (optional)                      | 30 min | ☐     |
+| 3   | Push Drizzle schema to Supabase: `bunx --bun drizzle-kit push`                | 15 min | ☐     |
 | 4   | Create `app/api/journal/route.ts` — POST endpoint saves mood + recommendation | 30 min | ☐     |
 | 5   | Add "Save to Journal" button → calls API → shows success toast                | 30 min | ☐     |
-| 6   | Add auth check (redirect to login if not logged in)                           | 20 min | ☐     |
-| 7   | Style the whole component properly (colors, spacing, mobile-responsive)       | 45 min | ☐     |
+| 6   | Add auth guard (redirect to login if not logged in)                           | 20 min | ☐     |
+| 7   | Style the whole component (colors, spacing, mobile-responsive)                | 45 min | ☐     |
 | 8   | Test full flow: open camera → analyze → save → check Supabase table           | 20 min | ☐     |
 | 9   | Deploy to Vercel, test on phone                                               | 15 min | ☐     |
 
@@ -69,21 +119,21 @@ Here's your full sprint plan, broken into **bite-sized tasks per day.** Each tas
 
 ---
 
-## PHASE 2: Journal System (Jun 2–4)
+## PHASE 2: Journal System (May 28–30)
 
-### Day 1 — Monday, Jun 2: Schema + Basic Page
+### Day 1 — Thursday, May 28: Schema + Basic Page
 
 **Goal: "Journal page exists, I can write text and save it"**
 
-| #   | Task                                                                                                | Est.   | Done? |
-| --- | --------------------------------------------------------------------------------------------------- | ------ | ----- |
-| 1   | Install Tiptap: `npm install @tiptap/react @tiptap/starter-kit @tiptap/extension-placeholder`       | 10 min | ☐     |
-| 2   | Update Supabase `journal_entries` table — add `content` (text) column if not there                  | 10 min | ☐     |
-| 3   | Create `app/journal/page.tsx` — basic layout with heading                                           | 15 min | ☐     |
-| 4   | Create `components/JournalEditor.tsx` — mount Tiptap with basic toolbar (bold, italic, bullet list) | 45 min | ☐     |
-| 5   | Add a "Save" button that POST's Tiptap HTML content to `/api/journal`                               | 30 min | ☐     |
-| 6   | Update the API route to accept `content` field                                                      | 15 min | ☐     |
-| 7   | Test: write something → save → check Supabase → content stored ✓                                    | 15 min | ☐     |
+| #   | Task                                                                      | Est.   | Done? |
+| --- | ------------------------------------------------------------------------- | ------ | ----- |
+| 1   | `bun add @tiptap/react @tiptap/starter-kit @tiptap/extension-placeholder` | 10 min | ☐     |
+| 2   | Update Drizzle schema — add `content` column to `journal_entries`         | 10 min | ☐     |
+| 3   | Rewrite `app/dashboard/journal/page.tsx` — basic layout with heading      | 15 min | ☐     |
+| 4   | Create `components/JournalEditor.tsx` — mount Tiptap with basic toolbar   | 45 min | ☐     |
+| 5   | Add "Save" button that POST's Tiptap HTML content to `/api/journal`       | 30 min | ☐     |
+| 6   | Update the API route to accept `content` field                            | 15 min | ☐     |
+| 7   | Test: write something → save → check Supabase → content stored ✓          | 15 min | ☐     |
 
 **End-of-day checkpoint:** Journal page renders Tiptap editor. I can type and save. Content appears in DB.
 
@@ -91,19 +141,19 @@ Here's your full sprint plan, broken into **bite-sized tasks per day.** Each tas
 
 ---
 
-### Day 2 — Tuesday, Jun 3: Mood Selector + History List
+### Day 2 — Friday, May 29: Mood Selector + History List
 
 **Goal: "I can pick my mood, see past entries"**
 
-| #   | Task                                                                                                         | Est.   | Done? |
-| --- | ------------------------------------------------------------------------------------------------------------ | ------ | ----- |
-| 1   | Create `components/MoodSelector.tsx` — 5 emoji buttons (😌😊😐😟😰), one selected at a time                  | 30 min | ☐     |
-| 2   | Wire mood selection into journal form state                                                                  | 15 min | ☐     |
-| 3   | Update save API to include mood in the INSERT                                                                | 10 min | ☐     |
-| 4   | Create GET `/api/journal` — fetch all entries for current user, newest first                                 | 30 min | ☐     |
-| 5   | Create `components/JournalHistory.tsx` — list view of past entries (date, mood emoji, first line of content) | 45 min | ☐     |
-| 6   | Add journal history below the editor (or as separate tab)                                                    | 20 min | ☐     |
-| 7   | Test: save 3 entries with different moods → all show in history ✓                                            | 15 min | ☐     |
+| #   | Task                                                                                        | Est.   | Done? |
+| --- | ------------------------------------------------------------------------------------------- | ------ | ----- |
+| 1   | Create `components/MoodSelector.tsx` — 5 emoji buttons (😌😊😐😟😰), one selected at a time | 30 min | ☐     |
+| 2   | Wire mood selection into journal form state                                                 | 15 min | ☐     |
+| 3   | Update save API to include mood in the INSERT                                               | 10 min | ☐     |
+| 4   | Create GET `/api/journal` — fetch all entries for current user, newest first                | 30 min | ☐     |
+| 5   | Create `components/JournalHistory.tsx` — list view of past entries                          | 45 min | ☐     |
+| 6   | Add journal history below the editor (or as separate tab)                                   | 20 min | ☐     |
+| 7   | Test: save 3 entries with different moods → all show in history ✓                           | 15 min | ☐     |
 
 **End-of-day checkpoint:** Full journal flow works: pick mood → write → save → see it in history.
 
@@ -111,19 +161,19 @@ Here's your full sprint plan, broken into **bite-sized tasks per day.** Each tas
 
 ---
 
-### Day 3 — Wednesday, Jun 4: Polish + Connect Face Scanner
+### Day 3 — Saturday, May 30: Polish + Connect Face Scanner
 
 **Goal: "Face scanner pre-fills mood. Everything looks good."**
 
-| #   | Task                                                                                                       | Est.   | Done? |
-| --- | ---------------------------------------------------------------------------------------------------------- | ------ | ----- |
-| 1   | After face scan "Save to Journal" → redirect to `/journal` with mood pre-filled (via query param or state) | 30 min | ☐     |
-| 2   | Journal page reads the pre-filled mood and selects it automatically                                        | 20 min | ☐     |
-| 3   | Add "Scan Face First" optional button on journal page (links to scanner)                                   | 15 min | ☐     |
-| 4   | Add entry detail view — click a history item → expand to see full content                                  | 30 min | ☐     |
-| 5   | Style everything: mood selector colors, editor toolbar, history cards                                      | 45 min | ☐     |
-| 6   | Mobile responsive check + fix                                                                              | 20 min | ☐     |
-| 7   | Deploy + test full flow: scan → pre-fills mood → write journal → save → see history                        | 20 min | ☐     |
+| #   | Task                                                                                      | Est.   | Done? |
+| --- | ----------------------------------------------------------------------------------------- | ------ | ----- |
+| 1   | After face scan "Save to Journal" → redirect to `/dashboard/journal` with mood pre-filled | 30 min | ☐     |
+| 2   | Journal page reads the pre-filled mood and selects it automatically                       | 20 min | ☐     |
+| 3   | Add "Scan Face First" optional button on journal page (links to scanner)                  | 15 min | ☐     |
+| 4   | Add entry detail view — click a history item → expand to see full content                 | 30 min | ☐     |
+| 5   | Style everything: mood selector colors, editor toolbar, history cards                     | 45 min | ☐     |
+| 6   | Mobile responsive check + fix                                                             | 20 min | ☐     |
+| 7   | Deploy + test full flow: scan → pre-fills mood → write journal → save → see history       | 20 min | ☐     |
 
 **End-of-day checkpoint:** Journal feature complete. Connected to face scanner. Phase 2 DONE.
 
@@ -131,21 +181,21 @@ Here's your full sprint plan, broken into **bite-sized tasks per day.** Each tas
 
 ---
 
-## PHASE 3: Book Chapter Gating (Jun 9–11)
+## PHASE 3: Book Chapter Gating (Jun 2–4)
 
-### Day 1 — Monday, Jun 9: Schema + Admin Upload
+### Day 1 — Tuesday, Jun 2: Schema + Admin Upload
 
 **Goal: "Chapters exist in DB, I can upload a PDF"**
 
-| #   | Task                                                                                                       | Est.   | Done? |
-| --- | ---------------------------------------------------------------------------------------------------------- | ------ | ----- |
-| 1   | Create Supabase table `book_chapters` (id, title, chapter_number, price, pdf_url, description, created_at) | 15 min | ☐     |
-| 2   | Create Supabase table `chapter_purchases` (id, user_id, chapter_id, paid_at, payment_status)               | 15 min | ☐     |
-| 3   | Create Supabase Storage bucket `book-pdfs` (private, no public access)                                     | 10 min | ☐     |
-| 4   | Create admin page `app/admin/chapters/page.tsx` — form to add chapter (title, number, price, PDF upload)   | 60 min | ☐     |
-| 5   | Upload PDF to Supabase Storage + save metadata to `book_chapters` table                                    | 30 min | ☐     |
-| 6   | Test: upload a dummy PDF → appears in DB + Storage ✓                                                       | 15 min | ☐     |
-| 7   | Create GET `/api/chapters` — returns chapter list (title, number, price, owned/not-owned)                  | 30 min | ☐     |
+| #   | Task                                                                                      | Est.   | Done? |
+| --- | ----------------------------------------------------------------------------------------- | ------ | ----- |
+| 1   | Add `book_chapters` table to Drizzle schema + `drizzle-kit push`                          | 15 min | ☐     |
+| 2   | Add `chapter_purchases` table to Drizzle schema + `drizzle-kit push`                      | 15 min | ☐     |
+| 3   | Create Supabase Storage bucket `book-pdfs` (private, no public access)                    | 10 min | ☐     |
+| 4   | Create admin page `app/admin/chapters/page.tsx` — form to add chapter                     | 60 min | ☐     |
+| 5   | Upload PDF to Supabase Storage + save metadata to `book_chapters` table                   | 30 min | ☐     |
+| 6   | Test: upload a dummy PDF → appears in DB + Storage ✓                                      | 15 min | ☐     |
+| 7   | Create GET `/api/chapters` — returns chapter list (title, number, price, owned/not-owned) | 30 min | ☐     |
 
 **End-of-day checkpoint:** Chapters in DB. PDF uploaded. API returns chapter list.
 
@@ -153,20 +203,20 @@ Here's your full sprint plan, broken into **bite-sized tasks per day.** Each tas
 
 ---
 
-### Day 2 — Tuesday, Jun 10: Payment Gating + Viewer
+### Day 2 — Wednesday, Jun 3: Payment Gating + Viewer
 
 **Goal: "Users see chapter list. Paid = read. Unpaid = locked."**
 
-| #   | Task                                                                                                  | Est.   | Done? |
-| --- | ----------------------------------------------------------------------------------------------------- | ------ | ----- |
-| 1   | Create `app/book/page.tsx` — chapter list UI (cards with lock/unlock icon)                            | 45 min | ☐     |
-| 2   | Add logic: check `chapter_purchases` for current user → mark chapters as owned/locked                 | 30 min | ☐     |
-| 3   | Create `app/book/[chapterId]/page.tsx` — chapter reader page                                          | 20 min | ☐     |
-| 4   | Add access check: if not purchased → redirect to purchase page / show "Buy" button                    | 20 min | ☐     |
-| 5   | Create mock payment flow (for MVP: manual confirmation or simple button that inserts purchase record) | 30 min | ☐     |
-| 6   | After "payment" → insert into `chapter_purchases` → redirect to reader                                | 20 min | ☐     |
-| 7   | Create PDF viewer: serve PDF via signed Supabase URL + render in `<iframe>` or react-pdf              | 45 min | ☐     |
-| 8   | Test: locked chapter → buy → now can read ✓                                                           | 15 min | ☐     |
+| #   | Task                                                                                     | Est.   | Done? |
+| --- | ---------------------------------------------------------------------------------------- | ------ | ----- |
+| 1   | Create `app/dashboard/book/page.tsx` — chapter list UI (cards with lock/unlock icon)     | 45 min | ☐     |
+| 2   | Add logic: check `chapter_purchases` for current user → mark chapters as owned/locked    | 30 min | ☐     |
+| 3   | Create `app/dashboard/book/[chapterId]/page.tsx` — chapter reader page                   | 20 min | ☐     |
+| 4   | Add access check: if not purchased → redirect to purchase page / show "Buy" button       | 20 min | ☐     |
+| 5   | Create mock payment flow (for MVP: button that inserts purchase record)                  | 30 min | ☐     |
+| 6   | After "payment" → insert into `chapter_purchases` → redirect to reader                   | 20 min | ☐     |
+| 7   | Create PDF viewer: serve PDF via signed Supabase URL + render in `<iframe>` or react-pdf | 45 min | ☐     |
+| 8   | Test: locked chapter → buy → now can read ✓                                              | 15 min | ☐     |
 
 **End-of-day checkpoint:** Chapter list shows locked/unlocked. Purchase unlocks. PDF renders in-app.
 
@@ -174,7 +224,7 @@ Here's your full sprint plan, broken into **bite-sized tasks per day.** Each tas
 
 ---
 
-### Day 3 — Wednesday, Jun 11: Security + Sequential Gating + Ship
+### Day 3 — Thursday, Jun 4: Security + Sequential Gating + Ship
 
 **Goal: "Must buy chapter 1 before chapter 2. PDF can't be easily downloaded."**
 
@@ -185,7 +235,7 @@ Here's your full sprint plan, broken into **bite-sized tasks per day.** Each tas
 | 3   | Generate signed URLs with short expiry (5 min) so links can't be shared            | 20 min | ☐     |
 | 4   | Add RLS policy: users can only access PDFs for chapters they've purchased          | 30 min | ☐     |
 | 5   | Style book page: chapter cards, progress indicator, "Next Chapter" flow            | 30 min | ☐     |
-| 6   | Connect everything: navigation between scanner → journal → book                    | 20 min | ☐     |
+| 6   | Connect navigation between scanner → journal → book                                | 20 min | ☐     |
 | 7   | Full E2E test: new user → scan face → journal → browse book → buy chapter 1 → read | 20 min | ☐     |
 | 8   | Deploy final build                                                                 | 15 min | ☐     |
 
@@ -198,22 +248,20 @@ Here's your full sprint plan, broken into **bite-sized tasks per day.** Each tas
 ## The Full Calendar View
 
 ```
-May 26 (Mon) ░░░░░░░░ Phase 1, Day 1 - Skeleton + Camera
-May 27 (Tue) ░░░░░░░░ Phase 1, Day 2 - Detection Logic
-May 28 (Wed) ░░░░░░░░ Phase 1, Day 3 - Polish + Save  ← DEADLINE ✓
-May 29–Jun 1          Recovery (test, fix bugs, breathe)
+Mon May 25 — PHASE 0 FOUNDATION ✓
+Tue May 26 ░░░░░░░░ Phase 1, Day 1 - Detection + Analyze
+Wed May 27 ░░░░░░░░ Phase 1, Day 2 - Polish + Save + Ship ← DEADLINE
+Thu May 28 ░░░░░░░░ Phase 2, Day 1 - Schema + Editor
+Fri May 29 ░░░░░░░░ Phase 2, Day 2 - Mood + History
+Sat May 30 ░░░░░░░░ Phase 2, Day 3 - Polish + Connect  ← DEADLINE
+May 31–Jun 1        Recovery (test, fix bugs, breathe)
 
-Jun 2  (Mon) ░░░░░░░░ Phase 2, Day 1 - Schema + Editor
-Jun 3  (Tue) ░░░░░░░░ Phase 2, Day 2 - Mood + History
-Jun 4  (Wed) ░░░░░░░░ Phase 2, Day 3 - Polish + Connect ← DEADLINE ✓
-Jun 5–8               Recovery (test, fix bugs, games)
+Tue Jun 2  ░░░░░░░░ Phase 3, Day 1 - Schema + Upload
+Wed Jun 3  ░░░░░░░░ Phase 3, Day 2 - Payment + Viewer
+Thu Jun 4  ░░░░░░░░ Phase 3, Day 3 - Security + Ship  ← DEADLINE
+Jun 5–11             Polish, E2E testing, Mas Chiko review
 
-Jun 9  (Mon) ░░░░░░░░ Phase 3, Day 1 - Schema + Upload
-Jun 10 (Tue) ░░░░░░░░ Phase 3, Day 2 - Payment + Viewer
-Jun 11 (Wed) ░░░░░░░░ Phase 3, Day 3 - Security + Ship  ← DEADLINE ✓
-Jun 12–18             Polish, E2E testing, Mas Chiko review
-
-Jun 28                GO LIVE (external deadline to Mas Chiko)
+Jun 12                GO LIVE (external deadline to Mas Chiko)
 ```
 
 ---
@@ -232,4 +280,10 @@ Jun 28                GO LIVE (external deadline to Mas Chiko)
 
 ---
 
-**Your move:** Copy this into Notion. Set calendar reminders for May 26, Jun 2, Jun 9 as "SPRINT START" alarms. Tell your wife those are work days. Then close this tab and go enjoy the weekend guilt-free—**because the deadline is set and you know exactly what to do.**
+### Reminders
+
+- Always use `bun` — `bunx --bun` for package execution, never `npx`
+- Run `bunx --bun drizzle-kit push` to push schema changes to Supabase
+- Route convention: everything behind `/dashboard/` (auth shell with sidebar)
+- Face detection is fully client-side (face-api.js). No API endpoint needed.
+- Book pricing model needs Mas Chiko's input before Phase 3 starts
