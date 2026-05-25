@@ -38,5 +38,3 @@ jobs:
         run: bun run build
         env:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
-        env:
-          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
