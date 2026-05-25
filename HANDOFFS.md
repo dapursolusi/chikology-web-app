@@ -87,3 +87,42 @@
 3. Phase 2 (Jun 2): Journal editor with Tiptap
 
 ---
+
+## [Monday, 25-05-2026 14:30] — Phase 1 Day 1: Analyze + Display wired up
+
+### Session Target
+
+- Implement Phase 1 Day 1 (tasks 1–7): Add Analyze Face button, wire detection → stress mapping → enriched result card with Mas Chiko's content
+
+### Current State
+
+- Status: shipped (code complete, tasks 8–10 pending manual testing)
+- Scope: `src/lib/stressAnalyzer.ts`, `src/components/FaceScanner.tsx`
+
+### What Changed
+
+- `src/lib/stressAnalyzer.ts` — Rewrote with Mas Chiko's full stress level content from `docs/STRESS_RECOMMENDATION.md`: 5 levels with labels, emoji, color (green→dark-red), "Pesan dari Chikology" messages, and evidence-based interventions. Replaced generic `recommendations` object with structured `stressLevels` data. Added `getStressLevel()` export; removed `getRandomRecommendation()` (unused).
+- `src/components/FaceScanner.tsx` — Added "Analisis Wajah" button after camera starts; `analyzeFace()` calls `detectSingleFace().withFaceExpressions()` on live video, passes emotions to `mapEmotionsToStress()` then `getStressLevel()`. Result card displays below webcam: color strip, emoji + level label, full "Pesan dari Chikology", intervention box, "Analisis Ulang" button. "Tidak ada wajah terdeteksi" error when detection returns null. faceapi ref stored on load for reuse.
+
+### Verification
+
+- `bun run build` — Clean compile, all routes generated
+- `bun run lint` — 0 errors, 10 warnings (all pre-existing)
+
+### Decisions
+
+- D-008: Live video detection over screenshot — Pass `video` element directly to `detectSingleFace()`. Simpler, faster, no canvas intermediary.
+- D-009: Enriched result card over minimal label — Mas Chiko's full "Pesan dari Chikology" displayed in card below webcam with color strip, emoji, tier label, and evidence-based intervention.
+- D-010: Camera stays on after analysis — User can change expression and click "Analisis Ulang" without restarting camera, supporting the Day 1 checkpoint ("Change expression → different result").
+
+### Known Issues / Risks
+
+- `mapEmotionsToStress()` thresholds untuned — May need adjustment after real-world testing (task 9). Current: positiveSignal > 0.8 → tier 1, else cascading thresholds down to tier 5.
+
+### Next Steps (ordered)
+
+1. Manual testing tasks 8–10: test with different expressions, tweak thresholds, test on phone
+2. Phase 1 Day 2 (May 27): loading spinner, schema push, save-to-journal API + button, auth guard, styling
+3. Phase 2 (Jun 2): Journal editor with Tiptap
+
+---

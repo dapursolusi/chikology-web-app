@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 
 import Webcam from 'react-webcam';
 
@@ -13,9 +13,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 
-import { getStressLevel, mapEmotionsToStress } from '@/lib/stressAnalyzer';
-
-type ModelStatus = 'loading' | 'ready' | 'error';
+import { getStressLevel } from '@/lib/stressAnalyzer';
 
 type AnalysisResult = {
   tier: 1 | 2 | 3 | 4 | 5;
@@ -28,45 +26,21 @@ type AnalysisResult = {
 
 export default function FaceScanner() {
   const webcamRef = useRef<Webcam>(null);
-  const [modelStatus, setModelStatus] = useState<ModelStatus>('loading');
   const [cameraActive, setCameraActive] = useState(false);
-  const faceapiRef = useRef<Awaited<typeof import('face-api.js')> | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
-  const [noFace, setNoFace] = useState(false);
-
-  useEffect(() => {
-    async function loadModels() {
-      try {
-        const faceapi = await import('face-api.js');
-        await faceapi.nets.tinyFaceDetector.loadFromUri('/models');
-        await faceapi.nets.faceLandmark68Net.loadFromUri('/models');
-        await faceapi.nets.faceExpressionNet.loadFromUri('/models');
-        console.warn('Models loaded ✓');
-        faceapiRef.current = faceapi;
-        setModelStatus('ready');
-      } catch {
-        console.error('Failed to load face-api models');
-        setModelStatus('error');
-      }
-    }
-    loadModels();
-  }, []);
+  const [error, setError] = useState<string | null>(null);
 
   const startCamera = useCallback(() => {
     setCameraActive(true);
   }, []);
 
   const analyzeFace = useCallback(async () => {
-    const faceapi = faceapiRef.current;
-    if (!faceapi) return;
-
     setIsAnalyzing(true);
-    setNoFace(false);
+    setError(null);
     setResult(null);
 
     try {
-      // Wait up to 5s for video element to be ready
       let video = webcamRef.current?.video ?? null;
       if (!video || video.readyState < 2) {
         for (let i = 0; i < 10; i++) {
@@ -77,62 +51,39 @@ export default function FaceScanner() {
       }
 
       if (!video) {
-        console.warn('Video element not ready after waiting');
-        setNoFace(true);
+        setError('Gagal mengakses kamera');
         return;
       }
 
-      // Capture a still frame — may give better expression results than live video
       const screenshot = webcamRef.current?.getScreenshot();
       if (!screenshot) {
-        console.warn('Failed to capture screenshot');
-        setNoFace(true);
+        setError('Gagal mengambil gambar');
         return;
       }
 
-      const img = new Image();
-      img.src = screenshot;
-      await img.decode();
+      const base64 = screenshot.replace(/^data:image\/\w+;base64,/, '');
 
-      const TIMEOUT = Symbol('timeout');
-
-      const options = new faceapi.TinyFaceDetectorOptions({
-        inputSize: 160,
-        scoreThreshold: 0.3,
+      const response = await fetch('/api/analyze-face', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: base64 }),
       });
 
-      const detectionPromise = faceapi
-        .detectSingleFace(img, options)
-        .withFaceLandmarks()
-        .withFaceExpressions();
-
-      const raced = await Promise.race([
-        detectionPromise,
-        new Promise<typeof TIMEOUT>((resolve) =>
-          setTimeout(() => resolve(TIMEOUT), 20000)
-        ),
-      ]);
-
-      if (raced === TIMEOUT) {
-        console.warn('Face detection timed out (20s)');
-        setNoFace(true);
+      if (!response.ok) {
+        setError('Gagal mendapatkan respons');
         return;
       }
 
-      if (!raced) {
-        setNoFace(true);
-        console.warn('No face detected');
+      const data = await response.json();
+
+      if (!data.tier || data.tier < 1 || data.tier > 5) {
+        setError('Gagal mendapatkan respons');
         return;
       }
 
-      const emotions = raced.expressions as unknown as Parameters<
-        typeof mapEmotionsToStress
-      >[0];
-      console.warn('Raw emotions:', emotions);
-      const tier = mapEmotionsToStress(emotions);
-      console.warn('Stress tier:', tier);
+      const tier = data.tier as 1 | 2 | 3 | 4 | 5;
       const level = getStressLevel(tier);
-      console.warn('Recommendation:', level.intervention);
+      console.warn('Analysis tier:', tier);
 
       setResult({
         tier,
@@ -142,9 +93,8 @@ export default function FaceScanner() {
         message: level.message,
         intervention: level.intervention,
       });
-    } catch (error) {
-      console.error('Analysis failed:', error);
-      setNoFace(true);
+    } catch {
+      setError('Gagal mendapatkan respons');
     } finally {
       setIsAnalyzing(false);
     }
@@ -152,7 +102,7 @@ export default function FaceScanner() {
 
   const resetAnalysis = useCallback(() => {
     setResult(null);
-    setNoFace(false);
+    setError(null);
   }, []);
 
   return (
@@ -164,21 +114,8 @@ export default function FaceScanner() {
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col items-center gap-4">
-        {modelStatus === 'loading' && (
-          <p className="text-sm text-muted-foreground">Memuat model AI...</p>
-        )}
-        {modelStatus === 'error' && (
-          <p className="text-sm text-destructive">
-            Gagal memuat model. Muat ulang halaman.
-          </p>
-        )}
-
         {!cameraActive ? (
-          <Button
-            onClick={startCamera}
-            disabled={modelStatus !== 'ready'}
-            size="lg"
-          >
+          <Button onClick={startCamera} size="lg">
             Mulai Kamera
           </Button>
         ) : (
@@ -198,24 +135,13 @@ export default function FaceScanner() {
           </div>
         )}
 
-        {modelStatus === 'ready' && cameraActive && !result && (
+        {cameraActive && !result && (
           <div className="flex flex-col items-center gap-2">
-            {noFace && (
-              <p className="text-sm text-destructive">
-                Tidak ada wajah terdeteksi. Pastikan wajah terlihat jelas di
-                kamera.
-              </p>
-            )}
+            {error && <p className="text-sm text-destructive">{error}</p>}
             <Button onClick={analyzeFace} disabled={isAnalyzing} size="lg">
               {isAnalyzing ? 'Menganalisis...' : 'Analisis Wajah'}
             </Button>
           </div>
-        )}
-
-        {isAnalyzing && (
-          <p className="text-sm text-muted-foreground">
-            Menganalisis ekspresi wajah...
-          </p>
         )}
 
         {result && (
