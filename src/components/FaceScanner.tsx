@@ -61,7 +61,26 @@ export default function FaceScanner() {
         return;
       }
 
-      const base64 = screenshot.replace(/^data:image\/\w+;base64,/, '');
+      const img = new Image();
+      img.src = screenshot;
+      await new Promise((r) => {
+        img.onload = r;
+      });
+
+      const cropRatio = 0.7;
+      const cropW = img.width * cropRatio;
+      const cropH = img.height * cropRatio;
+      const cropX = (img.width - cropW) / 2;
+      const cropY = (img.height - cropH) / 2;
+
+      const c = document.createElement('canvas');
+      c.width = cropW;
+      c.height = cropH;
+      const ctx = c.getContext('2d')!;
+      ctx.drawImage(img, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
+      const cropped = c.toDataURL('image/jpeg', 0.95);
+
+      const base64 = cropped.replace(/^data:image\/\w+;base64,/, '');
 
       const response = await fetch('/api/analyze-face', {
         method: 'POST',

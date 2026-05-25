@@ -1,5 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import Groq from 'groq-sdk';
+
+const groq = new Groq();
+
+const STRESS_PROMPT = `Analyze facial expression for stress. Rate 1-5.
+
+RULES:
+- 1: Relaxed. Soft face, gentle eyes, zero muscle tension. Smile or calm-neutral.
+- 2: Mild. Very subtle tension in 1 area (brow or mouth). Still appears mostly relaxed.
+- 3: Moderate. Visible tension in 2+ areas. Flat affect with tight jaw or furrowed brow. WARNING: Do NOT default here.
+- 4: High. Hard expression, obvious clenching, compressed lips, tight eyes.
+- 5: Severe. Extreme tension, grimacing, distress.
+
+CRITICAL:
+- A neutral face with NO tension = 1 (not 3). Calm neutral is relaxed.
+- A neutral face with TENSE features (tight jaw, furrowed brow) = 3+.
+- If totally ambiguous with zero tension cues = 2 (not 3).
+- Only use 3 when you clearly see tension in multiple zones.
+
+Return {"tier": <1-5>}. JSON only.`;
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -9,58 +30,38 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No image provided' }, { status: 400 });
     }
 
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey = process.env.GROQ_API_KEY;
     if (!apiKey) {
       return NextResponse.json(
-        { error: 'API key not configured' },
+        { error: 'GROQ_API_KEY not configured' },
         { status: 500 }
       );
     }
 
-    const geminiResponse = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [
+    const response = await groq.chat.completions.create({
+      model: 'meta-llama/llama-4-scout-17b-16e-instruct',
+      messages: [
+        {
+          role: 'user',
+          content: [
+            { type: 'text', text: STRESS_PROMPT },
             {
-              parts: [
-                {
-                  text: 'Analyze this person\'s facial expression. Rate stress level 1-5. Return ONLY valid JSON: {"tier": <1-5>}. Tier 1 = relaxed/happy, 2 = mild tension, 3 = moderate stress, 4 = high stress, 5 = severe distress. No other text, no markdown, no backticks.',
-                },
-                {
-                  inline_data: {
-                    mime_type: 'image/jpeg',
-                    data: image,
-                  },
-                },
-              ],
+              type: 'image_url',
+              image_url: {
+                url: `data:image/jpeg;base64,${image}`,
+              },
             },
           ],
-          generationConfig: {
-            maxOutputTokens: 50,
-            temperature: 0.2,
-          },
-        }),
-      }
-    );
+        },
+      ],
+      temperature: 0.2,
+      max_tokens: 50,
+    });
 
-    if (!geminiResponse.ok) {
-      const errText = await geminiResponse.text();
-      console.error('Gemini API error:', geminiResponse.status, errText);
-      return NextResponse.json(
-        { error: `Gemini error: ${geminiResponse.status}` },
-        { status: 502 }
-      );
-    }
-
-    const geminiData = await geminiResponse.json();
-    const content = geminiData.candidates?.[0]?.content?.parts?.[0]?.text;
-
+    const content = response.choices?.[0]?.message?.content;
     if (!content) {
       return NextResponse.json(
-        { error: 'Gemini returned empty response' },
+        { error: 'Groq returned empty response' },
         { status: 502 }
       );
     }
@@ -74,9 +75,9 @@ export async function POST(request: NextRequest) {
     try {
       result = JSON.parse(cleaned);
     } catch {
-      console.error('Gemini raw output:', content);
+      console.error('Groq raw output:', content);
       return NextResponse.json(
-        { error: 'Invalid JSON from Gemini' },
+        { error: 'Invalid JSON from Groq' },
         { status: 502 }
       );
     }
