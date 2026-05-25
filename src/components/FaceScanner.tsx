@@ -58,25 +58,55 @@ export default function FaceScanner() {
 
   const analyzeFace = useCallback(async () => {
     const faceapi = faceapiRef.current;
-    const video = webcamRef.current?.video;
-    if (!faceapi || !video) return;
+    if (!faceapi) return;
 
     setIsAnalyzing(true);
     setNoFace(false);
     setResult(null);
 
     try {
-      const detection = await faceapi
+      // Wait up to 5s for video element to be ready
+      let video = webcamRef.current?.video ?? null;
+      if (!video || video.readyState < 2) {
+        for (let i = 0; i < 10; i++) {
+          await new Promise((r) => setTimeout(r, 500));
+          video = webcamRef.current?.video ?? null;
+          if (video && video.readyState >= 2) break;
+        }
+      }
+
+      if (!video) {
+        console.warn('Video element not ready after waiting');
+        setNoFace(true);
+        return;
+      }
+
+      const TIMEOUT = Symbol('timeout');
+
+      const detectionPromise = faceapi
         .detectSingleFace(video)
         .withFaceExpressions();
 
-      if (!detection) {
+      const raced = await Promise.race([
+        detectionPromise,
+        new Promise<typeof TIMEOUT>((resolve) =>
+          setTimeout(() => resolve(TIMEOUT), 20000)
+        ),
+      ]);
+
+      if (raced === TIMEOUT) {
+        console.warn('Face detection timed out (20s)');
+        setNoFace(true);
+        return;
+      }
+
+      if (!raced) {
         setNoFace(true);
         console.warn('No face detected');
         return;
       }
 
-      const emotions = detection.expressions as unknown as Parameters<
+      const emotions = raced.expressions as unknown as Parameters<
         typeof mapEmotionsToStress
       >[0];
       console.warn('Raw emotions:', emotions);
