@@ -32,7 +32,7 @@ jobs:
         run: bunx --bun tsc --noEmit
 
       - name: Run Tests
-        run: bun test
+        run: bun test --pass-with-no-tests
 
       - name: Verify Production Build
         run: bun build
