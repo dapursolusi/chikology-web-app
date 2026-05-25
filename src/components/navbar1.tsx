@@ -133,15 +133,17 @@ const Navbar1 = ({
   },
   className,
 }: Navbar1Props) => {
-  const [activeAuth, setActiveAuth] = useState<'login' | 'signup' | null>(() => {
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search);
-      if (params.has('auth')) {
-        return 'login';
+  const [activeAuth, setActiveAuth] = useState<'login' | 'signup' | null>(
+    () => {
+      if (typeof window !== 'undefined') {
+        const params = new URLSearchParams(window.location.search);
+        if (params.has('auth')) {
+          return 'login';
+        }
       }
+      return null;
     }
-    return null;
-  });
+  );
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
