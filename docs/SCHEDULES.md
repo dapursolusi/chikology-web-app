@@ -117,10 +117,10 @@ src/
 | 6   | Add auth guard (redirect to login if not logged in)                           | 20 min | ✓     |
 | 6a  | [Prereq] Wire Supabase auth: client/server/middleware, proxy, OAuth, login/signup forms | 2 hr | ✓ |
 | 7   | Style the whole component (colors, spacing, mobile-responsive, spinner)       | 45 min | ✓     |
-| 8   | Test full flow: open camera → analyze → save → check Supabase table           | 20 min | ☐     |
-| 9   | Deploy to Vercel, test on phone                                               | 15 min | ☐     |
+| 8   | Test full flow: open camera → analyze → save → check Supabase table           | 20 min | ✓     |
+| 9   | Deploy to Vercel, test on phone                                               | 15 min | ✓     |
 
-**End-of-day checkpoint:** Deployed. Works on phone. Data saves to Supabase. Phase 1 DONE.
+**End-of-day checkpoint:** Deployed. Works on phone. Data saves to Supabase. Phase 1 DONE ✓
 
 **Total: ~3.5 hours active work**
 
