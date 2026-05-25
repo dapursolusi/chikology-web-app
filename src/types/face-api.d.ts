@@ -28,13 +28,15 @@ declare module 'face-api.js' {
     height: number;
   }
 
-  export interface TinyFaceDetectorOptions {
-    inputSize?: number;
-    scoreThreshold?: number;
+  export class TinyFaceDetectorOptions {
+    constructor(options?: { inputSize?: number; scoreThreshold?: number });
   }
 
   export const nets: {
     tinyFaceDetector: {
+      loadFromUri(uri: string): Promise<void>;
+    };
+    faceLandmark68Net: {
       loadFromUri(uri: string): Promise<void>;
     };
     faceExpressionNet: {
@@ -46,6 +48,9 @@ declare module 'face-api.js' {
     input: TNetInput | HTMLVideoElement,
     options?: TinyFaceDetectorOptions
   ): {
-    withFaceExpressions(): Promise<WithFaceExpressions | null>;
+    withFaceLandmarks(): {
+      withFaceExpressions(): Promise<WithFaceExpressions | undefined>;
+    };
+    withFaceExpressions(): Promise<WithFaceExpressions | undefined>;
   };
 }

@@ -40,6 +40,7 @@ export default function FaceScanner() {
       try {
         const faceapi = await import('face-api.js');
         await faceapi.nets.tinyFaceDetector.loadFromUri('/models');
+        await faceapi.nets.faceLandmark68Net.loadFromUri('/models');
         await faceapi.nets.faceExpressionNet.loadFromUri('/models');
         console.warn('Models loaded ✓');
         faceapiRef.current = faceapi;
@@ -83,8 +84,14 @@ export default function FaceScanner() {
 
       const TIMEOUT = Symbol('timeout');
 
+      const options = new faceapi.TinyFaceDetectorOptions({
+        inputSize: 160,
+        scoreThreshold: 0.3,
+      });
+
       const detectionPromise = faceapi
-        .detectSingleFace(video)
+        .detectSingleFace(video, options)
+        .withFaceLandmarks()
         .withFaceExpressions();
 
       const raced = await Promise.race([
