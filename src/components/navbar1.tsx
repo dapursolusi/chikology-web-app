@@ -133,7 +133,15 @@ const Navbar1 = ({
   },
   className,
 }: Navbar1Props) => {
-  const [activeAuth, setActiveAuth] = useState<'login' | 'signup' | null>(null);
+  const [activeAuth, setActiveAuth] = useState<'login' | 'signup' | null>(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.has('auth')) {
+        return 'login';
+      }
+    }
+    return null;
+  });
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
@@ -143,11 +151,10 @@ const Navbar1 = ({
     });
 
     const params = new URLSearchParams(window.location.search);
+    if (params.get('auth') === 'error') {
+      alert('Gagal masuk. Silakan coba lagi.');
+    }
     if (params.has('auth')) {
-      if (params.get('auth') === 'error') {
-        alert('Gagal masuk. Silakan coba lagi.');
-      }
-      setActiveAuth('login');
       window.history.replaceState({}, '', window.location.pathname);
     }
   }, []);

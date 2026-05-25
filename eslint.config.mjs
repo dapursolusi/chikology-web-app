@@ -1,18 +1,24 @@
-import coreWebVitals from 'eslint-config-next/core-web-vitals';
-import nextTypescript from 'eslint-config-next/typescript';
-import config from 'eslint-config-prettier';
-import eslintConfigPrettier from 'eslint-config-prettier';
-import { defineConfig } from 'eslint/config';
+import { defineConfig, globalIgnores } from 'eslint/config'
+import nextVitals from 'eslint-config-next/core-web-vitals'
+import nextTs from 'eslint-config-next/typescript'
+import prettier from 'eslint-config-prettier/flat'
 
-export default defineConfig([
-  config,
-  eslintConfigPrettier,
-  nextTypescript,
-  coreWebVitals,
+const eslintConfig = defineConfig([
+  ...nextVitals,
+  ...nextTs,
+  prettier,
+  globalIgnores([
+    '.next/**',
+    'out/**',
+    'build/**',
+    'next-env.d.ts',
+  ]),
   {
     rules: {
-      'no-console': ['warn', { allow: ['warn', 'error'] }], // Prevents messy console.logs in production
-      '@typescript-eslint/no-explicit-any': 'error', // Forces strict typing over 'any'
+      'no-console': ['warn', { allow: ['warn', 'error'] }],
+      '@typescript-eslint/no-explicit-any': 'error',
     },
   },
-]);
+])
+
+export default eslintConfig
