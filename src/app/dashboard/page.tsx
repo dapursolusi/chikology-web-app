@@ -1,14 +1,6 @@
 import Link from 'next/link';
 
-import {
-  ArrowRight,
-  BookOpen,
-  Calendar,
-  Clock,
-  Smile,
-  Sparkles,
-  TrendingUp,
-} from 'lucide-react';
+import { ArrowRight, BookOpen, Calendar, Smile, Sparkles } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -114,7 +106,7 @@ export default function Page() {
                   <span className="text-sm font-medium">Tulis Jurnal</span>
                 </Button>
               </Link>
-              <Link href="/dashboard/face-detection">
+              <Link href="/dashboard/scanner">
                 <Button
                   variant="outline"
                   className="h-24 flex-col gap-2 border-2 hover:border-primary/20 hover:bg-primary/5"
@@ -123,31 +115,13 @@ export default function Page() {
                   <span className="text-sm font-medium">Deteksi Mood</span>
                 </Button>
               </Link>
-              <Link href="/e-book">
-                <Button
-                  variant="outline"
-                  className="h-24 flex-col gap-2 border-2 hover:border-primary/20 hover:bg-primary/5"
-                >
-                  <BookOpen className="size-6 text-secondary-foreground" />
-                  <span className="text-sm font-medium">E-Book</span>
-                </Button>
-              </Link>
               <Link href="/dashboard/journal">
                 <Button
                   variant="outline"
                   className="h-24 flex-col gap-2 border-2 hover:border-primary/20 hover:bg-primary/5"
                 >
-                  <TrendingUp className="size-6 text-primary" />
-                  <span className="text-sm font-medium">Statistik</span>
-                </Button>
-              </Link>
-              <Link href="/dashboard/counseling">
-                <Button
-                  variant="outline"
-                  className="h-24 flex-col gap-2 border-2 hover:border-primary/20 hover:bg-primary/5"
-                >
-                  <Clock className="size-6 text-secondary-foreground" />
-                  <span className="text-sm font-medium">Jadwal</span>
+                  <BookOpen className="size-6 text-secondary-foreground" />
+                  <span className="text-sm font-medium">Jurnal</span>
                 </Button>
               </Link>
             </div>

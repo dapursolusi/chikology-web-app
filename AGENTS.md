@@ -1,3 +1,10 @@
+## Runtime
+
+Use `bun` for everything — install, run scripts, execute packages.
+Always use `bunx --bun` instead of `bunx` or `npx`.
+Fallback to `npm`/`npx` only if `bun` fails multiple times.
+Lockfile: `bun.lock` (never `package-lock.json` or `yarn.lock`).
+
 <!-- BEGIN:nextjs-agent-rules -->
 
 # This is NOT the Next.js you know
