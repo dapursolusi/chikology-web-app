@@ -40,7 +40,7 @@ const navMain = [
     ],
   },
   {
-    title: 'Mood Checker',
+    title: 'Stress Detection',
     url: '#',
     icon: <BotIcon />,
     items: [

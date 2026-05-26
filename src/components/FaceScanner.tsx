@@ -164,7 +164,7 @@ export default function FaceScanner() {
   }, [result]);
 
   return (
-    <Card className="mx-auto w-full max-w-2xl">
+    <Card className="mx-0 w-full max-w-2xl">
       <CardHeader>
         <CardTitle>Face Scanner</CardTitle>
         <CardDescription>
