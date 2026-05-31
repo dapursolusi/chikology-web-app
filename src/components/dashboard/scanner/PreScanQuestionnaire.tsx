@@ -68,11 +68,11 @@ export function PreScanQuestionnaire({ onSubmit }: PreScanQuestionnaireProps) {
     onSubmit({});
   };
 
-  const isValid = Object.keys(PLACEHOLDER_QUESTIONS).every((qId) => {
-    const answer = answers[qId];
+  const isValid = PLACEHOLDER_QUESTIONS.every((q) => {
+    const answer = answers[q.id];
     if (!answer) return false;
     if (answer.startsWith('other:')) {
-      return otherTexts[qId]?.trim().length > 0;
+      return otherTexts[q.id]?.trim().length > 0;
     }
     return true;
   });
