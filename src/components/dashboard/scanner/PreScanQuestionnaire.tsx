@@ -46,7 +46,10 @@ export function PreScanQuestionnaire({ onSubmit }: PreScanQuestionnaireProps) {
   const [skipModalOpen, setSkipModalOpen] = useState(false);
 
   const handleOptionChange = (questionId: string, option: string) => {
-    setAnswers((prev) => ({ ...prev, [questionId]: option }));
+    setAnswers((prev) => ({
+      ...prev,
+      [questionId]: option === 'Lainnya' ? 'other:' : option,
+    }));
   };
 
   const handleOtherTextChange = (questionId: string, text: string) => {
