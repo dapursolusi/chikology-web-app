@@ -39,4 +39,11 @@ Prefer Next.js Server Actions (`'use server'` in `src/actions/`) over API routes
 
 ### Components
 
-All components must use shadcn, try to find it first, or modify what available instead of installing any new dependendcies
+All components must use shadcn, try to find it first, or modify what available instead of installing any new dependencies.
+
+### Component folder convention
+
+Feature-specific components live under `src/components/<domain>/`. Shared/generic components (layout, ui) stay in their current locations. Examples:
+
+- `src/components/dashboard/scanner/` — scanner flow components (ScannerFlow, PreScanQuestionnaire, StressResultCard)
+- `src/components/dashboard/journal/` — journal components (JournalEditor, MoodSelector, JournalHistory)

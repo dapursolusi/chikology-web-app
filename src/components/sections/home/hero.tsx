@@ -62,7 +62,7 @@ export function Hero() {
             className="h-12 min-w-[200px] rounded-lg px-8 text-base shadow-sm"
             onClick={handleOpenSignup}
           >
-            Mulai Gratis
+            Daftar
             <ArrowRight className="ml-2 size-4" />
           </Button>
 

@@ -1,49 +1,47 @@
-## [Sunday, 31-05-2026 19:24] — Grilled design decisions + Rescheduled for Mas Chiko feedback
+## [Sunday, 31-05-2026 21:34] — Phase 1.5 Slice 1 shipped (TDD)
 
 ### Session Target
 
-- Interview user relentlessly on Mas Chiko's 8 feedback items
-- Reschedule docs/SCHEDULES.md based on decisions
+Implement Phase 1.5 Slice 1: Landing page CTA fix + privacy tagline (GitHub issue #3).
 
 ### Current State
 
-- Status: design decisions locked for items 1-3, 7-8; partial for 4-6
-- Scope: `docs/SCHEDULES.md`, decisions logged
+- Status: shipped
+- Scope: hero.tsx, footer.tsx, dashboard layout.tsx, test infra setup
 
 ### What Changed
 
-- `docs/SCHEDULES.md` — Full rewrite with new timeline:
-  - Phase 1.5 (Jun 1-3): Scanner refinements from Mas Chiko feedback
-  - Phase 2 (Jun 4-6): Journal system (unchanged from original plan)
-  - Phase 3 soft launch (Jun 7-8): Countdown + nav gating only
-  - Soft launch (Jun 12): Scanner + Journal + LP live, e-book = countdown
-  - Full launch build (Jun 12-15): Chapter UI, payment, viewer
-  - Full launch (Jun 16): E-book unlocks
+- `vitest.config.ts` — new file, jsdom + React plugin + @ alias
+- `src/test/setup.ts` — new file, imports @testing-library/jest-dom
+- `src/test/__mocks__/next-link.tsx` — new file, mocks next/link
+- `src/components/sections/home/hero.tsx` — "Mulai Gratis" → "Daftar"
+- `src/components/layout/footer.tsx` — added privacy banner between links and copyright
+- `src/app/dashboard/layout.tsx` — added privacy tagline to header right side
+- `src/components/sections/home/hero.test.tsx` — new file, TDD test for CTA
+- `src/components/layout/footer.test.tsx` — new file, TDD test for privacy banner
+- `src/app/dashboard/layout.test.tsx` — new file, TDD test for header tagline
+- `package.json` — added "test": "vitest" script
 
 ### Verification
 
-- SCHEDULES.md updated with new dates and phase structure
+- `bun run test -- --run` — 3/3 tests pass
+- `bun run build` — passes
 
 ### Decisions
 
-- D-001: Soft launch (Jun 12) = scanner + journal live, e-book section = countdown to Jun 16. Chapter buttons appear only at full launch.
-- D-002: Full launch = Jun 16 (Mas Chiko's birthday)
-- D-003: Landing page hero — remove "Mulai Gratis", use "Daftar" instead
-- D-004: Pre-scan questionnaire — user has questions, will insert manually later. We build the component + schema structure.
-- D-005: Result card — extract into StressResultCard.tsx, add consultation CTA + privacy tagline + structured comments with variations
-- D-006: Full e-book (chapter list, payment, PDF viewer) built after soft launch (Jun 12-15)
+- D-003: Landing page hero — remove "Mulai Gratis", use "Daftar" instead (re-confirmed)
+- D-007: Vitest + RTL chosen over Playwright for component-level tests — lightweight, sufficient for UI content assertions
 
 ### Known Issues / Risks
 
-- Booking/consultation link (item 4) still needs URL from Mas Chiko
-- Stress recommendation content variations (item 6) — using existing docs/STRESS_RECOMMENDATION.md content. Mas Chiko may provide more.
-- Tight timeline: 12 days to build journal + questionnaire + e-book schema + countdown. Priority: soft launch essentials first, e-book full features secondary.
-- Pre-scan questions: user will fill in, component has placeholder structure
+- No mobile responsive verification done yet (acceptance criteria says it should be checked)
+- Dashboard header privacy tagline is text-only (no icon) — could be enhanced later
 
 ### Next Steps (ordered)
 
-1. [Pending from grilling] Resolve items 4 (consultation link) and 6 (stress content variations)
-2. Begin implementation: Phase 1.5 Day 1 (Jun 1) — Landing page quick wins
+1. Phase 1.5 Slice 2 — Pre-scan questionnaire component + schema (GitHub issue #5)
+2. Phase 1.5 Slice 3 — Wire questionnaire into Groq (GitHub issue #6, blocked by #5)
+3. Phase 1.5 Slice 4 — Stress result card extraction + CTA (GitHub issue #4)
 
 ### Blockers (if any)
 

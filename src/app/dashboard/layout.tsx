@@ -56,6 +56,11 @@ export default async function DashboardLayout({
                 </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>
+            <div className="ml-auto">
+              <span className="text-xs text-muted-foreground">
+                Datamu aman, privasi terjamin
+              </span>
+            </div>
           </div>
         </header>
         <div className="w-full flex-1 bg-muted/30 p-4">{children}</div>

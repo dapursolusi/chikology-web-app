@@ -174,8 +174,16 @@ export default function Footer() {
           </div>
         </div>
 
+        {/* Privacy banner */}
+        <div className="mt-12 rounded-lg bg-primary/5 p-4 text-center">
+          <p className="text-sm font-medium text-foreground">
+            <span className="text-primary">Datamu aman, privasi terjamin</span>
+            {' — '}Kami hanya membaca pola, bukan menyimpan wajah.
+          </p>
+        </div>
+
         {/* Bottom bar */}
-        <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t pt-8 md:flex-row">
+        <div className="mt-6 flex flex-col items-center justify-between gap-4 border-t pt-8 md:flex-row">
           <p className="text-sm text-muted-foreground">
             © {currentYear} Chikology. Hak cipta dilindungi.
           </p>

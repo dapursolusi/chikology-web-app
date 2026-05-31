@@ -100,9 +100,9 @@ src/
 
 | #   | Task                                                                                            | Est.   | Done? |
 | --- | ----------------------------------------------------------------------------------------------- | ------ | ----- |
-| 1   | 🆕 Hero: change "Mulai Gratis" → "Daftar" (remove "Masuk gratis" copy)                          | 5 min  | ☐     |
-| 2   | 🆕 Add privacy section to footer: **"Datamu aman, privasi terjamin"** + brief privacy statement | 20 min | ☐     |
-| 3   | 🆕 Hero: update sub-copy to remove "Masuk gratis" references                                    | 5 min  | ☐     |
+| 1   | 🆕 Hero: change "Mulai Gratis" → "Daftar" (remove "Masuk gratis" copy)                          | 5 min  | ✓     |
+| 2   | 🆕 Add privacy section to footer: **"Datamu aman, privasi terjamin"** + brief privacy statement | 20 min | ✓     |
+| 3   | 🆕 Hero: update sub-copy to remove "Masuk gratis" references                                    | 5 min  | ✓     |
 | 4   | Mobile responsive check on updated landing page                                                 | 15 min | ☐     |
 | 5   | Deploy + verify                                                                                 | 10 min | ☐     |
 
