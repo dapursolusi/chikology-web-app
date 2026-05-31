@@ -46,3 +46,49 @@ Implement Phase 1.5 Slice 1: Landing page CTA fix + privacy tagline (GitHub issu
 ### Blockers (if any)
 
 - None
+
+---
+
+## [Sunday, 31-05-2026 21:55] — Phase 1.5 Slice 4 shipped (TDD)
+
+### Session Target
+
+Implement Phase 1.5 Slice 4: Stress result card extraction + structured comments + consultation CTA (GitHub issue #4).
+
+### Current State
+
+- Status: shipped
+- Scope: StressResultCard, stressAnalyzer, FaceScanner wiring, tests
+
+### What Changed
+
+- `src/components/dashboard/scanner/StressResultCard.tsx` — new file, extracted result card component with consultation CTA, privacy tagline, expandable ciri+risiko
+- `src/lib/stressAnalyzer.ts` — added `messages: string[]`, `ciri`, `risiko` fields per tier; `message` replaced with `messages[0]`
+- `src/components/FaceScanner.tsx` — uses StressResultCard instead of inline result rendering; removed unused tierGradients/tierBorders
+- `src/components/dashboard/scanner/stress-result-card.test.tsx` — new file, TDD tests for StressResultCard
+
+### Verification
+
+- `bun run test -- --run` — 7/7 tests pass (3 Slice 1 + 4 Slice 4)
+- `bun run build` — passes
+
+### Decisions
+
+- D-008: StressResultCard extracted as separate component in `src/components/dashboard/scanner/`
+- D-009: Consultation CTA: wa.me/6287853186759, opens in new tab
+- D-010: Ciri and risiko in expandable "Lihat Detail" section (native `<details>` element)
+- D-011: stressAnalyzer `messages: string[]` array (single element for now, ready for variants later)
+
+### Known Issues / Risks
+
+- Mobile responsive verification still pending (cross-slice acceptance criteria)
+- Existing tests (hero, footer, dashboard layout) still pass after FaceScanner changes
+
+### Next Steps (ordered)
+
+1. Phase 1.5 Slice 2 — Pre-scan questionnaire component + schema (GitHub issue #5)
+2. Phase 1.5 Slice 3 — Wire questionnaire into Groq (GitHub issue #6, blocked by #5)
+
+### Blockers (if any)
+
+- None

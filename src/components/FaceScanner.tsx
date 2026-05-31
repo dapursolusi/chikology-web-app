@@ -7,6 +7,7 @@ import { LoaderCircle } from 'lucide-react';
 import Webcam from 'react-webcam';
 import { toast } from 'sonner';
 
+import { StressResultCard } from '@/components/dashboard/scanner/StressResultCard';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -25,22 +26,8 @@ type AnalysisResult = {
   color: string;
   message: string;
   intervention: string;
-};
-
-const tierGradients: Record<number, string> = {
-  1: 'from-[#22c55e]/10 to-[#22c55e]/5',
-  2: 'from-[#84cc16]/10 to-[#84cc16]/5',
-  3: 'from-[#eab308]/10 to-[#eab308]/5',
-  4: 'from-[#ef4444]/10 to-[#ef4444]/5',
-  5: 'from-[#b91c1c]/15 to-[#b91c1c]/5',
-};
-
-const tierBorders: Record<number, string> = {
-  1: 'border-l-[#22c55e]',
-  2: 'border-l-[#84cc16]',
-  3: 'border-l-[#eab308]',
-  4: 'border-l-[#ef4444]',
-  5: 'border-l-[#b91c1c]',
+  ciri: string;
+  risiko: string;
 };
 
 export default function FaceScanner() {
@@ -131,8 +118,10 @@ export default function FaceScanner() {
         emoji: level.emoji,
         label: level.label,
         color: level.color,
-        message: level.message,
+        message: level.messages[0],
         intervention: level.intervention,
+        ciri: level.ciri,
+        risiko: level.risiko,
       });
     } catch {
       setError('Gagal mendapatkan respons');
@@ -220,72 +209,12 @@ export default function FaceScanner() {
         )}
 
         {result && (
-          <div className="w-full animate-in fade-in slide-in-from-bottom-2 duration-300">
-            <div className="overflow-hidden rounded-xl border">
-              <div
-                className="h-1.5 w-full"
-                style={{ backgroundColor: result.color }}
-              />
-              <div
-                className={`space-y-4 bg-gradient-to-br p-5 ${tierGradients[result.tier]} border-l-4 ${tierBorders[result.tier]}`}
-              >
-                <div className="flex items-center gap-4">
-                  <span className="flex size-14 shrink-0 items-center justify-center rounded-full bg-white/80 text-3xl shadow-sm ring-1 ring-black/5">
-                    {result.emoji}
-                  </span>
-                  <div className="min-w-0">
-                    <p className="text-xl font-bold">Tingkat {result.tier}</p>
-                    <p
-                      className="text-sm font-medium"
-                      style={{ color: result.color }}
-                    >
-                      {result.label}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                    Pesan dari Chikology
-                  </h4>
-                  <p className="text-sm leading-relaxed text-foreground/80">
-                    {result.message}
-                  </p>
-                </div>
-
-                <div className="rounded-lg bg-white/60 p-4 ring-1 ring-black/5">
-                  <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                    Intervensi
-                  </p>
-                  <p className="text-sm">{result.intervention}</p>
-                </div>
-
-                <div className="flex flex-col gap-2 sm:flex-row">
-                  <Button
-                    onClick={handleSave}
-                    disabled={isSaving}
-                    className="flex-1"
-                  >
-                    {isSaving ? (
-                      <span className="flex items-center gap-2">
-                        <LoaderCircle className="size-4 animate-spin" />
-                        Menyimpan...
-                      </span>
-                    ) : (
-                      'Simpan ke Jurnal'
-                    )}
-                  </Button>
-                  <Button
-                    onClick={resetAnalysis}
-                    variant="outline"
-                    className="flex-1"
-                  >
-                    Analisis Ulang
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
+          <StressResultCard
+            result={result}
+            onSave={handleSave}
+            onReset={resetAnalysis}
+            isSaving={isSaving}
+          />
         )}
       </CardContent>
     </Card>
