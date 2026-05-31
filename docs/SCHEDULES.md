@@ -33,43 +33,6 @@
 
 ---
 
-## File Structure
-
-```
-src/
-├── app/
-│   ├── (main)/              ← public landing page
-│   ├── api/
-│   ├── dashboard/
-│   │   ├── layout.tsx        ← auth shell (sidebar)
-│   │   ├── page.tsx          ← dashboard home
-│   │   ├── scanner/          ← Phase 1 ✅
-│   │   ├── journal/          ← Phase 2
-│   │   └── book/             ← Phase 3 (greyed in nav during soft launch)
-│   ├── layout.tsx
-│   └── globals.css
-├── components/
-│   ├── ui/
-│   ├── PreScanQuestionnaire.tsx   ← 🆕 before camera activates
-│   ├── FaceScanner.tsx            ← ✅ exists
-│   ├── StressResultCard.tsx       ← 🆕 extracted from FaceScanner, holds CTA + privacy
-│   ├── login-form.tsx             ← ✅ exists
-│   ├── signup-form.tsx            ← ✅ exists
-│   ├── JournalEditor.tsx          ← Phase 2
-│   ├── MoodSelector.tsx           ← Phase 2
-│   ├── JournalHistory.tsx         ← Phase 2
-│   ├── ChapterList.tsx            ← Phase 3 (full launch only)
-│   └── BookCountdown.tsx          ← 🆕 soft launch landing page
-├── lib/
-│   ├── db/
-│   │   ├── index.ts
-│   │   └── schema.ts
-│   ├── stressAnalyzer.ts
-│   └── utils.ts
-└── types/
-    └── face-api.d.ts
-```
-
 ---
 
 ## PHASE 0: Foundation — ✅ Done (May 25)

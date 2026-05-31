@@ -5,6 +5,63 @@ Always use `bunx --bun` instead of `bunx` or `npx`.
 Fallback to `npm`/`npx` only if `bun` fails multiple times.
 Lockfile: `bun.lock` (never `package-lock.json` or `yarn.lock`).
 
+## Tech Stack (Locked)
+
+| Layer           | Choice                                |
+| --------------- | ------------------------------------- |
+| Framework       | Next.js (App Router)                  |
+| UI              | Tailwind CSS v4 + shadcn/ui           |
+| Database        | Supabase (Postgres)                   |
+| ORM             | Drizzle ORM + postgres driver         |
+| Auth            | Supabase Auth (Google OAuth only)     |
+| Face Detection  | Groq (Llama 4 Scout) server-side      |
+| Storage         | Supabase Storage (book PDFs, Phase 3) |
+| Deploy          | Vercel                                |
+| Payment         | Mock (real gateway deferred)          |
+| Package Manager | bun — `bunx --bun`, not npx           |
+
+## Canonical File Structure
+
+```
+src/
+├── app/                         # Next.js app router pages
+│   ├── (main)/                  # Public pages (landing page)
+│   ├── api/analyze-face/       # Groq proxy (server-side API key)
+│   ├── dashboard/               # Auth-protected pages (sidebar layout)
+│   │   ├── layout.tsx          # Dashboard auth shell + sidebar
+│   │   └── scanner/page.tsx    # Scanner page (uses ScannerFlow)
+│   └── auth/                    # Supabase auth callbacks
+├── actions/                     # Next.js Server Actions
+│   ├── journal.ts
+│   └── questionnaire.ts
+├── components/
+│   ├── ui/                     # shadcn/ui primitives
+│   ├── layout/                 # Header, Footer
+│   ├── dashboard/
+│   │   └── scanner/            # Scanner domain components
+│   │       ├── PreScanQuestionnaire.tsx
+│   │       ├── ScannerFlow.tsx
+│   │       └── StressResultCard.tsx
+│   ├── sections/home/           # Landing page sections (Hero, EBook, Features)
+│   ├── FaceScanner.tsx         # Camera + Groq analysis (root scanner)
+│   └── ...
+├── db/
+│   ├── index.ts                # Drizzle client instance
+│   └── schema.ts               # All table definitions
+├── lib/
+│   ├── stressAnalyzer.ts        # Stress level data (messages, interventions)
+│   └── utils.ts
+└── test/                       # Vitest + RTL test setup
+    └── setup.ts + __mocks__/
+```
+
+Key rules:
+
+- Feature-specific components live under `src/components/<domain>/`
+- Server Actions in `src/actions/`
+- Schema at `src/db/schema.ts` (NOT `src/lib/db/`)
+- API routes for third-party proxies only (`/api/`)
+
 <!-- BEGIN:nextjs-agent-rules -->
 
 # This is NOT the Next.js you know
