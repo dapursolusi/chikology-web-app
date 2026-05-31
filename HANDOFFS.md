@@ -1,45 +1,50 @@
-## [Monday, 25-05-2026 17:25] — Phase 1 DONE: Branch cleanup + Deploy
+## [Sunday, 31-05-2026 19:24] — Grilled design decisions + Rescheduled for Mas Chiko feedback
 
 ### Session Target
 
-- Ship Phase 1: branch cleanup, merge to main, deploy to Vercel, verify live
+- Interview user relentlessly on Mas Chiko's 8 feedback items
+- Reschedule docs/SCHEDULES.md based on decisions
 
 ### Current State
 
-- Status: shipped — Phase 1 complete
-- Scope: Branch cleanup + Vercel deploy
+- Status: design decisions locked for items 1-3, 7-8; partial for 4-6
+- Scope: `docs/SCHEDULES.md`, decisions logged
 
 ### What Changed
 
-- `feat/auth` branch → committed, merged to `development`, deleted
-- `feat/scanner/save-to-journal` branch → committed, merged to `development`, deleted
-- `development` → merged into `main` and pushed
-- Vercel redeployed `main` — app live at `chikology-web-app-knl6.vercel.app`
-- Verified: landing page renders, dashboard redirects unauthenticated users (no errors)
-- `docs/SCHEDULES.md` — Phase 1 Day 2 tasks 8-9 marked done
+- `docs/SCHEDULES.md` — Full rewrite with new timeline:
+  - Phase 1.5 (Jun 1-3): Scanner refinements from Mas Chiko feedback
+  - Phase 2 (Jun 4-6): Journal system (unchanged from original plan)
+  - Phase 3 soft launch (Jun 7-8): Countdown + nav gating only
+  - Soft launch (Jun 12): Scanner + Journal + LP live, e-book = countdown
+  - Full launch build (Jun 12-15): Chapter UI, payment, viewer
+  - Full launch (Jun 16): E-book unlocks
 
 ### Verification
 
-- Live URL loaded correctly in browser automation — Chikology landing page with all sections
-- `/dashboard/scanner` redirects to `/` (no session — expected)
-- Console: 0 errors, minor a11y warnings only
+- SCHEDULES.md updated with new dates and phase structure
 
 ### Decisions
 
-- D-018: Merge `development` → `main` for Vercel deploy (instead of changing Vercel production branch), since user approved
+- D-001: Soft launch (Jun 12) = scanner + journal live, e-book section = countdown to Jun 16. Chapter buttons appear only at full launch.
+- D-002: Full launch = Jun 16 (Mas Chiko's birthday)
+- D-003: Landing page hero — remove "Mulai Gratis", use "Daftar" instead
+- D-004: Pre-scan questionnaire — user has questions, will insert manually later. We build the component + schema structure.
+- D-005: Result card — extract into StressResultCard.tsx, add consultation CTA + privacy tagline + structured comments with variations
+- D-006: Full e-book (chapter list, payment, PDF viewer) built after soft launch (Jun 12-15)
 
 ### Known Issues / Risks
 
-- ESLint pre-existing crash remains (unrelated)
-- Canvas overlay (task 2) skipped — optional
+- Booking/consultation link (item 4) still needs URL from Mas Chiko
+- Stress recommendation content variations (item 6) — using existing docs/STRESS_RECOMMENDATION.md content. Mas Chiko may provide more.
+- Tight timeline: 12 days to build journal + questionnaire + e-book schema + countdown. Priority: soft launch essentials first, e-book full features secondary.
+- Pre-scan questions: user will fill in, component has placeholder structure
 
 ### Next Steps (ordered)
 
-1. **PHASE 2: Journal System (May 28)** — schema, CRUD, journal page
-2. Canvas overlay (anytime)
+1. [Pending from grilling] Resolve items 4 (consultation link) and 6 (stress content variations)
+2. Begin implementation: Phase 1.5 Day 1 (Jun 1) — Landing page quick wins
 
 ### Blockers (if any)
 
 - None
-
----

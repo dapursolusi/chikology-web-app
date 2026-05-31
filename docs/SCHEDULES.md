@@ -1,4 +1,16 @@
-Here's your full sprint plan, broken into **bite-sized tasks per day.** Each task is 1–2 hours max, binary (done or not), and ordered so you can just follow the list top to bottom without thinking.
+# Chikology.id — Sprint Schedule
+
+> Last updated: 31 Mei 2026
+> Rescheduled after Mas Chiko meeting (May 31). All feedback items marked with 🆕
+
+---
+
+## Key Dates
+
+| Milestone   | Date                                     | Scope                                                      |
+| ----------- | ---------------------------------------- | ---------------------------------------------------------- |
+| Soft Launch | **June 12, 2026**                        | Scanner + Journal + Landing Page. E-book = countdown only. |
+| Full Launch | **June 16, 2026** (Mas Chiko's birthday) | E-book unlocks. Chapter buttons appear. Countdown removed. |
 
 ---
 
@@ -6,47 +18,53 @@ Here's your full sprint plan, broken into **bite-sized tasks per day.** Each tas
 
 | Layer           | Choice                                |
 | --------------- | ------------------------------------- |
-| Framework       | Next.js 16 (App Router)               |
+| Framework       | Next.js (App Router)                  |
 | UI              | Tailwind CSS v4 + shadcn/ui           |
 | Database        | Supabase (Postgres)                   |
-| ORM             | Drizzle ORM + `postgres` driver       |
+| ORM             | Drizzle ORM + postgres driver         |
 | Auth            | Supabase Auth (Google OAuth only)     |
 | Face Detection  | Groq (Llama 4 Scout) server-side      |
 | Storage         | Supabase Storage (book PDFs, Phase 3) |
 | Deploy          | Vercel                                |
-| Payment         | **Mock** (real gateway deferred)      |
+| Payment         | Mock (real gateway deferred)          |
 | Book Pricing    | Waiting on Mas Chiko                  |
 | Email Marketing | Deferred until 500+ users             |
-| Package Manager | **bun** — `bunx --bun`, not `npx`     |
+| Package Manager | bun — `bunx --bun`, not npx           |
 
-### File structure
+---
+
+## File Structure
 
 ```
 src/
 ├── app/
 │   ├── (main)/              ← public landing page
-│   ├── api/                  ← API routes
+│   ├── api/
 │   ├── dashboard/
 │   │   ├── layout.tsx        ← auth shell (sidebar)
 │   │   ├── page.tsx          ← dashboard home
-│   │   ├── scanner/          ← Phase 1
+│   │   ├── scanner/          ← Phase 1 ✅
 │   │   ├── journal/          ← Phase 2
-│   │   └── book/             ← Phase 3
-│   ├── layout.tsx            ← root layout (theme, fonts)
+│   │   └── book/             ← Phase 3 (greyed in nav during soft launch)
+│   ├── layout.tsx
 │   └── globals.css
 ├── components/
-│   ├── ui/                   ← shadcn components
-│   ├── FaceScanner.tsx       ← Phase 1
-│   ├── login-form.tsx        ← Phase 1 (UI only, no logic)
-│   ├── signup-form.tsx       ← Phase 1 (UI only, no logic)
-│   ├── JournalEditor.tsx     ← Phase 2 (not yet created)
-│   ├── MoodSelector.tsx      ← Phase 2 (not yet created)
-│   └── JournalHistory.tsx    ← Phase 2 (not yet created)
+│   ├── ui/
+│   ├── PreScanQuestionnaire.tsx   ← 🆕 before camera activates
+│   ├── FaceScanner.tsx            ← ✅ exists
+│   ├── StressResultCard.tsx       ← 🆕 extracted from FaceScanner, holds CTA + privacy
+│   ├── login-form.tsx             ← ✅ exists
+│   ├── signup-form.tsx            ← ✅ exists
+│   ├── JournalEditor.tsx          ← Phase 2
+│   ├── MoodSelector.tsx           ← Phase 2
+│   ├── JournalHistory.tsx         ← Phase 2
+│   ├── ChapterList.tsx            ← Phase 3 (full launch only)
+│   └── BookCountdown.tsx          ← 🆕 soft launch landing page
 ├── lib/
 │   ├── db/
-│   │   ├── index.ts          ← drizzle client
-│   │   └── schema.ts         ← all tables
-│   ├── stressAnalyzer.ts     ← Phase 1
+│   │   ├── index.ts
+│   │   └── schema.ts
+│   ├── stressAnalyzer.ts
 │   └── utils.ts
 └── types/
     └── face-api.d.ts
@@ -54,245 +72,298 @@ src/
 
 ---
 
-## PHASE 0: Foundation (May 25 — done)
-
-| #   | Task                                                                  | Done? |
-| --- | --------------------------------------------------------------------- | ----- |
-| 1   | Grill all tech stack decisions                                        | ✓     |
-| 2   | `bun add face-api.js drizzle-orm postgres @supabase/supabase-js`      | ✓     |
-| 3   | `bun add -D drizzle-kit`                                              | ✓     |
-| 4   | Create `drizzle.config.ts` + `src/lib/db/index.ts`                    | ✓     |
-| 5   | Create `src/lib/db/schema.ts` (users, journal_entries, mood enum)     | ✓     |
-| 6   | Create `src/lib/stressAnalyzer.ts` (emotion→stress→recommendation)    | ✓     |
-| 7   | Create `src/components/FaceScanner.tsx` (webcam + model load + start) | ✓     |
-| 8   | Create `src/app/dashboard/scanner/page.tsx`                           | ✓     |
-| 9   | Download face-api.js models to `public/models/`                       | ✓     |
-| 10  | Create `src/types/face-api.d.ts`                                      | ✓     |
-| 11  | Delete demo pages (face-detection, journal, e-book, api/test)         | ✓     |
-| 12  | Fix dashboard links (home page quick actions)                         | ✓     |
-| 13  | Build passes ✅                                                       | ✓     |
+## PHASE 0: Foundation — ✅ Done (May 25)
 
 ---
 
-## PHASE 1: Face Detection (May 25–28)
+## PHASE 1: Face Scanner — ✅ Shipped (May 25–26)
 
-### Day 1 — Monday, May 25: Groq Integration + API Route
+### Day 1 — Groq Integration ✅ Done
 
-**Goal: "Webcam works, analyze button calls Groq, result displays — better than face-api.js"**
+### Day 2 — Polish, Save, Deploy ✅ Done
 
-**Context:** face-api.js was inaccurate (couldn't detect stress on flat faces). Switched to cloud API approach.
-
-| #   | Task                                                                                       | Est.   | Done? |
-| --- | ------------------------------------------------------------------------------------------ | ------ | ----- |
-| 1   | Create `/api/analyze-face` route — proxy to Groq (Llama 4 Scout 17B)                       | 30 min | ✓     |
-| 2   | Write `STRESS_PROMPT` for micro-expression / muscle tension detection                      | 20 min | ✓     |
-| 3   | Wire "Analyze Face" button → POST screenshot to `/api/analyze-face`                        | 15 min | ✓     |
-| 4   | Display result card: tier, emoji, label, "Pesan dari Chikology", intervention              | 30 min | ✓     |
-| 5   | Add loading state ("Menganalisis...") + error handling                                     | 15 min | ✓     |
-| 6   | Add center 70% face crop to remove background before sending                               | 20 min | ✓     |
-| 7   | Fix Groq model name (was decommissioned → Llama 4 Scout)                                   | 5 min  | ✓     |
-| 8   | Refine prompt: tier 3 anchor bias → flat face with no tension = tier 1, not 3              | 20 min | ✓     |
-| 9   | Test: smile→2, flat→1-2, mad→4 — tier 4-5 still needs exaggerated expression (known limit) | 20 min | ~     |
-| 10  | [Deferred] Test on phone + deploy to Vercel preview                                        | 30 min | ☐     |
-
-**End-of-day checkpoint:** Camera → click analyze → see result with color-coded tier + message. Groq works, no 429 errors. But detection needs visible expression for high tiers.
-
-**Known limitation:** Vision LLM can't detect hidden physiological stress. Tier 4-5 requires exaggerated expression. Future: DeepFace Python backend.
-
-**Total: ~3 hours active work**
+| #   | Task                   | Done?                            |
+| --- | ---------------------- | -------------------------------- |
+| 1–8 | All core tasks         | ✓                                |
+| 9   | Mobile responsive test | ✓ (tested during Mas Chiko demo) |
 
 ---
 
-### Day 2 — Tuesday, May 26: Polish + Save + Ship
+## PHASE 1.5: Scanner Refinements — Mas Chiko Feedback (Jun 1–3)
 
-**Goal: "Feature complete. User can scan face, see result, save to journal."**
+> Based on 8 feedback items from Mas Chiko meeting (May 31).
+> Items 1, 3, 4, 5, 6 touch the scanner or landing page.
 
-| #   | Task                                                                                    | Est.   | Done? |
-| --- | --------------------------------------------------------------------------------------- | ------ | ----- |
-| 1   | Add loading state ("Analyzing...") with spinner/animation                               | 15 min | ✓     |
-| 2   | Add canvas overlay showing face detection box (optional)                                | 30 min | ☐     |
-| 3   | Push Drizzle schema to Supabase: `bunx --bun drizzle-kit push`                          | 15 min | ✓     |
-| 4   | Create Server Action saves mood + recommendation (journal.ts)                           | 30 min | ✓     |
-| 5   | Add "Save to Journal" button → calls Server Action → shows success message              | 30 min | ✓     |
-| 6   | Add auth guard (redirect to login if not logged in)                                     | 20 min | ✓     |
-| 6a  | [Prereq] Wire Supabase auth: client/server/middleware, proxy, OAuth, login/signup forms | 2 hr   | ✓     |
-| 7   | Style the whole component (colors, spacing, mobile-responsive, spinner)                 | 45 min | ✓     |
-| 8   | Test full flow: open camera → analyze → save → check Supabase table                     | 20 min | ✓     |
-| 9   | Deploy to Vercel, test on phone                                                         | 15 min | ✓     |
+### Day 1 — Sunday, Jun 1: Landing Page Quick Wins
 
-**End-of-day checkpoint:** Deployed. Works on phone. Data saves to Supabase. Phase 1 DONE ✓
+**Goal:** "Copy fixed. Privacy banner visible. Landing page presentable."
 
-**Total: ~3.5 hours active work**
+| #   | Task                                                                                            | Est.   | Done? |
+| --- | ----------------------------------------------------------------------------------------------- | ------ | ----- |
+| 1   | 🆕 Hero: change "Mulai Gratis" → "Daftar" (remove "Masuk gratis" copy)                          | 5 min  | ☐     |
+| 2   | 🆕 Add privacy section to footer: **"Datamu aman, privasi terjamin"** + brief privacy statement | 20 min | ☐     |
+| 3   | 🆕 Hero: update sub-copy to remove "Masuk gratis" references                                    | 5 min  | ☐     |
+| 4   | Mobile responsive check on updated landing page                                                 | 15 min | ☐     |
+| 5   | Deploy + verify                                                                                 | 10 min | ☐     |
+
+**End-of-day checkpoint:** Landing page shows "Daftar", privacy banner in footer. Mobile OK.
+**Total: ~1 hour**
 
 ---
 
-## PHASE 2: Journal System (May 28–30)
+### Day 2 — Monday, Jun 2: Pre-Scan Questionnaire
 
-### Day 1 — Thursday, May 28: Schema + Basic Page
+**Goal:** "User answers questions before camera activates. Answers sent to Groq for synthesis."
 
-**Goal: "Journal page exists, I can write text and save it"**
+| #   | Task                                                                                                                                                  | Est.   | Done? |
+| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ----- |
+| 1   | 🆕 Create `PreScanQuestionnaire.tsx` — form component, displayed before camera. Questions placeholder (user will fill in Mas Chiko's questions later) | 60 min | ☐     |
+| 2   | 🆕 Update schema: add `questionnaire_responses` table (user_id, answers JSONB, created_at)                                                            | 15 min | ☐     |
+| 3   | `bunx --bun drizzle-kit push`                                                                                                                         | 5 min  | ☐     |
+| 4   | 🆕 Wire questionnaire into scanner flow: form → submit → show camera                                                                                  | 30 min | ☐     |
+| 5   | 🆕 Pass questionnaire answers as context into Groq STRESS_PROMPT                                                                                      | 20 min | ☐     |
+| 6   | 🆕 Mobile responsive check: questionnaire form on small screens                                                                                       | 15 min | ☐     |
+| 7   | Deploy + test: questionnaire → scan → result                                                                                                          | 15 min | ☐     |
+
+**End-of-day checkpoint:** Questionnaire appears before camera. Answers influence Groq result. Mobile OK.
+**Total: ~2.5 hours**
+
+---
+
+### Day 3 — Tuesday, Jun 3: Result Card Refinement + CTA
+
+**Goal:** "Result card shows consultation CTA, privacy note, improved stress comments."
+
+| #   | Task                                                                                                                                                                                                           | Est.   | Done? |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ----- |
+| 1   | 🆕 Extract result card from `FaceScanner.tsx` into `StressResultCard.tsx` (cleaner separation)                                                                                                                 | 30 min | ☐     |
+| 2   | 🆕 Add consultation CTA to result card: **"Butuh rekomendasi lebih dalam? Jadwalkan konsultasi dengan Mas Chiko"** → link (URL TBD from Mas Chiko)                                                             | 20 min | ☐     |
+| 3   | 🆕 Add privacy tagline to result card: **"Datamu aman, privasi terjamin"**                                                                                                                                     | 10 min | ☐     |
+| 4   | 🆕 Restructure stress comments per tier in `stressAnalyzer.ts` — organize into: pesan (message), ciri (indicators), risiko (risk), intervensi (intervention). Use content from `docs/STRESS_RECOMMENDATION.md` | 60 min | ☐     |
+| 5   | 🆕 Add variation to stress comments: multiple message variants per tier (rotate or randomize)                                                                                                                  | 30 min | ☐     |
+| 6   | 🆕 Mobile responsive check: refined result card on small screens                                                                                                                                               | 15 min | ☐     |
+| 7   | Deploy + full test: questionnaire → scan → refined result → CTA visible                                                                                                                                        | 15 min | ☐     |
+
+**End-of-day checkpoint:** Result card has CTA, privacy note, structured comments with variations. Mobile OK.
+**Total: ~3 hours**
+
+---
+
+## PHASE 2: Journal System (Jun 4–6)
+
+### Day 1 — Wednesday, Jun 4: Schema + Editor
+
+**Goal:** "Journal page exists. I can write text and save it."
 
 | #   | Task                                                                      | Est.   | Done? |
 | --- | ------------------------------------------------------------------------- | ------ | ----- |
 | 1   | `bun add @tiptap/react @tiptap/starter-kit @tiptap/extension-placeholder` | 10 min | ☐     |
-| 2   | Update Drizzle schema — add `content` column to `journal_entries`         | 10 min | ☐     |
-| 3   | Rewrite `app/dashboard/journal/page.tsx` — basic layout with heading      | 15 min | ☐     |
-| 4   | Create `components/JournalEditor.tsx` — mount Tiptap with basic toolbar   | 45 min | ☐     |
-| 5   | Add "Save" button that POST's Tiptap HTML content to `/api/journal`       | 30 min | ☐     |
-| 6   | Update the API route to accept `content` field                            | 15 min | ☐     |
-| 7   | Test: write something → save → check Supabase → content stored ✓          | 15 min | ☐     |
+| 2   | Update Drizzle schema — add `content` column to journal_entries           | 10 min | ☐     |
+| 3   | Rewrite `app/dashboard/journal/page.tsx` — basic layout                   | 15 min | ☐     |
+| 4   | Create `JournalEditor.tsx` — Tiptap with basic toolbar                    | 45 min | ☐     |
+| 5   | Add "Simpan" button → save via Server Action                              | 30 min | ☐     |
+| 6   | Update server action to accept content field                              | 15 min | ☐     |
+| 7   | Test: write → save → check Supabase → content stored ✓                    | 15 min | ☐     |
 
-**End-of-day checkpoint:** Journal page renders Tiptap editor. I can type and save. Content appears in DB.
-
-**Total: ~2.5 hours active work**
-
----
-
-### Day 2 — Friday, May 29: Mood Selector + History List
-
-**Goal: "I can pick my mood, see past entries"**
-
-| #   | Task                                                                                        | Est.   | Done? |
-| --- | ------------------------------------------------------------------------------------------- | ------ | ----- |
-| 1   | Create `components/MoodSelector.tsx` — 5 emoji buttons (😌😊😐😟😰), one selected at a time | 30 min | ☐     |
-| 2   | Wire mood selection into journal form state                                                 | 15 min | ☐     |
-| 3   | Update save API to include mood in the INSERT                                               | 10 min | ☐     |
-| 4   | Create GET `/api/journal` — fetch all entries for current user, newest first                | 30 min | ☐     |
-| 5   | Create `components/JournalHistory.tsx` — list view of past entries                          | 45 min | ☐     |
-| 6   | Add journal history below the editor (or as separate tab)                                   | 20 min | ☐     |
-| 7   | Test: save 3 entries with different moods → all show in history ✓                           | 15 min | ☐     |
-
-**End-of-day checkpoint:** Full journal flow works: pick mood → write → save → see it in history.
-
-**Total: ~2.75 hours active work**
+**End-of-day checkpoint:** Journal page renders Tiptap editor. Can type and save. Content in DB.
+**Total: ~2.5 hours**
 
 ---
 
-### Day 3 — Saturday, May 30: Polish + Connect Face Scanner
+### Day 2 — Thursday, Jun 5: Mood Selector + History
 
-**Goal: "Face scanner pre-fills mood. Everything looks good."**
+**Goal:** "I can pick my mood, see past entries."
 
-| #   | Task                                                                                      | Est.   | Done? |
-| --- | ----------------------------------------------------------------------------------------- | ------ | ----- |
-| 1   | After face scan "Save to Journal" → redirect to `/dashboard/journal` with mood pre-filled | 30 min | ☐     |
-| 2   | Journal page reads the pre-filled mood and selects it automatically                       | 20 min | ☐     |
-| 3   | Add "Scan Face First" optional button on journal page (links to scanner)                  | 15 min | ☐     |
-| 4   | Add entry detail view — click a history item → expand to see full content                 | 30 min | ☐     |
-| 5   | Style everything: mood selector colors, editor toolbar, history cards                     | 45 min | ☐     |
-| 6   | Mobile responsive check + fix                                                             | 20 min | ☐     |
-| 7   | Deploy + test full flow: scan → pre-fills mood → write journal → save → see history       | 20 min | ☐     |
+| #   | Task                                                                   | Est.   | Done? |
+| --- | ---------------------------------------------------------------------- | ------ | ----- |
+| 1   | Create `MoodSelector.tsx` — 5 emoji buttons (😌😊😐😟😰), one selected | 30 min | ☐     |
+| 2   | Wire mood selection into journal form state                            | 15 min | ☐     |
+| 3   | Update save action to include mood in INSERT                           | 10 min | ☐     |
+| 4   | Create GET endpoint — fetch all entries, newest first                  | 30 min | ☐     |
+| 5   | Create `JournalHistory.tsx` — list of past entries                     | 45 min | ☐     |
+| 6   | Add history below editor (or as tab)                                   | 20 min | ☐     |
+| 7   | Test: save 3 entries with different moods → all in history ✓           | 15 min | ☐     |
 
-**End-of-day checkpoint:** Journal feature complete. Connected to face scanner. Phase 2 DONE.
-
-**Total: ~3 hours active work**
-
----
-
-## PHASE 3: Book Chapter Gating (Jun 2–4)
-
-### Day 1 — Tuesday, Jun 2: Schema + Admin Upload
-
-**Goal: "Chapters exist in DB, I can upload a PDF"**
-
-| #   | Task                                                                                      | Est.   | Done? |
-| --- | ----------------------------------------------------------------------------------------- | ------ | ----- |
-| 1   | Add `book_chapters` table to Drizzle schema + `drizzle-kit push`                          | 15 min | ☐     |
-| 2   | Add `chapter_purchases` table to Drizzle schema + `drizzle-kit push`                      | 15 min | ☐     |
-| 3   | Create Supabase Storage bucket `book-pdfs` (private, no public access)                    | 10 min | ☐     |
-| 4   | Create admin page `app/admin/chapters/page.tsx` — form to add chapter                     | 60 min | ☐     |
-| 5   | Upload PDF to Supabase Storage + save metadata to `book_chapters` table                   | 30 min | ☐     |
-| 6   | Test: upload a dummy PDF → appears in DB + Storage ✓                                      | 15 min | ☐     |
-| 7   | Create GET `/api/chapters` — returns chapter list (title, number, price, owned/not-owned) | 30 min | ☐     |
-
-**End-of-day checkpoint:** Chapters in DB. PDF uploaded. API returns chapter list.
-
-**Total: ~3 hours active work**
+**End-of-day checkpoint:** Full journal flow works: pick mood → write → save → see history.
+**Total: ~2.75 hours**
 
 ---
 
-### Day 2 — Wednesday, Jun 3: Payment Gating + Viewer
+### Day 3 — Friday, Jun 6: Polish + Connect to Scanner
 
-**Goal: "Users see chapter list. Paid = read. Unpaid = locked."**
+**Goal:** "Face scanner pre-fills mood. Everything looks good. Mobile ready."
 
-| #   | Task                                                                                     | Est.   | Done? |
-| --- | ---------------------------------------------------------------------------------------- | ------ | ----- |
-| 1   | Create `app/dashboard/book/page.tsx` — chapter list UI (cards with lock/unlock icon)     | 45 min | ☐     |
-| 2   | Add logic: check `chapter_purchases` for current user → mark chapters as owned/locked    | 30 min | ☐     |
-| 3   | Create `app/dashboard/book/[chapterId]/page.tsx` — chapter reader page                   | 20 min | ☐     |
-| 4   | Add access check: if not purchased → redirect to purchase page / show "Buy" button       | 20 min | ☐     |
-| 5   | Create mock payment flow (for MVP: button that inserts purchase record)                  | 30 min | ☐     |
-| 6   | After "payment" → insert into `chapter_purchases` → redirect to reader                   | 20 min | ☐     |
-| 7   | Create PDF viewer: serve PDF via signed Supabase URL + render in `<iframe>` or react-pdf | 45 min | ☐     |
-| 8   | Test: locked chapter → buy → now can read ✓                                              | 15 min | ☐     |
+| #   | Task                                                                                | Est.   | Done? |
+| --- | ----------------------------------------------------------------------------------- | ------ | ----- |
+| 1   | After scan "Simpan ke Jurnal" → redirect to /dashboard/journal with mood pre-filled | 30 min | ☐     |
+| 2   | Journal page reads pre-filled mood from URL param → selects automatically           | 20 min | ☐     |
+| 3   | Add "Scan Wajah Dulu" optional button on journal page                               | 15 min | ☐     |
+| 4   | Add entry detail view — click history item → expand full content                    | 30 min | ☐     |
+| 5   | Style everything: mood selector colors, editor toolbar, history cards               | 45 min | ☐     |
+| 6   | 🆕 Mobile responsive check: all journal components on small screens                 | 20 min | ☐     |
+| 7   | Deploy + test full flow: scan → pre-fills mood → write journal → save → history     | 20 min | ☐     |
 
-**End-of-day checkpoint:** Chapter list shows locked/unlocked. Purchase unlocks. PDF renders in-app.
-
-**Total: ~3.75 hours active work**
+**End-of-day checkpoint:** Journal feature complete. Connected to scanner. Phase 2 DONE.
+**Total: ~3 hours**
 
 ---
 
-### Day 3 — Thursday, Jun 4: Security + Sequential Gating + Ship
+## PHASE 3: E-Book (Jun 7–8 soft launch scope, Jun 12–15 full launch scope)
 
-**Goal: "Must buy chapter 1 before chapter 2. PDF can't be easily downloaded."**
+> **Soft launch (Jun 12):** Landing page e-book section = countdown to June 16. Dashboard book nav = greyed. No chapter buttons visible.
+> **Full launch (Jun 16):** Countdown removed → chapter button group appears. E-book nav unlocks. Full read/buy flow.
 
-| #   | Task                                                                               | Est.   | Done? |
-| --- | ---------------------------------------------------------------------------------- | ------ | ----- |
-| 1   | Add sequential logic: can only purchase chapter N if chapter N-1 is purchased      | 30 min | ☐     |
-| 2   | Disable PDF right-click context menu + hide download button in iframe              | 20 min | ☐     |
-| 3   | Generate signed URLs with short expiry (5 min) so links can't be shared            | 20 min | ☐     |
-| 4   | Add RLS policy: users can only access PDFs for chapters they've purchased          | 30 min | ☐     |
-| 5   | Style book page: chapter cards, progress indicator, "Next Chapter" flow            | 30 min | ☐     |
-| 6   | Connect navigation between scanner → journal → book                                | 20 min | ☐     |
-| 7   | Full E2E test: new user → scan face → journal → browse book → buy chapter 1 → read | 20 min | ☐     |
-| 8   | Deploy final build                                                                 | 15 min | ☐     |
+### Soft Launch Scope — Saturday, Jun 7: Schema + Countdown
 
-**End-of-day checkpoint:** MVP feature-complete. Phase 3 DONE.
+**Goal:** "Book chapters table exists. Landing page shows countdown. Nav is greyed."
 
-**Total: ~3 hours active work**
+| #   | Task                                                                                                                                                                    | Est.   | Done? |
+| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ----- |
+| 1   | Add `book_chapters` table: id, title, chapter_number, price_idr, `release_date` (nullable), pdf_path                                                                    | 20 min | ☐     |
+| 2   | Add `chapter_purchases` table: id, user_id, chapter_id, purchased_at                                                                                                    | 15 min | ☐     |
+| 3   | `bunx --bun drizzle-kit push`                                                                                                                                           | 5 min  | ☐     |
+| 4   | 🆕 Create `BookCountdown.tsx` — countdown timer targeting June 16, 2026                                                                                                 | 30 min | ☐     |
+| 5   | 🆕 Replace e-book section CTA with countdown component. Remove "Baca Preview" and "Akses Full E-Book" buttons. Show countdown + "Rilis 16 Juni — Ulang Tahun Mas Chiko" | 20 min | ☐     |
+| 6   | 🆕 Add `EBOOK_LIVE` feature flag (env var) — when false, sidebar "E-book" link renders as greyed/disabled with tooltip "Segera hadir 16 Juni"                           | 20 min | ☐     |
+| 7   | 🆕 Set `EBOOK_LIVE=false` for soft launch                                                                                                                               | 5 min  | ☐     |
+| 8   | Test: landing page shows countdown, dashboard book nav greyed                                                                                                           | 15 min | ☐     |
+
+**End-of-day checkpoint:** Countdown visible on landing page. Book nav greyed. Schema ready for full launch.
+**Total: ~2 hours**
 
 ---
 
-## The Full Calendar View
+### Soft Launch Scope — Sunday, Jun 8: Security + Final Prep
+
+**Goal:** "Everything secure. Full E2E test passes. Ready for soft launch."
+
+| #   | Task                                                                                                                  | Est.   | Done? |
+| --- | --------------------------------------------------------------------------------------------------------------------- | ------ | ----- |
+| 1   | Connect navigation: scanner → journal → book (greyed)                                                                 | 20 min | ☐     |
+| 2   | Privacy check: privacy tagline visible on scanner, result card, landing page footer                                   | 10 min | ☐     |
+| 3   | Consultation CTA check: visible on result card + landing page                                                         | 10 min | ☐     |
+| 4   | 🆕 Mobile responsive: full E2E on phone — questionnaire → scan → result → journal → landing page                      | 30 min | ☐     |
+| 5   | SEO basics: title, description, og:image                                                                              | 20 min | ☐     |
+| 6   | Deploy soft launch build to Vercel                                                                                    | 15 min | ☐     |
+| 7   | Full E2E test: new user → daftar → questionnaire → scan → result (CTA + privacy) → journal → landing page (countdown) | 30 min | ☐     |
+
+**End-of-day checkpoint:** Soft launch ready. All features tested. Mobile OK.
+**Total: ~2.5 hours**
+
+---
+
+### Buffer — Monday, Jun 9: Testing + Bug Fix
+
+| #   | Task                                          | Est.   | Done? |
+| --- | --------------------------------------------- | ------ | ----- |
+| 1   | Bug fixes from E2E test                       | 60 min | ☐     |
+| 2   | Mas Chiko UAT (share preview link)            | 30 min | ☐     |
+| 3   | Final adjustments based on Mas Chiko feedback | 60 min | ☐     |
+| 4   | Deploy final soft launch build                | 15 min | ☐     |
+
+---
+
+### Tuesday, Jun 10–11: Mas Chiko Final Approval
+
+| #   | Task                                                | Est.   | Done? |
+| --- | --------------------------------------------------- | ------ | ----- |
+| 1   | Mas Chiko reviews full app on phone                 | 30 min | ☐     |
+| 2   | Fix any issues found                                | 60 min | ☐     |
+| 3   | Connect domain (chikology.id) to Vercel if not done | 20 min | ☐     |
+| 4   | Final deploy                                        | 15 min | ☐     |
+
+---
+
+### 🚀 Wednesday, Jun 12: SOFT LAUNCH
+
+Scanner + Journal + Landing Page live. E-book = countdown to June 16.
+
+---
+
+### Full Launch Build — Jun 12–15: Chapter UI + Payment + Viewer
+
+> These tasks happen AFTER soft launch. Build the full e-book experience for June 16.
+
+| #   | Task                                                                                                                                  | Est.   | Done? |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------- | ------ | ----- |
+| 1   | 🆕 Create `ChapterList.tsx` — horizontal button group [Bab 1] [Bab 2] [Bab 3] ...                                                     | 30 min | ☐     |
+| 2   | Button state logic: unreleased → grey ("Segera hadir"), released + not purchased → price + "Beli", released + purchased → open reader | 30 min | ☐     |
+| 3   | Create `app/dashboard/book/page.tsx` — chapter list page                                                                              | 20 min | ☐     |
+| 4   | Create `app/dashboard/book/[chapterId]/page.tsx` — chapter reader                                                                     | 20 min | ☐     |
+| 5   | Access check: not purchased → redirect / show "Beli" button                                                                           | 20 min | ☐     |
+| 6   | Mock payment flow: button inserts into `chapter_purchases`                                                                            | 30 min | ☐     |
+| 7   | PDF viewer: signed Supabase URL (5-min expiry) + render in `<iframe>`                                                                 | 45 min | ☐     |
+| 8   | Sequential purchase: can only buy chapter N if N-1 is owned                                                                           | 30 min | ☐     |
+| 9   | Disable PDF right-click + hide download in iframe                                                                                     | 20 min | ☐     |
+| 10  | RLS policy: users access only owned chapter PDFs                                                                                      | 30 min | ☐     |
+| 11  | Create admin page for chapter upload (title, number, price, release date, PDF)                                                        | 60 min | ☐     |
+| 12  | 🆕 Replace landing page countdown with chapter button group                                                                           | 20 min | ☐     |
+| 13  | 🆕 Set `EBOOK_LIVE=true` + deploy                                                                                                     | 5 min  | ☐     |
+| 14  | 🆕 Mobile responsive: chapter button group on phone                                                                                   | 20 min | ☐     |
+| 15  | Full E2E: scan → journal → browse chapters → buy → read ✓                                                                             | 30 min | ☐     |
+
+**Total: ~6.5 hours (spread across Jun 12–15)**
+
+---
+
+### 🚀 Tuesday, Jun 16: FULL LAUNCH
+
+E-book unlocks. Chapter buttons live. Countdown removed. `EBOOK_LIVE=true`.
+
+---
+
+## Full Calendar View
 
 ```
-Mon May 25 — PHASE 0 FOUNDATION ✓ + PHASE 1, DAY 1 (Groq) ✓ + Auth module ✓
-Tue May 26 ░░░░░░░░ Phase 1, Day 2 - Style, Save, Deploy ← DEADLINE
-Wed May 27 ░░░░░░░░ Phase 1, Day 2 - Test + Deploy
-Thu May 28 ░░░░░░░░ Phase 2, Day 1 - Schema + Editor
-Fri May 29 ░░░░░░░░ Phase 2, Day 2 - Mood + History
-Sat May 30 ░░░░░░░░ Phase 2, Day 3 - Polish + Connect  ← DEADLINE
-May 31–Jun 1        Recovery (test, fix bugs, breathe)
+May 25–26     ████ Phase 0 ✓ + Phase 1 (Scanner) ✓               ← DONE
+May 27–30     ░░░░ Original Phase 2/3 dates (missed)
+May 31        🔄   Mas Chiko meeting + reschedule
 
-Tue Jun 2  ░░░░░░░░ Phase 3, Day 1 - Schema + Upload
-Wed Jun 3  ░░░░░░░░ Phase 3, Day 2 - Payment + Viewer
-Thu Jun 4  ░░░░░░░░ Phase 3, Day 3 - Security + Ship  ← DEADLINE
-Jun 5–11             Polish, E2E testing, Mas Chiko review
+Jun  1 (Sun)  ████ Phase 1.5 Day 1 — Landing Page Quick Wins     ← NEXT
+Jun  2 (Mon)  ████ Phase 1.5 Day 2 — Pre-Scan Questionnaire
+Jun  3 (Tue)  ████ Phase 1.5 Day 3 — Result Card + CTA
 
-Jun 12                GO LIVE (external deadline to Mas Chiko)
+Jun  4 (Wed)  ████ Phase 2 Day 1 — Journal Schema + Editor
+Jun  5 (Thu)  ████ Phase 2 Day 2 — Mood + History
+Jun  6 (Fri)  ████ Phase 2 Day 3 — Polish + Connect              ← PHASE 2 DONE
+
+Jun  7 (Sat)  ████ Phase 3 (soft launch) — Schema + Countdown + Nav Gating
+Jun  8 (Sun)  ████ Phase 3 (soft launch) — Security + E2E Test
+
+Jun  9 (Mon)  ░░░░ Buffer — bug fixes + Mas Chiko UAT
+Jun 10 (Tue)  ░░░░ Mas Chiko final approval + domain connect
+Jun 11 (Wed)  ░░░░ Final prep
+
+Jun 12 (Thu)  🚀   SOFT LAUNCH — Scanner + Journal + Landing Page. E-book = countdown.
+
+Jun 12–15     ████ Full e-book build (chapter UI, payment, viewer)
+Jun 16 (Mon)  🚀   FULL LAUNCH — E-book unlocks. Chapter buttons live.
 ```
 
 ---
 
-### Why This Works For Your Brain
+## Pending — Waiting on Mas Chiko
 
-**Each day has ~3 hours of actual work.** Not 8. Not 12. Three. The rest is buffer for:
-
-- Debugging something that doesn't work first try
-- Bathroom + food + kids interrupting
-- The 30 minutes of "staring at the screen before starting"
-
-**Each task is checkable.** Your brain can't argue with "does the camera show my face? Yes or no." No ambiguity = no perfectionism loop.
-
-**The dopamine:** Checking boxes is its own reward. By task #3 each day, you're in flow.
+| Item                                                                              | Needed by     | Impact if late                        |
+| --------------------------------------------------------------------------------- | ------------- | ------------------------------------- |
+| Pre-scan questions (wording, count, order)                                        | Before Jun 2  | Ship with placeholder questions       |
+| Booking/consultation link for CTA                                                 | Before Jun 3  | Placeholder URL in CTA button         |
+| Stress recommendation content (if different from `docs/STRESS_RECOMMENDATION.md`) | Before Jun 3  | Use existing content from doc         |
+| Chapter pricing (chapter 1 free or paid?)                                         | Before Jun 12 | Can't build full launch purchase flow |
+| Chapter content / PDF files                                                       | Before Jun 14 | Can't test chapter upload + viewer    |
+| Chapter release schedule (tanggal per bab)                                        | Before Jun 14 | Can't set release_date in DB          |
 
 ---
 
-### Reminders
+## Reminders (Dev)
 
 - Always use `bun` — `bunx --bun` for package execution, never `npx`
-- Run `bunx --bun drizzle-kit push` to push schema changes to Supabase
+- Run `bunx --bun drizzle-kit push` after every schema change
 - Route convention: everything behind `/dashboard/` (auth shell with sidebar)
-- Face detection uses Groq API (Llama 4 Scout) via `/api/analyze-face`. Requires `GROQ_API_KEY` in `.env.local`
-- face-api.js models remain in `public/models/` for optional future client-side face detection (bounding box only)
-- `mapEmotionsToStress()` in `stressAnalyzer.ts` is unused — the Groq API returns a tier directly. But the function stays for future DeepFace integration
-- Book pricing model needs Mas Chiko's input before Phase 3 starts
+- Face detection: Groq API (Llama 4 Scout) via `/api/analyze-face`. Requires `GROQ_API_KEY` in `.env.local`
+- `mapEmotionsToStress()` in `stressAnalyzer.ts` unused — kept for future DeepFace integration
+- Feature flag: `EBOOK_LIVE=false` in production until full launch (June 16)
+- Privacy tagline **"Datamu aman, privasi terjamin"** must appear on: scanner page, result card, landing page footer
+- Consultation CTA **"Butuh rekomendasi lebih dalam? Jadwalkan konsultasi dengan Mas Chiko"** appears on: result card (after scan), landing page
+- All components must pass mobile responsive test before phase is marked done
+- Pre-scan questions: user will insert Mas Chiko's questions manually into `PreScanQuestionnaire.tsx`
