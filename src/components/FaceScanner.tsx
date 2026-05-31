@@ -30,7 +30,13 @@ type AnalysisResult = {
   risiko: string;
 };
 
-export default function FaceScanner() {
+interface FaceScannerProps {
+  questionnaireAnswers?: Record<string, string>;
+}
+
+export default function FaceScanner({
+  questionnaireAnswers: _questionnaireAnswers,
+}: FaceScannerProps = {}) {
   const webcamRef = useRef<Webcam>(null);
   const [cameraActive, setCameraActive] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);

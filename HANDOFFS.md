@@ -92,3 +92,53 @@ Implement Phase 1.5 Slice 4: Stress result card extraction + structured comments
 ### Blockers (if any)
 
 - None
+
+---
+
+## [Sunday, 31-05-2026 22:04] — Phase 1.5 Slice 2 shipped (TDD)
+
+### Session Target
+
+Implement Phase 1.5 Slice 2: Pre-scan questionnaire + schema + ScannerFlow orchestrator (GitHub issue #5).
+
+### Current State
+
+- Status: shipped
+- Scope: PreScanQuestionnaire, ScannerFlow, schema, FaceScanner prop, scanner page wiring
+
+### What Changed
+
+- `src/components/dashboard/scanner/PreScanQuestionnaire.tsx` — new file, form with 3 placeholder questions (MCQ + "Lainnya" textarea), skip confirmation modal, validation
+- `src/components/dashboard/scanner/ScannerFlow.tsx` — new file, orchestrator: questionnaire → camera state transition
+- `src/db/schema.ts` — added `questionnaire_responses` table (user_id, answers jsonb, created_at)
+- `src/components/FaceScanner.tsx` — accepts `questionnaireAnswers` prop (prefixed `_` since unused until Slice 3)
+- `src/app/dashboard/scanner/page.tsx` — uses ScannerFlow instead of FaceScanner directly
+- `src/components/dashboard/scanner/pre-scan-questionnaire.test.tsx` — new file, TDD tests
+- `src/components/dashboard/scanner/scanner-flow.test.tsx` — new file, TDD tests
+- `package.json` — added @testing-library/user-event
+
+### Verification
+
+- `bun run test -- --run` — 13/13 tests pass (3 Slice 1 + 4 Slice 4 + 4 Slice 2 questionnaire + 2 Slice 2 ScannerFlow)
+- `bun run build` — passes
+
+### Decisions
+
+- D-012: PreScanQuestionnaire placeholder questions: 3 MCQ questions with "Lainnya" option
+- D-013: Skip confirmation modal text: "Menjawab beberapa pertanyaan ini dapat membantu kami menganalisis kamu dengan lebih akurat"
+- D-014: Validation: all questions must be answered OR "Lainnya" must have text
+- D-015: Skip → onSubmit called with empty object `{}` (Slice 3 decides what to store in DB)
+
+### Known Issues / Risks
+
+- Mobile responsive verification still pending (cross-slice acceptance criteria)
+- `bunx --bun drizzle-kit push` not run yet — schema change needs to be pushed to Supabase
+- FaceScanner accepts but ignores `questionnaireAnswers` prop until Slice 3
+
+### Next Steps (ordered)
+
+1. Phase 1.5 Slice 3 — Wire questionnaire into Groq (GitHub issue #6, blocked by questionnaire DB row creation)
+
+### Blockers (if any)
+
+- None

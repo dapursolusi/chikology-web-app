@@ -1,4 +1,4 @@
-import FaceScanner from '@/components/FaceScanner';
+import { ScannerFlow } from '@/components/dashboard/scanner/ScannerFlow';
 
 export default function ScannerPage() {
   return (
@@ -12,7 +12,7 @@ export default function ScannerPage() {
           kesehatan mental.
         </p>
       </div>
-      <FaceScanner />
+      <ScannerFlow />
     </div>
   );
 }

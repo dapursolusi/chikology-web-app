@@ -115,15 +115,15 @@ src/
 
 **Goal:** "User answers questions before camera activates. Answers sent to Groq for synthesis."
 
-| #   | Task                                                                                                                                                  | Est.   | Done? |
-| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ----- |
-| 1   | 🆕 Create `PreScanQuestionnaire.tsx` — form component, displayed before camera. Questions placeholder (user will fill in Mas Chiko's questions later) | 60 min | ☐     |
-| 2   | 🆕 Update schema: add `questionnaire_responses` table (user_id, answers JSONB, created_at)                                                            | 15 min | ☐     |
-| 3   | `bunx --bun drizzle-kit push`                                                                                                                         | 5 min  | ☐     |
-| 4   | 🆕 Wire questionnaire into scanner flow: form → submit → show camera                                                                                  | 30 min | ☐     |
-| 5   | 🆕 Pass questionnaire answers as context into Groq STRESS_PROMPT                                                                                      | 20 min | ☐     |
-| 6   | 🆕 Mobile responsive check: questionnaire form on small screens                                                                                       | 15 min | ☐     |
-| 7   | Deploy + test: questionnaire → scan → result                                                                                                          | 15 min | ☐     |
+| #   | Task                                                                                                                                                  | Est.   | Done?       |
+| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ----------- |
+| 1   | 🆕 Create `PreScanQuestionnaire.tsx` — form component, displayed before camera. Questions placeholder (user will fill in Mas Chiko's questions later) | 60 min | ✓           |
+| 2   | 🆕 Update schema: add `questionnaire_responses` table (user_id, answers JSONB, created_at)                                                            | 15 min | ✓           |
+| 3   | `bunx --bun drizzle-kit push`                                                                                                                         | 5 min  | ☐           |
+| 4   | 🆕 Wire questionnaire into scanner flow: form → submit → show camera                                                                                  | 30 min | ✓           |
+| 5   | 🆕 Pass questionnaire answers as context into Groq STRESS_PROMPT                                                                                      | 20 min | ☐ (Slice 3) |
+| 6   | 🆕 Mobile responsive check: questionnaire form on small screens                                                                                       | 15 min | ☐           |
+| 7   | Deploy + test: questionnaire → scan → result                                                                                                          | 15 min | ☐           |
 
 **End-of-day checkpoint:** Questionnaire appears before camera. Answers influence Groq result. Mobile OK.
 **Total: ~2.5 hours**
