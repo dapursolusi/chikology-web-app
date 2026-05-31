@@ -52,6 +52,10 @@ vi.mock('@/components/FaceScanner', () => ({
   ),
 }));
 
+vi.mock('@/actions/questionnaire', () => ({
+  saveQuestionnaireResponse: vi.fn().mockResolvedValue({ success: true }),
+}));
+
 describe('ScannerFlow', () => {
   it('renders questionnaire first', () => {
     render(<ScannerFlow />);

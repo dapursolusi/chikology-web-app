@@ -1,6 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useTransition } from 'react';
+
+import { saveQuestionnaireResponse } from '@/actions/questionnaire';
 
 import FaceScanner from '@/components/FaceScanner';
 
@@ -13,10 +15,14 @@ export function ScannerFlow() {
   const [questionnaireAnswers, setQuestionnaireAnswers] = useState<
     Record<string, string> | undefined
   >(undefined);
+  const [, startTransition] = useTransition();
 
   const handleQuestionnaireSubmit = (answers: Record<string, string>) => {
-    setQuestionnaireAnswers(answers);
-    setFlowState('camera');
+    startTransition(async () => {
+      await saveQuestionnaireResponse({ answers });
+      setQuestionnaireAnswers(answers);
+      setFlowState('camera');
+    });
   };
 
   if (flowState === 'camera') {

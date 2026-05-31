@@ -142,3 +142,49 @@ Implement Phase 1.5 Slice 2: Pre-scan questionnaire + schema + ScannerFlow orche
 ### Blockers (if any)
 
 - None
+
+---
+
+## [Sunday, 31-05-2026 22:11] — Phase 1.5 Slice 3 shipped
+
+### Session Target
+
+Implement Phase 1.5 Slice 3: Wire questionnaire into Groq analysis (GitHub issue #6).
+
+### Current State
+
+- Status: shipped
+- Scope: FaceScanner, API route, server action, ScannerFlow wiring
+
+### What Changed
+
+- `src/components/FaceScanner.tsx` — passes `questionnaireAnswers` in POST body to `/api/analyze-face`
+- `src/app/api/analyze-face/route.ts` — accepts `questionnaire` field, appends to STRESS_PROMPT when present
+- `src/actions/questionnaire.ts` — new file, server action to insert `questionnaire_responses` row
+- `src/components/dashboard/scanner/ScannerFlow.tsx` — calls `saveQuestionnaireResponse` on questionnaire submit, then transitions to camera
+
+### Verification
+
+- `bun run test -- --run` — 13/13 tests pass
+- `bun run build` — passes
+
+### Decisions
+
+- D-016: Questionnaire context appended to Groq prompt as `[Questionnaire Answers]\n{json}` block
+- D-017: DB insert happens synchronously before camera transition — user waits briefly for save
+
+### Known Issues / Risks
+
+- Mobile responsive verification still pending
+- `bunx --bun drizzle-kit push` still not run — schema change pending
+- Manual E2E test needed: fill questionnaire → scan → verify Groq prompt includes context
+
+### Next Steps (ordered)
+
+1. Run `bunx --bun drizzle-kit push` to push schema to Supabase
+2. Mobile responsive verification across all slices
+3. Manual E2E test: fill questionnaire → scan → Groq result
+
+### Blockers (if any)
+
+- None

@@ -35,7 +35,7 @@ interface FaceScannerProps {
 }
 
 export default function FaceScanner({
-  questionnaireAnswers: _questionnaireAnswers,
+  questionnaireAnswers,
 }: FaceScannerProps = {}) {
   const webcamRef = useRef<Webcam>(null);
   const [cameraActive, setCameraActive] = useState(false);
@@ -97,7 +97,12 @@ export default function FaceScanner({
       const response = await fetch('/api/analyze-face', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image: base64 }),
+        body: JSON.stringify({
+          image: base64,
+          ...(questionnaireAnswers
+            ? { questionnaire: questionnaireAnswers }
+            : {}),
+        }),
       });
 
       if (!response.ok) {

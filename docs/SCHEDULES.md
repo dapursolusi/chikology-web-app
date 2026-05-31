@@ -115,15 +115,15 @@ src/
 
 **Goal:** "User answers questions before camera activates. Answers sent to Groq for synthesis."
 
-| #   | Task                                                                                                                                                  | Est.   | Done?       |
-| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ----------- |
-| 1   | 🆕 Create `PreScanQuestionnaire.tsx` — form component, displayed before camera. Questions placeholder (user will fill in Mas Chiko's questions later) | 60 min | ✓           |
-| 2   | 🆕 Update schema: add `questionnaire_responses` table (user_id, answers JSONB, created_at)                                                            | 15 min | ✓           |
-| 3   | `bunx --bun drizzle-kit push`                                                                                                                         | 5 min  | ☐           |
-| 4   | 🆕 Wire questionnaire into scanner flow: form → submit → show camera                                                                                  | 30 min | ✓           |
-| 5   | 🆕 Pass questionnaire answers as context into Groq STRESS_PROMPT                                                                                      | 20 min | ☐ (Slice 3) |
-| 6   | 🆕 Mobile responsive check: questionnaire form on small screens                                                                                       | 15 min | ☐           |
-| 7   | Deploy + test: questionnaire → scan → result                                                                                                          | 15 min | ☐           |
+| #   | Task                                                                                                                                                  | Est.   | Done? |
+| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ----- |
+| 1   | 🆕 Create `PreScanQuestionnaire.tsx` — form component, displayed before camera. Questions placeholder (user will fill in Mas Chiko's questions later) | 60 min | ✓     |
+| 2   | 🆕 Update schema: add `questionnaire_responses` table (user_id, answers JSONB, created_at)                                                            | 15 min | ✓     |
+| 3   | `bunx --bun drizzle-kit push`                                                                                                                         | 5 min  | ☐     |
+| 4   | 🆕 Wire questionnaire into scanner flow: form → submit → show camera                                                                                  | 30 min | ✓     |
+| 5   | 🆕 Pass questionnaire answers as context into Groq STRESS_PROMPT                                                                                      | 20 min | ✓     |
+| 6   | 🆕 Mobile responsive check: questionnaire form on small screens                                                                                       | 15 min | ☐     |
+| 7   | Deploy + test: questionnaire → scan → result                                                                                                          | 15 min | ☐     |
 
 **End-of-day checkpoint:** Questionnaire appears before camera. Answers influence Groq result. Mobile OK.
 **Total: ~2.5 hours**
@@ -136,10 +136,10 @@ src/
 
 | #   | Task                                                                                                                                                                                                           | Est.   | Done? |
 | --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ----- |
-| 1   | 🆕 Extract result card from `FaceScanner.tsx` into `StressResultCard.tsx` (cleaner separation)                                                                                                                 | 30 min | ☐     |
-| 2   | 🆕 Add consultation CTA to result card: **"Butuh rekomendasi lebih dalam? Jadwalkan konsultasi dengan Mas Chiko"** → link (URL TBD from Mas Chiko)                                                             | 20 min | ☐     |
-| 3   | 🆕 Add privacy tagline to result card: **"Datamu aman, privasi terjamin"**                                                                                                                                     | 10 min | ☐     |
-| 4   | 🆕 Restructure stress comments per tier in `stressAnalyzer.ts` — organize into: pesan (message), ciri (indicators), risiko (risk), intervensi (intervention). Use content from `docs/STRESS_RECOMMENDATION.md` | 60 min | ☐     |
+| 1   | 🆕 Extract result card from `FaceScanner.tsx` into `StressResultCard.tsx` (cleaner separation)                                                                                                                 | 30 min | ✓     |
+| 2   | 🆕 Add consultation CTA to result card: **"Butuh rekomendasi lebih dalam? Jadwalkan konsultasi dengan Mas Chiko"** → link (wa.me/6287853186759)                                                                | 20 min | ✓     |
+| 3   | 🆕 Add privacy tagline to result card: **"Datamu aman, privasi terjamin"**                                                                                                                                     | 10 min | ✓     |
+| 4   | 🆕 Restructure stress comments per tier in `stressAnalyzer.ts` — organize into: pesan (message), ciri (indicators), risiko (risk), intervensi (intervention). Use content from `docs/STRESS_RECOMMENDATION.md` | 60 min | ✓     |
 | 5   | 🆕 Add variation to stress comments: multiple message variants per tier (rotate or randomize)                                                                                                                  | 30 min | ☐     |
 | 6   | 🆕 Mobile responsive check: refined result card on small screens                                                                                                                                               | 15 min | ☐     |
 | 7   | Deploy + full test: questionnaire → scan → refined result → CTA visible                                                                                                                                        | 15 min | ☐     |
@@ -319,16 +319,16 @@ May 25–26     ████ Phase 0 ✓ + Phase 1 (Scanner) ✓               �
 May 27–30     ░░░░ Original Phase 2/3 dates (missed)
 May 31        🔄   Mas Chiko meeting + reschedule
 
-Jun  1 (Sun)  ████ Phase 1.5 Day 1 — Landing Page Quick Wins     ← NEXT
-Jun  2 (Mon)  ████ Phase 1.5 Day 2 — Pre-Scan Questionnaire
-Jun  3 (Tue)  ████ Phase 1.5 Day 3 — Result Card + CTA
+Jun  1 (Sun)  ████ Phase 1.5 Day 1 — Landing Page Quick Wins     ← DONE
+Jun  2 (Mon)  ████ Phase 1.5 Day 2 — Pre-Scan Questionnaire     ← DONE
+Jun  3 (Tue)  ████ Phase 1.5 Day 3 — Result Card + CTA           ← DONE
 
-Jun  4 (Wed)  ████ Phase 2 Day 1 — Journal Schema + Editor
-Jun  5 (Thu)  ████ Phase 2 Day 2 — Mood + History
-Jun  6 (Fri)  ████ Phase 2 Day 3 — Polish + Connect              ← PHASE 2 DONE
+Jun  4 (Wed)  ░░░░ Phase 2 Day 1 — Journal Schema + Editor
+Jun  5 (Thu)  ░░░░ Phase 2 Day 2 — Mood + History
+Jun  6 (Fri)  ░░░░ Phase 2 Day 3 — Polish + Connect
 
-Jun  7 (Sat)  ████ Phase 3 (soft launch) — Schema + Countdown + Nav Gating
-Jun  8 (Sun)  ████ Phase 3 (soft launch) — Security + E2E Test
+Jun  7 (Sat)  ░░░░ Phase 3 (soft launch) — Schema + Countdown + Nav Gating
+Jun  8 (Sun)  ░░░░ Phase 3 (soft launch) — Security + E2E Test
 
 Jun  9 (Mon)  ░░░░ Buffer — bug fixes + Mas Chiko UAT
 Jun 10 (Tue)  ░░░░ Mas Chiko final approval + domain connect
@@ -336,7 +336,7 @@ Jun 11 (Wed)  ░░░░ Final prep
 
 Jun 12 (Thu)  🚀   SOFT LAUNCH — Scanner + Journal + Landing Page. E-book = countdown.
 
-Jun 12–15     ████ Full e-book build (chapter UI, payment, viewer)
+Jun 12–15     ░░░░ Full e-book build (chapter UI, payment, viewer)
 Jun 16 (Mon)  🚀   FULL LAUNCH — E-book unlocks. Chapter buttons live.
 ```
 
