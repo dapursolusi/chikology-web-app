@@ -4,6 +4,7 @@ import { useCallback, useState, useTransition } from 'react';
 
 import { saveJournalEntry } from '@/actions/journal';
 import { saveQuestionnaireResponse } from '@/actions/questionnaire';
+import { MOOD_MAP } from '@/data/stressLevels';
 import type { StressLevel } from '@/data/stressLevels';
 import { toast } from 'sonner';
 
@@ -43,12 +44,13 @@ export function ScannerFlow() {
     if (!result) return;
     startSaveTransition(async () => {
       const res = await saveJournalEntry({
+        mood: MOOD_MAP[result.tier],
         stressTier: result.tier,
         recommendation: result.interventions.map((i) => i.title).join(', '),
       });
-      if (res.success) {
+      if ('success' in res && res.success) {
         toast.success('Tersimpan ke jurnal!');
-      } else {
+      } else if ('error' in res) {
         toast.error(res.error ?? 'Gagal menyimpan');
       }
     });

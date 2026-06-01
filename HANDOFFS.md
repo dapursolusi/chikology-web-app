@@ -1,58 +1,43 @@
-## [Monday, 01-06-2026 10:45] — Phase 2 architecture grilled + PRD published
+## [Monday, 01-06-2026 11:50] — Phase 2 Slice 1: Journal page foundation + server actions
 
 ### Session Target
 
-Grill Phase 2 (Journal System) architecture — walk all design branches, resolve dependencies, publish PRD to issue tracker.
+Implement `/dashboard/journal` route with unified server actions and mood selector (issue #8).
 
 ### Current State
 
-- Status: shipped
-- Scope: architecture/planning only — no code changes
-- Phase 2 PRD published as GitHub issue #7 with `ready-for-agent` label
+- Status: **shipped**
+- Scope: `src/actions/journal.ts`, `src/actions/dashboard.ts`, `src/app/dashboard/journal/page.tsx`, `src/components/dashboard/journal/JournalPageClient.tsx`, `src/components/dashboard/journal/MoodSelector.tsx`, `src/test/actions/journal.test.ts`, `src/components/dashboard/journal/MoodSelector.test.tsx`
 
 ### What Changed
 
-No code changes this session (read-only plan mode, then PRD-only output). See GitHub issue #7 for full PRD.
+- `src/actions/journal.ts` — Rewrote `saveJournalEntry` with new signature `({ mood, content?, stressTier?, recommendation? })`; added `getJournalEntries()` (user-filtered, deleted_at IS NULL, DESC); added `deleteJournalEntry(id)` (soft delete with userId guard)
+- `src/actions/dashboard.ts` — Fixed `getRecentActivity` and `getWeekMoods` to filter `deleted_at IS NULL` (was leaking soft-deleted entries); added `isNull` + `and` imports
+- `src/components/dashboard/scanner/ScannerFlow.tsx` — Updated `saveJournalEntry` call to use new signature `{ mood: MOOD_MAP[result.tier], stressTier: result.tier, recommendation: ... }`; added `MOOD_MAP` import
+- `src/app/dashboard/journal/page.tsx` — New server component; calls `getJournalEntries()` and passes to `JournalPageClient`
+- `src/components/dashboard/journal/JournalPageClient.tsx` — New `"use client"` component; owns form state with `useActionState`; renders `MoodSelector` + `Textarea` + history list
+- `src/components/dashboard/journal/MoodSelector.tsx` — New; 5 emoji buttons (😌😊😐😟😰), single-select via `aria-selected`, pre-fillable via `value` prop
+- `src/test/actions/journal.test.ts` — New; tests for `saveJournalEntry` (auth/mood validation/content-or-tier validation), `getJournalEntries` (auth guard), `deleteJournalEntry` (auth guard); mocks Supabase + Drizzle + `revalidatePath`
+- `src/components/dashboard/journal/MoodSelector.test.tsx` — New; tests render, onChange, aria-selected, pre-fill, titles
 
 ### Verification
 
-- `gh issue view 7` — PRD published with `ready-for-agent` label
-- No build/test needed (zero code changes)
+- Commands run: `bunx tsc --noEmit` → pass; `bun run build` → pass; `bun run test --run` → 8 test files, 25 tests, all pass
 
 ### Decisions
 
-- D-022: One unified `saveJournalEntry` action — replaces old scanner-only action. Accepts `mood` (required) + at least one of `content`/`stressTier`. Returns `{ success: true, entryId: string }`.
-- D-023: `stressTier = null` for manual journal entries — preserves semantic distinction between measured and self-reported data.
-- D-024: Server-fetched history, client-side editor — `page.tsx` fetches entries via `getJournalEntries()`, passes to client component.
-- D-025: Scanner redirect replaces inline save — "Simpan ke Jurnal" redirects to `/dashboard/journal?tier=N` instead of saving inline.
-- D-026: One row, one save — scanner data + manual content go into a single DB row.
-- D-027: Scanner data derived client-side from `stressLevels[tier]` — no DB fetch needed.
-- D-028: Scanner result shown as collapsible shadcn Accordion on journal page — collapsed by default.
-- D-029: Mood selector reuses scanner emojis (😌😊😐😟😰), single-select.
-- D-030: History display — date + mood emoji + content preview, newest first, expandable inline detail.
-- D-031: Delete-only (soft delete) — no edit, no trash view in MVP.
-- D-032: Tiptap toolbar minimal — bold, italic, bullet list, numbered list. No headings.
-- D-033: Sidebar nav cleanup — Jurnal → `/dashboard/journal`, Scanner → `/dashboard/scanner`, Book → `#`.
-- D-034: Breadcrumb dynamic — shows "Jurnal Harian", "Deteksi Level Stress", or "Dashboard" based on route.
-- D-035: `getJournalEntries()` co-located in `actions/journal.ts` — same file as save action, extracted later if file grows.
-- D-036: "Scan Wajah Dulu" banner above editor when no scanner params present for today.
-- D-037: Delete confirmation dialog before soft-delete (`deletedAt = now()`).
-- D-038: Validation — mood required + at least one of (content, stressTier) must be present server-side.
+- D-001: Use `useActionState` adapter function to bridge form `FormData` → typed `saveJournalEntry` signature; avoids modifying the action's public API
+- D-002: `revalidatePath` called on both `/dashboard` and `/dashboard/journal` to ensure dashboard stats + journal page stay in sync after save
 
 ### Known Issues / Risks
 
-- Test environment pre-existing failure (jsdom + react-webcam document access) — unrelated to Phase 2, but will affect new journal tests
-- Mobile responsive testing must be done (hard acceptance criterion)
-- `bunx --bun drizzle-kit push` still not run for questionnaire_responses schema change
-- PreScanQuestionnaire still has placeholder questions — waiting on Mas Chiko
+- `MoodSelector` uses ref-based hidden input for form binding; functional but unconventional — may want to refactor to controlled state + hidden input pattern later
+- Dashboard "Quick Actions" card has duplicate "Jurnal" link (also links to `/dashboard/journal`) — separate issue, not part of this slice
 
 ### Next Steps (ordered)
 
-1. [Phase 2] Slice 1 — Journal page foundation + server actions (#8) — no blockers
-2. [Phase 2] Slice 2 — Tiptap editor + full manual entries (#9) — blocked by #8
-3. [Phase 2] Slice 3 — Scanner redirect + pre-fill (#10) — blocked by #8
-4. [Phase 2] Slice 4 — History display + delete (#11) — blocked by #8
-5. [Phase 2] Slice 5 — Navigation + mobile polish (HITL) (#12) — blocked by #8, #10, #11
+1. Verify `/dashboard/journal` renders correctly in browser (manual QA)
+2. Phase 2 Slice 2 — Tiptap editor + full manual entries
 
 ### Blockers (if any)
 
