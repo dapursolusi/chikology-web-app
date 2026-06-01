@@ -2,12 +2,7 @@
 
 import { useEffect, useState } from 'react';
 
-import {
-  BookOpenIcon,
-  BotIcon,
-  NotebookPen,
-  Settings2Icon,
-} from 'lucide-react';
+import { BookOpenIcon, BotIcon, NotebookPen } from 'lucide-react';
 
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
@@ -35,7 +30,7 @@ const navMain = [
     items: [
       {
         title: 'Isi Jurnal',
-        url: dashboardLink('scanner'),
+        url: dashboardLink('journal'),
       },
     ],
   },
@@ -57,30 +52,7 @@ const navMain = [
     items: [
       {
         title: 'Baca E-Book',
-        url: dashboardLink('scanner'),
-      },
-    ],
-  },
-  {
-    title: 'Settings',
-    url: '#',
-    icon: <Settings2Icon />,
-    items: [
-      {
-        title: 'General',
-        url: dashboardLink('scanner'),
-      },
-      {
-        title: 'Team',
-        url: dashboardLink('scanner'),
-      },
-      {
-        title: 'Billing',
-        url: dashboardLink('scanner'),
-      },
-      {
-        title: 'Limits',
-        url: dashboardLink('scanner'),
+        url: '#',
       },
     ],
   },

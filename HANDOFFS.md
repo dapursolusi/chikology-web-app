@@ -1,38 +1,42 @@
-## [Monday, 01-06-2026 13:21] — Phase 2 Slice 4: History display + delete
+## [Monday, 01-06-2026 13:29] — Phase 2 Slice 5: Navigation + mobile polish
 
 ### Session Target
 
-Rich interactive journal history with expand/collapse and soft-delete (issue #11).
+Fix sidebar nav links, dynamic breadcrumb, mobile responsive (issue #12).
 
 ### Current State
 
 - Status: **shipped**
-- Scope: `JournalHistory.tsx`, `JournalPageClient.tsx`, `journal-history.test.tsx`, `alert-dialog.tsx`, `button.tsx`
+- Scope: `app-sidebar.tsx`, `layout.tsx`, `DashboardHeader.tsx`, `layout.test.tsx`, `breadcrumb.test.ts`, `app-sidebar-links.test.tsx`
 
 ### What Changed
 
-- `src/components/dashboard/journal/JournalHistory.tsx` — new; expandable journal entries (click to expand/collapse), scan-only entries show tier label + "(dari scan wajah)" preview, delete via AlertDialog confirmation, local state update on delete
-- `src/components/dashboard/journal/JournalPageClient.tsx` — replaced inline history list with `<JournalHistory entries={entries} />`; removed unused Card/CardContent/CardTitle, MOOD_EMOJI, formatDate, truncateHtml
-- `src/components/dashboard/journal/journal-history.test.tsx` — new; tests renders entries, scan-only preview, expand/collapse, delete button
-- `src/components/ui/alert-dialog.tsx` — new; added via `shadcn add alert-dialog`
-- `src/components/ui/button.tsx` — updated by shadcn installer
+- `src/components/app-sidebar.tsx` — Fixed navMain: "Isi Jurnal" → `/dashboard/journal`; "Baca E-Book" → `#`; removed Settings section (placeholder until Phase 3); removed unused `Settings2Icon` import
+- `src/app/dashboard/layout.tsx` — Refactored to use `DashboardHeader` client component; removed inline breadcrumb JSX
+- `src/app/dashboard/DashboardHeader.tsx` — new; `"use client"` component using `usePathname()` to show dynamic breadcrumb labels: Dashboard, Jurnal Harian, Deteksi Level Stress
+- `src/app/dashboard/layout.test.tsx` — added `DashboardHeader` mock to preserve "privacy tagline" test
+- `src/app/dashboard/breadcrumb.test.ts` — new; spec test for breadcrumb route→label mapping
+- `src/components/app-sidebar-links.test.tsx` — new; tests sidebar nav link URLs match spec
 
 ### Verification
 
-- Commands run: `bunx tsc --noEmit` → pass; `bun run build` → pass; `bun run test --run` → 10 test files, 33 tests, all pass
+- Commands run: `bunx tsc --noEmit` → pass; `bun run build` → pass; `bun run test --run` → 12 test files, 42 tests, all pass
 
 ### Decisions
 
-- D-007: Local state in JournalHistory handles delete removal; `revalidatePath` in server action ensures server data consistency
+- D-008: DashboardHeader extracted as separate client component — keeps layout server-only while enabling `usePathname()` for dynamic breadcrumb
+- D-009: Settings section removed from navMain — placeholder items serve no current purpose; links were all wrong anyway
 
 ### Known Issues / Risks
 
-- None
+- HITL mobile review still needed — automated tests cover nav links and breadcrumb logic only; mobile responsiveness requires manual testing on real device/emulator
 
 ### Next Steps (ordered)
 
-1. Phase 2 Slice 5 — Navigation + mobile polish (HITL)
+1. Manual mobile responsive review (HITL) — mood selector, toolbar, history items, sidebar collapse
+2. Full E2E path test: manual save → scan redirect → history + delete
+3. Close PRD issue #7
 
 ### Blockers (if any)
 
-- None
+- None (automation shipped; HITL is manual step)
