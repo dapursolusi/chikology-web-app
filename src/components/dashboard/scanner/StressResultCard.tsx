@@ -2,18 +2,11 @@
 
 import Link from 'next/link';
 
+import { StressLevel } from '@/data/stressLevels';
+
 import { Button } from '@/components/ui/button';
 
-type AnalysisResult = {
-  tier: 1 | 2 | 3 | 4 | 5;
-  emoji: string;
-  label: string;
-  color: string;
-  message: string;
-  intervention: string;
-  ciri: string;
-  risiko: string;
-};
+export type AnalysisResult = StressLevel;
 
 interface StressResultCardProps {
   result: AnalysisResult;
@@ -69,15 +62,6 @@ export function StressResultCard({
             </div>
           </div>
 
-          <div className="space-y-2">
-            <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Pesan dari Chikology
-            </h4>
-            <p className="text-sm leading-relaxed text-foreground/80">
-              {result.message}
-            </p>
-          </div>
-
           <details className="group space-y-2 rounded-lg bg-white/60 p-4 ring-1 ring-black/5">
             <summary className="cursor-pointer text-xs font-semibold uppercase tracking-wider text-muted-foreground group-open:text-primary">
               Lihat Detail
@@ -85,11 +69,23 @@ export function StressResultCard({
             <div className="mt-2 space-y-2 text-sm">
               <div>
                 <p className="font-medium text-foreground">Ciri:</p>
-                <p className="text-foreground/70">{result.ciri}</p>
+                <p className="text-foreground/70">
+                  <ul>
+                    {result.signs.map((sign, index) => (
+                      <li key={index}>{sign}</li>
+                    ))}
+                  </ul>
+                </p>
               </div>
               <div>
                 <p className="font-medium text-foreground">Risiko:</p>
-                <p className="text-foreground/70">{result.risiko}</p>
+                <p className="text-foreground/70">
+                  <ul>
+                    {result.risks.map((risk, index) => (
+                      <li key={index}>{risk}</li>
+                    ))}
+                  </ul>
+                </p>
               </div>
             </div>
           </details>
@@ -98,7 +94,29 @@ export function StressResultCard({
             <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Intervensi
             </p>
-            <p className="text-sm">{result.intervention}</p>
+            <p className="text-sm">
+              <ol>
+                {result.interventions.map((intervention, index) => (
+                  <li key={index}>
+                    <div className="space-y-1 rounded-md bg-primary/5 p-3">
+                      <p>{intervention.title}</p>
+                      <p className="text-foreground/70">
+                        {intervention.description}
+                      </p>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Pesan dari Chikology
+            </h4>
+            <p className="text-sm leading-relaxed text-foreground/80">
+              {result.messages}
+            </p>
           </div>
 
           <Link
@@ -115,12 +133,16 @@ export function StressResultCard({
 
           <div className="flex flex-col gap-2 sm:flex-row">
             {onSave && (
-              <Button onClick={onSave} disabled={isSaving} className="flex-1">
+              <Button
+                onClick={onSave}
+                disabled={isSaving}
+                className="md:flex-1"
+              >
                 {isSaving ? 'Menyimpan...' : 'Simpan ke Jurnal'}
               </Button>
             )}
             {onReset && (
-              <Button onClick={onReset} variant="outline" className="flex-1">
+              <Button onClick={onReset} variant="outline" className="md:flex-1">
                 Analisis Ulang
               </Button>
             )}

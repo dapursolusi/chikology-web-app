@@ -30,12 +30,21 @@ const mockResult = {
   emoji: '😐',
   label: 'Moderate Stress (Overload Beginning)',
   color: '#eab308',
-  message:
+  desc: 'Aktivasi HPA-axis yang signifikan.',
+  signs: [
+    'Ekspresi tegang (rahang kaku, alis mengerut)',
+    'Microexpression takut/marah',
+  ],
+  risks: ['Overthinking & Emotional reactivity meningkat.'],
+  interventions: [
+    {
+      title: 'Cognitive Restructuring',
+      subTitle: 'CBT',
+      description: 'Mengubah pikiran irasional jadi lebih rasional.',
+    },
+  ],
+  messages:
     'Haloo.. berhenti sejenak dari aktivitasmu dan baca tulisan ini sebentar karena ini sangat penting buat kamu.',
-  intervention:
-    'Cognitive Restructuring (CBT) — Identifikasi Automatic Negative Thoughts (ANTs)',
-  ciri: 'Ekspresi tegang (rahang kaku, alis mengerut), microexpression takut/marah',
-  risiko: 'Overthinking & Emotional reactivity meningkat',
 };
 
 describe('StressResultCard', () => {
@@ -57,13 +66,17 @@ describe('StressResultCard', () => {
     ).toBeInTheDocument();
   });
 
-  it('renders expandable detail with ciri and risiko', () => {
+  it('renders expandable detail with signs and risks', () => {
     render(<StressResultCard result={mockResult} />);
 
     expect(screen.getByText(/Ciri:/)).toBeInTheDocument();
     expect(screen.getByText(/Risiko:/)).toBeInTheDocument();
-    expect(screen.getByText(mockResult.ciri)).toBeInTheDocument();
-    expect(screen.getByText(mockResult.risiko)).toBeInTheDocument();
+    expect(
+      screen.getByText('Ekspresi tegang (rahang kaku, alis mengerut)')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('Overthinking & Emotional reactivity meningkat.')
+    ).toBeInTheDocument();
   });
 
   it('renders tier badge with emoji, tier number, and label', () => {

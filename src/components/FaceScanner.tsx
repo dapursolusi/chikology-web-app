@@ -7,7 +7,10 @@ import { LoaderCircle } from 'lucide-react';
 import Webcam from 'react-webcam';
 import { toast } from 'sonner';
 
-import { StressResultCard } from '@/components/dashboard/scanner/StressResultCard';
+import {
+  AnalysisResult,
+  StressResultCard,
+} from '@/components/dashboard/scanner/StressResultCard';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -18,17 +21,6 @@ import {
 } from '@/components/ui/card';
 
 import { getStressLevel } from '@/lib/stressAnalyzer';
-
-type AnalysisResult = {
-  tier: 1 | 2 | 3 | 4 | 5;
-  emoji: string;
-  label: string;
-  color: string;
-  message: string;
-  intervention: string;
-  ciri: string;
-  risiko: string;
-};
 
 interface FaceScannerProps {
   questionnaireAnswers?: Record<string, string>;
@@ -129,10 +121,11 @@ export default function FaceScanner({
         emoji: level.emoji,
         label: level.label,
         color: level.color,
-        message: level.messages[0],
-        intervention: level.intervention,
-        ciri: level.ciri,
-        risiko: level.risiko,
+        desc: level.desc,
+        messages: level.messages,
+        interventions: level.interventions,
+        signs: level.signs,
+        risks: level.risks,
       });
     } catch {
       setError('Gagal mendapatkan respons');
@@ -153,7 +146,7 @@ export default function FaceScanner({
     startSaveTransition(async () => {
       const res = await saveJournalEntry({
         stressTier: result.tier,
-        recommendation: result.intervention,
+        recommendation: result.interventions.map((i) => i.title).join(', '),
       });
       if (res.success) {
         toast.success('Tersimpan ke jurnal!');
