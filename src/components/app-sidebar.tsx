@@ -35,7 +35,7 @@ const navMain = [
     items: [
       {
         title: 'Isi Jurnal',
-        url: dashboardLink('journal'),
+        url: dashboardLink('scanner'),
       },
     ],
   },
@@ -57,7 +57,7 @@ const navMain = [
     items: [
       {
         title: 'Baca E-Book',
-        url: dashboardLink('book'),
+        url: dashboardLink('scanner'),
       },
     ],
   },
@@ -68,19 +68,19 @@ const navMain = [
     items: [
       {
         title: 'General',
-        url: dashboardLink('settings/general'),
+        url: dashboardLink('scanner'),
       },
       {
         title: 'Team',
-        url: dashboardLink('settings/team'),
+        url: dashboardLink('scanner'),
       },
       {
         title: 'Billing',
-        url: dashboardLink('settings/billing'),
+        url: dashboardLink('scanner'),
       },
       {
         title: 'Limits',
-        url: dashboardLink('settings/limits'),
+        url: dashboardLink('scanner'),
       },
     ],
   },

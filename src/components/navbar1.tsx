@@ -84,7 +84,7 @@ const Navbar1 = ({
           description:
             'Layanan konseling profesional untuk mendukung kesehatan mental',
           icon: <Book className="size-5 shrink-0" />,
-          url: '/dashboard/counseling',
+          url: '/dashboard/scanner',
         },
         {
           title: 'Jurnal Harian',
@@ -96,7 +96,7 @@ const Navbar1 = ({
           title: 'Deteksi Mood',
           description: 'Analisis mood dengan AI setiap hari',
           icon: <Zap className="size-5 shrink-0" />,
-          url: '/dashboard/face-detection',
+          url: '/dashboard/scanner',
         },
       ],
     },
