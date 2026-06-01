@@ -69,6 +69,14 @@ vi.mock('@/components/ui/separator', () => ({
   Separator: () => <hr />,
 }));
 
+vi.mock('./DashboardHeader', () => ({
+  DashboardHeader: () => (
+    <header>
+      <span>Datamu aman, privasi terjamin</span>
+    </header>
+  ),
+}));
+
 describe('Dashboard layout', () => {
   it('renders the privacy tagline in the header', async () => {
     const { container } = render(

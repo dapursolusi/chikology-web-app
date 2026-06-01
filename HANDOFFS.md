@@ -1,59 +1,53 @@
-## [Monday, 01-06-2026 10:45] — Phase 2 architecture grilled + PRD published
+# HANDOFFS
+
+## [Monday, 01-06-2026 15:19] — Journal UI polish + bug fixes (SHIPPED)
 
 ### Session Target
 
-Grill Phase 2 (Journal System) architecture — walk all design branches, resolve dependencies, publish PRD to issue tracker.
-
-### Current State
-
-- Status: shipped
-- Scope: architecture/planning only — no code changes
-- Phase 2 PRD published as GitHub issue #7 with `ready-for-agent` label
+Polish journal UI and fix critical UX bugs after manual testing feedback.
 
 ### What Changed
 
-No code changes this session (read-only plan mode, then PRD-only output). See GitHub issue #7 for full PRD.
+All changes on `feat/journal-tiptap-editor` (10 commits ahead of development):
+
+**Phase 2 slices 1–5** — already committed on this branch (journal foundation, tiptap editor, scanner redirect, expandable history, nav + breadcrumbs)
+
+**Bug fixes (this session):**
+
+- `src/components/navbar1.tsx` — auth state lazy init → useEffect (SSR/CSR hydration fix)
+- `src/components/modal.tsx` — add DialogDescription (aria compliance)
+- `src/components/dashboard/journal/MoodSelector.tsx` — tiny captions below emojis + aria-label
+- `src/components/dashboard/journal/JournalEditor.tsx` — Button (not Toggle) + cursor tracking + onSelectionUpdate
+- `src/components/dashboard/journal/JournalPageClient.tsx` — moodRef init, success toast, optimistic update, router.refresh(), lastSavedIdRef (infinite loop fix), remove startTransition
+- `src/components/dashboard/journal/JournalHistory.tsx` — stripHtml preserves list markers; useEffect syncs localEntries with prop (CRITICAL: this was the real stale-history bug)
+- `src/app/globals.css` — .ProseMirror and .journal-content list CSS
+
+### Critical Bug Found (D-013)
+
+`JournalHistory` has `useState(entries)` which reads prop ONLY ON MOUNT. Every subsequent prop update is silently ignored. This was the real reason history never updated after save — not the router.refresh(), not the optimistic update, not the sync effect in JournalPageClient. The fix: add `useEffect(() => setLocalEntries(entries), [entries])` in JournalHistory.
 
 ### Verification
 
-- `gh issue view 7` — PRD published with `ready-for-agent` label
-- No build/test needed (zero code changes)
+- `bunx tsc --noEmit` → pass
+- `bun run test --run` → 12 test files, 42 tests, all pass
+- `bun run build` → pass
+- Lint → 0 errors (warnings suppressed with eslint-disable for legitimate setState-in-effect patterns)
 
 ### Decisions
 
-- D-022: One unified `saveJournalEntry` action — replaces old scanner-only action. Accepts `mood` (required) + at least one of `content`/`stressTier`. Returns `{ success: true, entryId: string }`.
-- D-023: `stressTier = null` for manual journal entries — preserves semantic distinction between measured and self-reported data.
-- D-024: Server-fetched history, client-side editor — `page.tsx` fetches entries via `getJournalEntries()`, passes to client component.
-- D-025: Scanner redirect replaces inline save — "Simpan ke Jurnal" redirects to `/dashboard/journal?tier=N` instead of saving inline.
-- D-026: One row, one save — scanner data + manual content go into a single DB row.
-- D-027: Scanner data derived client-side from `stressLevels[tier]` — no DB fetch needed.
-- D-028: Scanner result shown as collapsible shadcn Accordion on journal page — collapsed by default.
-- D-029: Mood selector reuses scanner emojis (😌😊😐😟😰), single-select.
-- D-030: History display — date + mood emoji + content preview, newest first, expandable inline detail.
-- D-031: Delete-only (soft delete) — no edit, no trash view in MVP.
-- D-032: Tiptap toolbar minimal — bold, italic, bullet list, numbered list. No headings.
-- D-033: Sidebar nav cleanup — Jurnal → `/dashboard/journal`, Scanner → `/dashboard/scanner`, Book → `#`.
-- D-034: Breadcrumb dynamic — shows "Jurnal Harian", "Deteksi Level Stress", or "Dashboard" based on route.
-- D-035: `getJournalEntries()` co-located in `actions/journal.ts` — same file as save action, extracted later if file grows.
-- D-036: "Scan Wajah Dulu" banner above editor when no scanner params present for today.
-- D-037: Delete confirmation dialog before soft-delete (`deletedAt = now()`).
-- D-038: Validation — mood required + at least one of (content, stressTier) must be present server-side.
+- D-010: Auth state must not be initialized from browser globals in lazy initializer
+- D-011: Lucide icons for toolbar (consistent with design system)
+- D-012: Local state + onSelectionUpdate for cursor tracking
+- D-013: `useState(prop)` only reads on mount — always add sync useEffect when prop drives state in child components
 
-### Known Issues / Risks
+### Next Steps
 
-- Test environment pre-existing failure (jsdom + react-webcam document access) — unrelated to Phase 2, but will affect new journal tests
-- Mobile responsive testing must be done (hard acceptance criterion)
-- `bunx --bun drizzle-kit push` still not run for questionnaire_responses schema change
-- PreScanQuestionnaire still has placeholder questions — waiting on Mas Chiko
+- Merge `feat/journal-tiptap-editor` into `development`
+- HITL mobile responsive review (manual step)
+- Close any related issues
 
-### Next Steps (ordered)
-
-1. [Phase 2] Slice 1 — Journal page foundation + server actions (#8) — no blockers
-2. [Phase 2] Slice 2 — Tiptap editor + full manual entries (#9) — blocked by #8
-3. [Phase 2] Slice 3 — Scanner redirect + pre-fill (#10) — blocked by #8
-4. [Phase 2] Slice 4 — History display + delete (#11) — blocked by #8
-5. [Phase 2] Slice 5 — Navigation + mobile polish (HITL) (#12) — blocked by #8, #10, #11
-
-### Blockers (if any)
+### Blockers
 
 - None
+
+---

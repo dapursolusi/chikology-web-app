@@ -22,6 +22,12 @@ vi.mock('next/link', () => ({
   ),
 }));
 
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: vi.fn(),
+  }),
+}));
+
 vi.mock('@/components/modal', () => ({
   default: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
 }));

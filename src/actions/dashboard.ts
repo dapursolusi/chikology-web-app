@@ -2,7 +2,7 @@
 
 import { db } from '@/db';
 import { journalEntries } from '@/db/schema';
-import { and, desc, eq, gte, sql } from 'drizzle-orm';
+import { and, desc, eq, gte, isNull, sql } from 'drizzle-orm';
 
 import { createClient } from '@/lib/supabase/server';
 
@@ -103,7 +103,9 @@ export async function getRecentActivity(): Promise<RecentActivityItem[]> {
       createdAt: journalEntries.createdAt,
     })
     .from(journalEntries)
-    .where(eq(journalEntries.userId, user.id))
+    .where(
+      and(eq(journalEntries.userId, user.id), isNull(journalEntries.deletedAt))
+    )
     .orderBy(desc(journalEntries.createdAt))
     .limit(5);
 
@@ -150,7 +152,9 @@ export async function getWeekMoods(): Promise<DayMood[]> {
       createdAt: journalEntries.createdAt,
     })
     .from(journalEntries)
-    .where(eq(journalEntries.userId, user.id))
+    .where(
+      and(eq(journalEntries.userId, user.id), isNull(journalEntries.deletedAt))
+    )
     .orderBy(desc(journalEntries.createdAt));
 
   const entriesByDay = new Map<number, typeof entries>();

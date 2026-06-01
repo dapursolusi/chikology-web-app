@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 import Link from 'next/link';
 
@@ -133,18 +133,9 @@ const Navbar1 = ({
   },
   className,
 }: Navbar1Props) => {
-  const [activeAuth, setActiveAuth] = useState<'login' | 'signup' | null>(
-    () => {
-      if (typeof window !== 'undefined') {
-        const params = new URLSearchParams(window.location.search);
-        if (params.has('auth')) {
-          return 'login';
-        }
-      }
-      return null;
-    }
-  );
+  const [activeAuth, setActiveAuth] = useState<'login' | 'signup' | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const initRef = useRef(false);
 
   useEffect(() => {
     const supabase = createClient();
@@ -152,12 +143,18 @@ const Navbar1 = ({
       setIsLoggedIn(!!data.user);
     });
 
+    if (initRef.current) return;
+    initRef.current = true;
+
     const params = new URLSearchParams(window.location.search);
     if (params.get('auth') === 'error') {
       alert('Gagal masuk. Silakan coba lagi.');
     }
     if (params.has('auth')) {
-      window.history.replaceState({}, '', window.location.pathname);
+      queueMicrotask(() => {
+        setActiveAuth('login');
+        window.history.replaceState({}, '', window.location.pathname);
+      });
     }
   }, []);
 
