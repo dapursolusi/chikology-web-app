@@ -16,6 +16,7 @@ import {
 import { toast } from 'sonner';
 
 import { JournalEditor } from '@/components/dashboard/journal/JournalEditor';
+import { JournalHistory } from '@/components/dashboard/journal/JournalHistory';
 import { MoodSelector } from '@/components/dashboard/journal/MoodSelector';
 import { ScanResultAccordion } from '@/components/dashboard/journal/ScanResultAccordion';
 import { Button } from '@/components/ui/button';
@@ -139,66 +140,7 @@ export function JournalPageClient({ entries }: JournalPageClientProps) {
         </div>
       )}
 
-      {entries.length > 0 ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Riwayat Jurnal</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {entries.map((entry) => (
-              <div
-                key={entry.id}
-                className="flex items-start gap-3 rounded-lg border p-3"
-              >
-                <span className="text-2xl">
-                  {MOOD_EMOJI[entry.mood ?? 'neutral']}
-                </span>
-                <div className="flex-1 space-y-1">
-                  <p className="text-sm text-muted-foreground">
-                    {formatDate(entry.createdAt)}
-                  </p>
-                  {entry.content && (
-                    <p
-                      className="text-sm"
-                      dangerouslySetInnerHTML={{
-                        __html: truncateHtml(entry.content, 120),
-                      }}
-                    />
-                  )}
-                </div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      ) : (
-        <p className="text-sm text-muted-foreground">
-          Belum ada entri jurnal. Pilih mood dan klik Simpan untuk memulai.
-        </p>
-      )}
+      <JournalHistory entries={entries} />
     </div>
   );
-}
-
-const MOOD_EMOJI: Record<string, string> = {
-  very_calm: '😌',
-  calm: '😊',
-  neutral: '😐',
-  stressed: '😟',
-  very_stressed: '😰',
-};
-
-function formatDate(date: Date): string {
-  return new Intl.DateTimeFormat('id-ID', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(new Date(date));
-}
-
-function truncateHtml(html: string, maxLength: number): string {
-  const text = html.replace(/<[^>]*>/g, '');
-  if (text.length <= maxLength) return html;
-  return text.slice(0, maxLength) + '...';
 }
