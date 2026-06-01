@@ -1,14 +1,17 @@
 'use client';
 
 import { useActionState } from 'react';
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
+
+import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 
 import { type Mood, saveJournalEntry } from '@/actions/journal';
 
+import { JournalEditor } from '@/components/dashboard/journal/JournalEditor';
 import { MoodSelector } from '@/components/dashboard/journal/MoodSelector';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Textarea } from '@/components/ui/textarea';
 
 interface JournalEntry {
   id: string;
@@ -29,14 +32,16 @@ type ActionState =
   | null;
 
 export function JournalPageClient({ entries }: JournalPageClientProps) {
+  const searchParams = useSearchParams();
+  const hasTier = searchParams.has('tier');
+  const [editorContent, setEditorContent] = useState('');
   const [state, formAction, isPending] = useActionState<ActionState, FormData>(
     (_state, formData) => {
       const mood = formData.get('mood') as Mood | null;
-      const content = formData.get('content') as string | null;
       if (!mood) return { error: 'Mood wajib dipilih' };
       return saveJournalEntry({
         mood,
-        content: content ?? undefined,
+        content: editorContent || undefined,
       });
     },
     null
@@ -72,10 +77,9 @@ export function JournalPageClient({ entries }: JournalPageClientProps) {
             {state && 'error' in state && (
               <p className="text-sm text-destructive">{state.error}</p>
             )}
-            <Textarea
-              name="content"
-              placeholder="Tulis perasaanmu di sini... (opsional)"
-              rows={4}
+            <JournalEditor
+              content={editorContent}
+              onChange={setEditorContent}
             />
             <Button type="submit" disabled={isPending}>
               {isPending ? 'Menyimpan...' : 'Simpan'}
@@ -83,6 +87,23 @@ export function JournalPageClient({ entries }: JournalPageClientProps) {
           </form>
         </CardContent>
       </Card>
+
+      {!hasTier && (
+        <div className="flex items-center justify-center gap-2 rounded-lg border border-dashed border-primary/30 bg-primary/5 px-4 py-3 text-sm">
+          <span className="text-muted-foreground">
+            Belum ada deteksi stres hari ini.{' '}
+          </span>
+          <Link href="/dashboard/scanner">
+            <Button
+              variant="link"
+              size="sm"
+              className="h-auto p-0 text-primary"
+            >
+              Scan Wajah
+            </Button>
+          </Link>
+        </div>
+      )}
 
       {entries.length > 0 ? (
         <Card>
@@ -103,11 +124,12 @@ export function JournalPageClient({ entries }: JournalPageClientProps) {
                     {formatDate(entry.createdAt)}
                   </p>
                   {entry.content && (
-                    <p className="text-sm">
-                      {entry.content.length > 120
-                        ? entry.content.slice(0, 120) + '...'
-                        : entry.content}
-                    </p>
+                    <p
+                      className="text-sm"
+                      dangerouslySetInnerHTML={{
+                        __html: truncateHtml(entry.content, 120),
+                      }}
+                    />
                   )}
                 </div>
               </div>
@@ -139,4 +161,10 @@ function formatDate(date: Date): string {
     hour: '2-digit',
     minute: '2-digit',
   }).format(new Date(date));
+}
+
+function truncateHtml(html: string, maxLength: number): string {
+  const text = html.replace(/<[^>]*>/g, '');
+  if (text.length <= maxLength) return html;
+  return text.slice(0, maxLength) + '...';
 }

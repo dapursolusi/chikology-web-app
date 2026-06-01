@@ -1,43 +1,41 @@
-## [Monday, 01-06-2026 11:50] — Phase 2 Slice 1: Journal page foundation + server actions
+## [Monday, 01-06-2026 12:45] — Phase 2 Slice 2: Tiptap editor + full manual entries
 
 ### Session Target
 
-Implement `/dashboard/journal` route with unified server actions and mood selector (issue #8).
+Add Tiptap rich-text editor to journal page + "Scan Wajah Dulu" banner (issue #9).
 
 ### Current State
 
 - Status: **shipped**
-- Scope: `src/actions/journal.ts`, `src/actions/dashboard.ts`, `src/app/dashboard/journal/page.tsx`, `src/components/dashboard/journal/JournalPageClient.tsx`, `src/components/dashboard/journal/MoodSelector.tsx`, `src/test/actions/journal.test.ts`, `src/components/dashboard/journal/MoodSelector.test.tsx`
+- Scope: `JournalEditor.tsx`, `JournalPageClient.tsx`, `toggle.tsx`, `journal-editor.test.tsx`, test setup
 
 ### What Changed
 
-- `src/actions/journal.ts` — Rewrote `saveJournalEntry` with new signature `({ mood, content?, stressTier?, recommendation? })`; added `getJournalEntries()` (user-filtered, deleted_at IS NULL, DESC); added `deleteJournalEntry(id)` (soft delete with userId guard)
-- `src/actions/dashboard.ts` — Fixed `getRecentActivity` and `getWeekMoods` to filter `deleted_at IS NULL` (was leaking soft-deleted entries); added `isNull` + `and` imports
-- `src/components/dashboard/scanner/ScannerFlow.tsx` — Updated `saveJournalEntry` call to use new signature `{ mood: MOOD_MAP[result.tier], stressTier: result.tier, recommendation: ... }`; added `MOOD_MAP` import
-- `src/app/dashboard/journal/page.tsx` — New server component; calls `getJournalEntries()` and passes to `JournalPageClient`
-- `src/components/dashboard/journal/JournalPageClient.tsx` — New `"use client"` component; owns form state with `useActionState`; renders `MoodSelector` + `Textarea` + history list
-- `src/components/dashboard/journal/MoodSelector.tsx` — New; 5 emoji buttons (😌😊😐😟😰), single-select via `aria-selected`, pre-fillable via `value` prop
-- `src/test/actions/journal.test.ts` — New; tests for `saveJournalEntry` (auth/mood validation/content-or-tier validation), `getJournalEntries` (auth guard), `deleteJournalEntry` (auth guard); mocks Supabase + Drizzle + `revalidatePath`
-- `src/components/dashboard/journal/MoodSelector.test.tsx` — New; tests render, onChange, aria-selected, pre-fill, titles
+- `package.json` + `bun.lock` — installed `@tiptap/react@3.24.0`, `@tiptap/starter-kit@3.24.0`, `@tiptap/extension-placeholder@3.24.0`
+- `src/components/dashboard/journal/JournalEditor.tsx` — new; Tiptap editor with bold/italic/bullet/numbered toolbar using `Toggle` component; uses `useEditor` + `StarterKit` + `Placeholder`
+- `src/components/dashboard/journal/JournalPageClient.tsx` — replaced `Textarea` with `JournalEditor`; added `useSearchParams` banner ("Scan Wajah Dulu") shown when no `?tier=` param; content from Tiptap passed as HTML to `saveJournalEntry`; history truncates HTML tags for preview
+- `src/components/ui/toggle.tsx` — new; added via `bunx shadcn add toggle`
+- `src/test/setup.ts` — added `document.elementFromPoint` mock for jsdom (Tiptap Placeholder uses it)
+- `src/test/components/dashboard/journal/journal-editor.test.tsx` — new; tests toolbar buttons render and active states using mocked `@tiptap/react`
 
 ### Verification
 
-- Commands run: `bunx tsc --noEmit` → pass; `bun run build` → pass; `bun run test --run` → 8 test files, 25 tests, all pass
+- Commands run: `bunx tsc --noEmit` → pass; `bun run build` → pass; `bun run test --run` → 9 test files, 29 tests, all pass
 
 ### Decisions
 
-- D-001: Use `useActionState` adapter function to bridge form `FormData` → typed `saveJournalEntry` signature; avoids modifying the action's public API
-- D-002: `revalidatePath` called on both `/dashboard` and `/dashboard/journal` to ensure dashboard stats + journal page stay in sync after save
+- D-003: Tiptap `@tiptap/react` mocked in tests because Placeholder extension uses `elementFromPoint` which jsdom doesn't fully support; mock provides fake editor for toolbar state tests
+- D-004: `elementFromPoint` stubbed in test setup globally — harmless for other tests, necessary for Tiptap
 
 ### Known Issues / Risks
 
-- `MoodSelector` uses ref-based hidden input for form binding; functional but unconventional — may want to refactor to controlled state + hidden input pattern later
-- Dashboard "Quick Actions" card has duplicate "Jurnal" link (also links to `/dashboard/journal`) — separate issue, not part of this slice
+- `elementFromPoint` mock in setup.ts is global — may mask real issues in other components that use this API; acceptable tradeoff for jsdom compatibility
+- Tiptap content stored as HTML string in DB — `truncateHtml()` strips tags for preview, but full HTML is stored; fine for now (Slice 4 may add rendering)
 
 ### Next Steps (ordered)
 
-1. Verify `/dashboard/journal` renders correctly in browser (manual QA)
-2. Phase 2 Slice 2 — Tiptap editor + full manual entries
+1. Phase 2 Slice 3 — Scanner redirect + pre-fill
+2. Phase 2 Slice 4 — History display + delete
 
 ### Blockers (if any)
 

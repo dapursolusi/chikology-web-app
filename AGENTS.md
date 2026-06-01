@@ -1,3 +1,25 @@
+## Specific Rules:
+
+Only read and follow these rule files exactly if touching/writing on specific domain:
+
+- [TypeScript](./docs/rules/RULES_TYPESCRIPT.md)
+- [React](./docs/rules/RULES_REACT.md)
+- [Next.js](./docs/rules/RULES_NEXTJS.md)
+
+## Universal Guardrails (Always Active)
+
+- No new files/folders unless explicitly asked.
+- No renaming core types or restructuring modules.
+- No new npm packages without asking.
+- Prefer the smallest change that satisfies the requirement.
+- Output format: plan (5 lines max) → files affected → code → self-review checklist.
+
+## Reference Component Anchor
+
+Canonical reference for all new components:
+→ /components/[YourBestComponent]/index.tsx
+Copy its prop typing, layout patterns, and Tailwind usage for consistency.
+
 ## Runtime
 
 Use `bun` for everything — install, run scripts, execute packages.

@@ -1,9 +1,8 @@
-## `RULES_REACT.md`
+# `RULES_REACT.md`
 
-```markdown
-# React Rules
+## React Rules
 
-## REACT ARCHITECTURE & REFACTORING RULES
+### REACT ARCHITECTURE & REFACTORING RULES
 
 You must evaluate all React/Next.js components using this strict 4-step hierarchy before writing or editing code:
 
@@ -12,7 +11,7 @@ You must evaluate all React/Next.js components using this strict 4-step hierarch
 3. REUSABILITY: If a stateful UI pattern is used in multiple files, you MUST extract it into a shared custom hook.
 4. FILE SIZE LIMIT: If the component file is under 150 lines and handles local-only UI toggles, leave the handlers inside the component. If it exceeds 150 lines, extract the state and handlers into a companion custom hook to keep the JSX clean.
 
-## Component Structure
+### Component Structure
 
 - Functional components only. No class components.
 - Props typed with an explicit `interface`, named `[ComponentName]Props`, exported.
@@ -21,24 +20,24 @@ You must evaluate all React/Next.js components using this strict 4-step hierarch
 - Destructure props in function signature.
 - Use early returns for loading/error/null states.
 
-## File Organization
+### File Organization
+
+```ts
+/components/CIacdeinorv / index.tsx; // Component
+types.ts; // Props + local types
+useInvoiceCard.ts; // Custom hook (if needed)
 ```
 
-/components/InvoiceCard/
-index.tsx # Component
-types.ts # Props + local types
-useInvoiceCard.ts # Custom hook (if needed)
+### Hooks
 
-```
-
-## Hooks
 - Custom hooks: prefix with `use`, co-locate or place in `src/hooks/` or `/hooks/`.
 - No business logic inside components — extract to a custom hook.
 - No `useEffect` for data fetching. Use server actions, React Query, or server components.
 - `useEffect` allowed only for: DOM side effects, subscriptions, third-party lib init.
 - Dependency arrays must be complete. No eslint-disable on deps.
 
-## State Management
+### State Management
+
 - Local UI state: `useState` (open/close, selected tab, input text).
 - Server state: React Query (TanStack Query) or server components — never `useEffect` fetch.
 - Global UI state: Zustand with typed store (minimal surface area).
@@ -46,8 +45,10 @@ useInvoiceCard.ts # Custom hook (if needed)
 - No prop drilling beyond 2 levels — lift to context or co-locate with a hook.
 - Never sync the same data in two places.
 
-## Reference-First Rule (Prevents "Alien UI")
+### Reference-First Rule (Prevents "Alien UI")
+
 Before generating any new component, the agent needs one of:
+
 - A component tree / sketch description from the user
 - A screenshot or link to match
 - A reference component already in the repo
@@ -55,7 +56,8 @@ Before generating any new component, the agent needs one of:
 Without a reference → output wireframe-level JSX only (no styling decisions).
 With a reference → copy its patterns exactly (spacing, props shape, structure).
 
-## Styling
+### Styling
+
 - Tailwind only. Use only tokens from `tailwind.config.ts`.
 - No arbitrary values (`p-[13px]`) unless explicitly asked.
 - No inline styles except for dynamic values from JS.
@@ -63,20 +65,22 @@ With a reference → copy its patterns exactly (spacing, props shape, structure)
 - Do NOT "improve" visual design unless explicitly requested.
 - Mobile-first. Use `sm/md/lg` breakpoints only.
 
-## Forms
+### Forms
+
 - `react-hook-form` + `zod` for all forms.
 - Validation schema lives in `/schemas/`, not inside the component.
 - Labels tied to inputs, error messages displayed, keyboard-navigable.
 
-## Forbidden
+### Forbidden
+
 - No `React.FC` — use explicit return type or infer.
 - No default exports for utility functions or hooks — named exports only.
 - No inline arrow functions as event handlers in JSX if they cause re-renders in lists.
 - No wrapping divs or containers beyond what is specified.
 
-## STOP & ASK
+### STOP & ASK
+
 - New shared primitive (Button, Input, Dialog, Table): STOP, propose API first.
 - Modifying a component used in >2 places: STOP, list all usages before changing.
 - New design pattern not already in the codebase: STOP, ask.
 - Modifying shared layout components (Navbar, Sidebar, Shell): STOP, ask.
-```
