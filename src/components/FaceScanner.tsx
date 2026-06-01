@@ -1,17 +1,11 @@
 'use client';
 
-import { useCallback, useRef, useState, useTransition } from 'react';
+import { useCallback, useRef, useState } from 'react';
 
-import { saveJournalEntry } from '@/actions/journal';
-import { stressLevels } from '@/data/stressLevels';
+import type { StressLevel } from '@/data/stressLevels';
 import { LoaderCircle } from 'lucide-react';
 import Webcam from 'react-webcam';
-import { toast } from 'sonner';
 
-import {
-  AnalysisResult,
-  StressResultCard,
-} from '@/components/dashboard/scanner/StressResultCard';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -21,139 +15,50 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 
+import {
+  AnalysisError,
+  CameraError,
+  analyzeFace,
+} from '@/lib/scanner/pipeline';
+
 interface FaceScannerProps {
   questionnaireAnswers?: Record<string, string>;
+  onResult: (result: StressLevel) => void;
 }
 
 export default function FaceScanner({
   questionnaireAnswers,
-}: FaceScannerProps = {}) {
+  onResult,
+}: FaceScannerProps) {
   const webcamRef = useRef<Webcam>(null);
   const [cameraActive, setCameraActive] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [result, setResult] = useState<AnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const startCamera = useCallback(() => {
     setCameraActive(true);
   }, []);
 
-  const analyzeFace = useCallback(async () => {
+  const analyzeFaceAction = useCallback(async () => {
     setIsAnalyzing(true);
     setError(null);
-    setResult(null);
 
     try {
-      let video = webcamRef.current?.video ?? null;
-      if (!video || video.readyState < 2) {
-        for (let i = 0; i < 10; i++) {
-          await new Promise((r) => setTimeout(r, 500));
-          video = webcamRef.current?.video ?? null;
-          if (video && video.readyState >= 2) break;
-        }
-      }
-
-      if (!video) {
-        setError('Gagal mengakses kamera');
-        return;
-      }
-
-      const screenshot = webcamRef.current?.getScreenshot();
-      if (!screenshot) {
-        setError('Gagal mengambil gambar');
-        return;
-      }
-
-      const img = new Image();
-      img.src = screenshot;
-      await new Promise((r) => {
-        img.onload = r;
-      });
-
-      const cropRatio = 0.7;
-      const cropW = img.width * cropRatio;
-      const cropH = img.height * cropRatio;
-      const cropX = (img.width - cropW) / 2;
-      const cropY = (img.height - cropH) / 2;
-
-      const c = document.createElement('canvas');
-      c.width = cropW;
-      c.height = cropH;
-      const ctx = c.getContext('2d')!;
-      ctx.drawImage(img, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
-      const cropped = c.toDataURL('image/jpeg', 0.95);
-
-      const base64 = cropped.replace(/^data:image\/\w+;base64,/, '');
-
-      const response = await fetch('/api/analyze-face', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          image: base64,
-          ...(questionnaireAnswers
-            ? { questionnaire: questionnaireAnswers }
-            : {}),
-        }),
-      });
-
-      if (!response.ok) {
-        const err = await response
-          .json()
-          .catch(() => ({ error: 'Unknown error' }));
-        setError(err.error || 'Gagal mendapatkan respons');
-        return;
-      }
-
-      const data = await response.json();
-
-      if (!data.tier || data.tier < 1 || data.tier > 5) {
+      const result = await analyzeFace(webcamRef, questionnaireAnswers);
+      console.warn('Analysis tier:', result.tier);
+      onResult(result);
+    } catch (err) {
+      if (err instanceof CameraError) {
+        setError(err.message);
+      } else if (err instanceof AnalysisError) {
+        setError(err.message);
+      } else {
         setError('Gagal mendapatkan respons');
-        return;
       }
-
-      const tier = data.tier as 1 | 2 | 3 | 4 | 5;
-      const level = stressLevels[tier];
-      console.warn('Analysis tier:', tier);
-
-      setResult({
-        tier,
-        emoji: level.emoji,
-        label: level.label,
-        color: level.color,
-        desc: level.desc,
-        messages: level.messages,
-        interventions: level.interventions,
-        signs: level.signs,
-        risks: level.risks,
-      });
-    } catch {
-      setError('Gagal mendapatkan respons');
     } finally {
       setIsAnalyzing(false);
     }
-  }, []);
-
-  const resetAnalysis = useCallback(() => {
-    setResult(null);
-    setError(null);
-  }, []);
-
-  const [isSaving, startSaveTransition] = useTransition();
-
-  const handleSave = useCallback(() => {
-    if (!result) return;
-    startSaveTransition(async () => {
-      const res = await saveJournalEntry({
-        stressTier: result.tier,
-        recommendation: result.interventions.map((i) => i.title).join(', '),
-      });
-      if (res.success) {
-        toast.success('Tersimpan ke jurnal!');
-      } else {
-        toast.error(res.error ?? 'Gagal menyimpan');
-      }
-    });
-  }, [result]);
+  }, [questionnaireAnswers, onResult]);
 
   return (
     <Card className="mx-0 w-full max-w-2xl">
@@ -186,7 +91,7 @@ export default function FaceScanner({
           </div>
         )}
 
-        {cameraActive && !result && (
+        {cameraActive && (
           <div className="flex w-full flex-col items-center gap-3">
             {error && (
               <div className="w-full rounded-lg border border-destructive/20 bg-destructive/5 p-3 text-center text-sm text-destructive">
@@ -194,7 +99,7 @@ export default function FaceScanner({
               </div>
             )}
             <Button
-              onClick={analyzeFace}
+              onClick={analyzeFaceAction}
               disabled={isAnalyzing}
               size="lg"
               className="min-w-[200px]"
@@ -209,15 +114,6 @@ export default function FaceScanner({
               )}
             </Button>
           </div>
-        )}
-
-        {result && (
-          <StressResultCard
-            result={result}
-            onSave={handleSave}
-            onReset={resetAnalysis}
-            isSaving={isSaving}
-          />
         )}
       </CardContent>
     </Card>

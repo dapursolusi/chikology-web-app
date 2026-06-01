@@ -1,6 +1,11 @@
 import Link from 'next/link';
 
-import { ArrowRight, BookOpen, Calendar, Smile, Sparkles } from 'lucide-react';
+import {
+  getDashboardStats,
+  getRecentActivity,
+  getWeekMoods,
+} from '@/actions/dashboard';
+import { ArrowRight, BookOpen, Calendar, Sparkles } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -11,41 +16,60 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 
-export default function Page() {
-  // Mock data for dashboard
-  const stats = [
+const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+  Calendar,
+  Smile: Sparkles,
+  Sparkles,
+  BookOpen,
+};
+
+export default async function Page() {
+  const [stats, recentActivity, weekMoods] = await Promise.all([
+    getDashboardStats(),
+    getRecentActivity(),
+    getWeekMoods(),
+  ]);
+
+  const journalCount = stats.journalCount ?? 0;
+  const avgMood = stats.avgMood;
+
+  const moodLabel =
+    avgMood !== null
+      ? avgMood <= 1.5
+        ? 'Sangat tenang'
+        : avgMood <= 2.5
+          ? 'Tenang'
+          : avgMood <= 3.5
+            ? 'Netral'
+            : avgMood <= 4.5
+              ? 'Tertekan'
+              : 'Sangat tertekan'
+      : 'Belum ada data';
+
+  const cards = [
     {
       title: 'Jurnal minggu ini',
-      value: '5',
-      change: '+2 dari minggu lalu',
+      value: String(journalCount),
+      change: stats.weekChange ?? '—',
       icon: Calendar,
       color: 'text-primary',
       bg: 'bg-primary/10',
     },
     {
       title: 'Mood rata-rata',
-      value: '4.2',
-      change: 'Mulai meningkat',
-      icon: Smile,
+      value: avgMood !== null ? avgMood.toFixed(1) : '—',
+      change: avgMood !== null ? moodLabel : 'Mulai lacak moodmu',
+      icon: Sparkles,
       color: 'text-green-600 dark:text-green-400',
       bg: 'bg-green-100 dark:bg-green-900/30',
     },
-  ];
-
-  const recentActivity = [
     {
-      title: 'Jurnal baru ditambahkan',
-      description: 'Refleksi pagi tentang hari yang produktif',
-      time: '2 jam lalu',
+      title: 'Rata-rata stres',
+      value: avgMood !== null ? String(Math.round(avgMood)) : '—',
+      change: avgMood !== null ? 'Tingkat stres mingguan' : 'Belum ada data',
       icon: Calendar,
-      color: 'text-primary',
-    },
-    {
-      title: 'Deteksi mood selesai',
-      description: 'Analisis Harian - Akurasi 94%',
-      time: '5 jam lalu',
-      icon: Sparkles,
-      color: 'text-secondary-foreground',
+      color: 'text-orange-600 dark:text-orange-400',
+      bg: 'bg-orange-100 dark:bg-orange-900/30',
     },
   ];
 
@@ -63,8 +87,8 @@ export default function Page() {
 
       {/* Stats row */}
       <div className="grid gap-4 md:grid-cols-3">
-        {stats.map((stat, index) => (
-          <Card key={index} className="relative overflow-hidden">
+        {cards.map((stat) => (
+          <Card key={stat.title} className="relative overflow-hidden">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
                 {stat.title}
@@ -135,26 +159,40 @@ export default function Page() {
             <CardDescription>Riwayat aktivitas kamu</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {recentActivity.map((activity, index) => (
-                <div key={index} className="flex items-start gap-3">
-                  <div className="rounded-full p-2 bg-muted">
-                    <activity.icon className={`size-4 ${activity.color}`} />
-                  </div>
-                  <div className="flex-1 space-y-1">
-                    <p className="text-sm font-medium text-foreground">
-                      {activity.title}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {activity.description}
-                    </p>
-                    <p className="text-xs text-muted-foreground/70">
-                      {activity.time}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
+            {recentActivity.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                Belum ada aktivitas. Mulai dengan menulis jurnal atau deteksi
+                mood.
+              </p>
+            ) : (
+              <div className="space-y-4">
+                {recentActivity.map((activity, index) => {
+                  const IconComponent = ICONS[activity.icon];
+                  return (
+                    <div key={index} className="flex items-start gap-3">
+                      <div className="rounded-full bg-muted p-2">
+                        {IconComponent && (
+                          <IconComponent
+                            className={`size-4 ${activity.color}`}
+                          />
+                        )}
+                      </div>
+                      <div className="flex-1 space-y-1">
+                        <p className="text-sm font-medium text-foreground">
+                          {activity.title}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {activity.description}
+                        </p>
+                        <p className="text-xs text-muted-foreground/70">
+                          {activity.time}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -177,25 +215,21 @@ export default function Page() {
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-around py-4">
-            {['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'].map((day, i) => {
-              const moods = ['😊', '😌', '😐', '🙂', '😔', '😊', '😄'];
-              const isActive = i === 5 || i === 6;
-              return (
-                <div key={day} className="flex flex-col items-center gap-2">
-                  <span className="text-xs text-muted-foreground">{day}</span>
-                  <span
-                    className="text-2xl"
-                    role="img"
-                    aria-label={`Mood: ${moods[i]}`}
-                  >
-                    {moods[i]}
-                  </span>
-                  {isActive && (
-                    <div className="h-1 w-1 rounded-full bg-primary" />
-                  )}
-                </div>
-              );
-            })}
+            {weekMoods.map((day) => (
+              <div key={day.day} className="flex flex-col items-center gap-2">
+                <span className="text-xs text-muted-foreground">{day.day}</span>
+                <span
+                  className="text-2xl opacity-60"
+                  role="img"
+                  aria-label={`Mood: ${day.emoji}`}
+                >
+                  {day.emoji}
+                </span>
+                {day.hasEntry && (
+                  <div className="h-1 w-1 rounded-full bg-primary" />
+                )}
+              </div>
+            ))}
           </div>
         </CardContent>
       </Card>

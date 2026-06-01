@@ -188,3 +188,65 @@ Implement Phase 1.5 Slice 3: Wire questionnaire into Groq analysis (GitHub issue
 ### Blockers (if any)
 
 - None
+
+---
+
+## [Monday, 01-06-2026 09:08] — Architecture review + Candidates 1,3,4 shipped
+
+### Session Target
+
+Improve codebase architecture: surface friction, deepen shallow modules, fix leaky seams. Commit to development.
+
+### Current State
+
+- Status: shipped
+- Scope: FaceScanner refactor, dead code cleanup, Supabase URL consolidation, shallow module deletion
+
+### What Changed
+
+**Architecture review (Candidates 1, 3, 4):**
+
+- `src/components/nav-projects.tsx` — DELETED — never imported, shadcn sidebar remnant
+- `src/components/team-switcher.tsx` — DELETED — never imported, shadcn sidebar remnant
+- `src/components/logo-icon.tsx` — DELETED — near-duplicate of logo.tsx, never imported
+- `src/types/face-api.d.ts` — DELETED — types for face-api.js (never used at runtime)
+- `package.json` — removed `face-api.js` dependency
+- `src/lib/supabase/base-url.ts` — NEW — shared getBaseUrl(), replaces 3 identical copies
+- `src/lib/supabase/client.ts` — imports from base-url.ts
+- `src/lib/supabase/server.ts` — imports from base-url.ts
+- `src/lib/supabase/middleware.ts` — imports from base-url.ts
+- `src/lib/stressAnalyzer.ts` — DELETED — shallow pass-through; lookups inlined at call sites
+- `src/components/FaceScanner.tsx` — refactored: 225→77 lines; extracted pipeline, removed save logic; accepts `onResult` callback
+- `src/components/dashboard/scanner/ScannerFlow.tsx` — refactored: 33→83 lines; owns all flow state (form|camera|result), save transition, toast, reset
+- `src/lib/scanner/crop.ts` — NEW — cropImage() pure utility
+- `src/lib/scanner/pipeline.ts` — NEW — analyzeFace() pipeline (wait→screenshot→crop→API→parse), CameraError/AnalysisError classes
+
+### Verification
+
+- `bun run build` — passes
+- `bun run lint` — warnings only (pre-existing)
+- `bun test` — 13 tests fail with `document is not defined` — PRE-EXISTING failure (tests failed before this session due to react-webcam accessing document at module init in jsdom env)
+
+### Decisions
+
+- D-018: ScannerFlow is the single orchestrator — owns questionnaire→camera→result→save→reset lifecycle
+- D-019: FaceScanner is a thin camera view — camera + analyze button; reports result via `onResult` callback
+- D-020: analyzeFace() pipeline in src/lib/scanner/ — pure async, testable without React or webcam
+- D-021: CameraError / AnalysisError typed exceptions replace null-return error handling
+
+### Known Issues / Risks
+
+- Test environment pre-existing failure (jsdom + react-webcam document access at module level) — unrelated to this refactor
+- Browser-based E2E test of scanner flow not yet performed
+
+### Next Steps (ordered)
+
+1. Browser E2E test of scanner flow (questionnaire → camera → analyze → result → save → journal)
+2. Candidate 5 (ScannerFlow/FaceScanner seam — resolved in this session via D-018/D-019)
+3. Candidate 6 (dashboard mock data → real read actions)
+4. Candidate 7 (auth callback missing public.users guard)
+5. Phantom route stubs (Candidate 8)
+
+### Blockers (if any)
+
+- None
