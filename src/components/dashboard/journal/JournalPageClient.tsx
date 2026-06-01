@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState, useTransition } from 'react';
+import { useActionState } from 'react';
 import { useEffect, useRef, useState } from 'react';
 
 import Link from 'next/link';
@@ -83,40 +83,51 @@ export function JournalPageClient({ entries }: JournalPageClientProps) {
     null
   );
 
-  const [, startSuccessTransition] = useTransition();
   const lastSavedIdRef = useRef<string | null>(null);
 
+  // Sync historyEntries with fresh server data when entries prop changes
+  // (e.g. after router.refresh() completes)
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setHistoryEntries(entries);
+  }, [entries]);
+
+  // Handle successful save: toast, optimistic update, then refresh server data
   useEffect(() => {
     if (
       state &&
       'success' in state &&
       state.entryId !== lastSavedIdRef.current
     ) {
-      lastSavedIdRef.current = state.entryId;
+      const newId = state.entryId;
+      lastSavedIdRef.current = newId;
+
       toast.success('Jurnal berhasil disimpan!');
-      startSuccessTransition(() => {
-        setEditorContent('');
-        const savedEntry = entries.find((e) => e.id === state.entryId);
-        if (savedEntry) {
-          setHistoryEntries((prev) => [savedEntry, ...prev]);
-        } else {
-          setHistoryEntries((prev) => {
-            const newEntry = {
-              id: state.entryId,
-              mood: preselectedMood ?? null,
-              content: editorContent || null,
-              stressTier: tier ?? null,
-              recommendation: tier ? stressLevels[tier].messages : null,
-              createdAt: new Date(),
-            };
-            return [newEntry, ...prev];
-          });
-        }
-      });
+      setEditorContent('');
+
+      // Optimistically prepend the saved entry
+      const savedEntry = entries.find((e) => e.id === newId);
+      if (savedEntry) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setHistoryEntries((prev) => [savedEntry, ...prev]);
+      } else {
+        setHistoryEntries((prev) => {
+          const newEntry = {
+            id: newId,
+            mood: preselectedMood ?? null,
+            content: editorContent || null,
+            stressTier: tier ?? null,
+            recommendation: tier ? stressLevels[tier].messages : null,
+            createdAt: new Date(),
+          };
+          return [newEntry, ...prev];
+        });
+      }
+
       router.refresh();
     }
-     
-  }, [state, editorContent, entries, preselectedMood, tier]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state]);
 
   return (
     <div className="flex flex-1 flex-col gap-4 pt-0 md:p-6">
