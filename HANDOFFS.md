@@ -1,22 +1,22 @@
-## [Monday, 01-06-2026 12:45] — Phase 2 Slice 2: Tiptap editor + full manual entries
+## [Monday, 01-06-2026 13:15] — Phase 2 Slice 3: Scanner redirect + pre-fill
 
 ### Session Target
 
-Add Tiptap rich-text editor to journal page + "Scan Wajah Dulu" banner (issue #9).
+Wire scanner to journal page with redirect + pre-fill (issue #10).
 
 ### Current State
 
 - Status: **shipped**
-- Scope: `JournalEditor.tsx`, `JournalPageClient.tsx`, `toggle.tsx`, `journal-editor.test.tsx`, test setup
+- Scope: `ScannerFlow.tsx`, `JournalPageClient.tsx`, `ScanResultAccordion.tsx`, `journal/page.tsx`, `scanner-flow.test.tsx`, `badge.tsx`
 
 ### What Changed
 
-- `package.json` + `bun.lock` — installed `@tiptap/react@3.24.0`, `@tiptap/starter-kit@3.24.0`, `@tiptap/extension-placeholder@3.24.0`
-- `src/components/dashboard/journal/JournalEditor.tsx` — new; Tiptap editor with bold/italic/bullet/numbered toolbar using `Toggle` component; uses `useEditor` + `StarterKit` + `Placeholder`
-- `src/components/dashboard/journal/JournalPageClient.tsx` — replaced `Textarea` with `JournalEditor`; added `useSearchParams` banner ("Scan Wajah Dulu") shown when no `?tier=` param; content from Tiptap passed as HTML to `saveJournalEntry`; history truncates HTML tags for preview
-- `src/components/ui/toggle.tsx` — new; added via `bunx shadcn add toggle`
-- `src/test/setup.ts` — added `document.elementFromPoint` mock for jsdom (Tiptap Placeholder uses it)
-- `src/test/components/dashboard/journal/journal-editor.test.tsx` — new; tests toolbar buttons render and active states using mocked `@tiptap/react`
+- `src/components/dashboard/scanner/ScannerFlow.tsx` — removed `saveJournalEntry` call; `handleSave` now calls `router.push('/dashboard/journal?tier=' + result.tier)`; removed `isSaving`/`startSaveTransition`; removed `sonner` import
+- `src/components/dashboard/journal/ScanResultAccordion.tsx` — new; shadcn Accordion showing tier badge, emoji, label, messages, interventions from `stressLevels[tier]`; collapsed by default
+- `src/components/dashboard/journal/JournalPageClient.tsx` — parse `?tier=` param on mount; derive mood from `MOOD_MAP[tier]` and pre-fill selector; show toast "Hasil scan telah diteruskan ke jurnal"; pass `stressTier` + `recommendation` (from `stressLevels[tier].messages`) to `saveJournalEntry`; render `ScanResultAccordion` when tier present
+- `src/app/dashboard/journal/page.tsx` — wrapped `JournalPageClient` in `Suspense` boundary (required for `useSearchParams`)
+- `src/components/dashboard/scanner/scanner-flow.test.tsx` — added `useRouter` mock
+- `src/components/ui/badge.tsx` — new; added via `shadcn add badge`
 
 ### Verification
 
@@ -24,18 +24,16 @@ Add Tiptap rich-text editor to journal page + "Scan Wajah Dulu" banner (issue #9
 
 ### Decisions
 
-- D-003: Tiptap `@tiptap/react` mocked in tests because Placeholder extension uses `elementFromPoint` which jsdom doesn't fully support; mock provides fake editor for toolbar state tests
-- D-004: `elementFromPoint` stubbed in test setup globally — harmless for other tests, necessary for Tiptap
+- D-005: `Suspense` boundary wraps `JournalPageClient` — required since `useSearchParams()` causes client rendering boundary in Next.js App Router
+- D-006: Toast shown via `useEffect` with `hasTier` dependency — only fires once on mount when redirected from scanner
 
 ### Known Issues / Risks
 
-- `elementFromPoint` mock in setup.ts is global — may mask real issues in other components that use this API; acceptable tradeoff for jsdom compatibility
-- Tiptap content stored as HTML string in DB — `truncateHtml()` strips tags for preview, but full HTML is stored; fine for now (Slice 4 may add rendering)
+- None
 
 ### Next Steps (ordered)
 
-1. Phase 2 Slice 3 — Scanner redirect + pre-fill
-2. Phase 2 Slice 4 — History display + delete
+1. Phase 2 Slice 4 — History display + delete
 
 ### Blockers (if any)
 

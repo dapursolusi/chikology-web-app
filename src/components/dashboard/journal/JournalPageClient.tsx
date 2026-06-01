@@ -1,15 +1,23 @@
 'use client';
 
 import { useActionState } from 'react';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 
-import { type Mood, saveJournalEntry } from '@/actions/journal';
+import { type Mood as MoodType, saveJournalEntry } from '@/actions/journal';
+import {
+  MOOD_MAP,
+  type Mood,
+  type StressTier,
+  stressLevels,
+} from '@/data/stressLevels';
+import { toast } from 'sonner';
 
 import { JournalEditor } from '@/components/dashboard/journal/JournalEditor';
 import { MoodSelector } from '@/components/dashboard/journal/MoodSelector';
+import { ScanResultAccordion } from '@/components/dashboard/journal/ScanResultAccordion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -33,19 +41,41 @@ type ActionState =
 
 export function JournalPageClient({ entries }: JournalPageClientProps) {
   const searchParams = useSearchParams();
-  const hasTier = searchParams.has('tier');
+  const tierParam = searchParams.get('tier');
+  const tier =
+    tierParam !== null
+      ? (Math.max(1, Math.min(5, Math.round(Number(tierParam)))) as StressTier)
+      : null;
+  const hasTier = tier !== null;
+
+  const defaultMood: MoodType | undefined =
+    hasTier && tier ? (MOOD_MAP[tier] as MoodType) : undefined;
+
+  const [preselectedMood, setPreselectedMood] = useState<MoodType | undefined>(
+    defaultMood
+  );
   const [editorContent, setEditorContent] = useState('');
+
+  useEffect(() => {
+    if (hasTier) {
+      toast.success('Hasil scan telah diteruskan ke jurnal.');
+    }
+  }, [hasTier]);
+
   const [state, formAction, isPending] = useActionState<ActionState, FormData>(
     (_state, formData) => {
-      const mood = formData.get('mood') as Mood | null;
+      const mood = formData.get('mood') as MoodType | null;
       if (!mood) return { error: 'Mood wajib dipilih' };
       return saveJournalEntry({
         mood,
         content: editorContent || undefined,
+        stressTier: tier ?? undefined,
+        recommendation: tier ? stressLevels[tier].messages : undefined,
       });
     },
     null
   );
+
   const moodRef = useRef<HTMLInputElement>(null);
 
   return (
@@ -60,6 +90,8 @@ export function JournalPageClient({ entries }: JournalPageClientProps) {
         </p>
       </div>
 
+      {hasTier && tier && <ScanResultAccordion tier={tier} />}
+
       <Card>
         <CardHeader>
           <CardTitle>Bagaimana perasaanmu sekarang?</CardTitle>
@@ -68,7 +100,9 @@ export function JournalPageClient({ entries }: JournalPageClientProps) {
           <form action={formAction} className="space-y-4">
             <input type="hidden" name="mood" ref={moodRef} />
             <MoodSelector
+              value={preselectedMood}
               onChange={(mood) => {
+                setPreselectedMood(mood);
                 if (moodRef.current) {
                   moodRef.current.value = mood;
                 }
