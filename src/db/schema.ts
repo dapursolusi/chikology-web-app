@@ -1,5 +1,6 @@
 import {
   integer,
+  jsonb,
   pgEnum,
   pgTable,
   text,
@@ -37,4 +38,13 @@ export const journalEntries = pgTable('journal_entries', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
   deletedAt: timestamp('deleted_at'),
+});
+
+export const questionnaireResponses = pgTable('questionnaire_responses', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id')
+    .notNull()
+    .references(() => users.id),
+  answers: jsonb('answers'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
 });

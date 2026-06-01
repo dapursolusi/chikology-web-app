@@ -7,6 +7,7 @@ const config = {
   tabWidth: 2,
   semi: true,
   singleQuote: true,
+  printWidth: 80,
   plugins: [
     'prettier-plugin-tailwindcss',
     '@trivago/prettier-plugin-sort-imports',

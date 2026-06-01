@@ -1,9 +1,88 @@
+## Specific Rules:
+
+Only read and follow these rule files exactly if touching/writing on specific domain:
+
+- [TypeScript](./docs/rules/RULES_TYPESCRIPT.md)
+- [React](./docs/rules/RULES_REACT.md)
+- [Next.js](./docs/rules/RULES_NEXTJS.md)
+
+## Universal Guardrails (Always Active)
+
+- No new files/folders unless explicitly asked.
+- No renaming core types or restructuring modules.
+- No new npm packages without asking.
+- Prefer the smallest change that satisfies the requirement.
+- Output format: plan (5 lines max) → files affected → code → self-review checklist.
+
+## Reference Component Anchor
+
+Canonical reference for all new components:
+→ /components/[YourBestComponent]/index.tsx
+Copy its prop typing, layout patterns, and Tailwind usage for consistency.
+
 ## Runtime
 
 Use `bun` for everything — install, run scripts, execute packages.
 Always use `bunx --bun` instead of `bunx` or `npx`.
 Fallback to `npm`/`npx` only if `bun` fails multiple times.
 Lockfile: `bun.lock` (never `package-lock.json` or `yarn.lock`).
+
+## Tech Stack (Locked)
+
+| Layer           | Choice                                |
+| --------------- | ------------------------------------- |
+| Framework       | Next.js (App Router)                  |
+| UI              | Tailwind CSS v4 + shadcn/ui           |
+| Database        | Supabase (Postgres)                   |
+| ORM             | Drizzle ORM + postgres driver         |
+| Auth            | Supabase Auth (Google OAuth only)     |
+| Face Detection  | Groq (Llama 4 Scout) server-side      |
+| Storage         | Supabase Storage (book PDFs, Phase 3) |
+| Deploy          | Vercel                                |
+| Payment         | Mock (real gateway deferred)          |
+| Package Manager | bun — `bunx --bun`, not npx           |
+
+## Canonical File Structure
+
+```
+src/
+├── app/                         # Next.js app router pages
+│   ├── (main)/                  # Public pages (landing page)
+│   ├── api/analyze-face/       # Groq proxy (server-side API key)
+│   ├── dashboard/               # Auth-protected pages (sidebar layout)
+│   │   ├── layout.tsx          # Dashboard auth shell + sidebar
+│   │   └── scanner/page.tsx    # Scanner page (uses ScannerFlow)
+│   └── auth/                    # Supabase auth callbacks
+├── actions/                     # Next.js Server Actions
+│   ├── journal.ts
+│   └── questionnaire.ts
+├── components/
+│   ├── ui/                     # shadcn/ui primitives
+│   ├── layout/                 # Header, Footer
+│   ├── dashboard/
+│   │   └── scanner/            # Scanner domain components
+│   │       ├── PreScanQuestionnaire.tsx
+│   │       ├── ScannerFlow.tsx
+│   │       └── StressResultCard.tsx
+│   ├── sections/home/           # Landing page sections (Hero, EBook, Features)
+│   ├── FaceScanner.tsx         # Camera + Groq analysis (root scanner)
+│   └── ...
+├── db/
+│   ├── index.ts                # Drizzle client instance
+│   └── schema.ts               # All table definitions
+├── lib/
+│   ├── stressAnalyzer.ts        # Stress level data (messages, interventions)
+│   └── utils.ts
+└── test/                       # Vitest + RTL test setup
+    └── setup.ts + __mocks__/
+```
+
+Key rules:
+
+- Feature-specific components live under `src/components/<domain>/`
+- Server Actions in `src/actions/`
+- Schema at `src/db/schema.ts` (NOT `src/lib/db/`)
+- API routes for third-party proxies only (`/api/`)
 
 <!-- BEGIN:nextjs-agent-rules -->
 
@@ -39,4 +118,11 @@ Prefer Next.js Server Actions (`'use server'` in `src/actions/`) over API routes
 
 ### Components
 
-All components must use shadcn, try to find it first, or modify what available instead of installing any new dependendcies
+All components must use shadcn, try to find it first, or modify what available instead of installing any new dependencies.
+
+### Component folder convention
+
+Feature-specific components live under `src/components/<domain>/`. Shared/generic components (layout, ui) stay in their current locations. Examples:
+
+- `src/components/dashboard/scanner/` — scanner flow components (ScannerFlow, PreScanQuestionnaire, StressResultCard)
+- `src/components/dashboard/journal/` — journal components (JournalEditor, MoodSelector, JournalHistory)

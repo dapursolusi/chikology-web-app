@@ -24,7 +24,7 @@ Return {"tier": <1-5>}. JSON only.`;
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { image } = body;
+    const { image, questionnaire } = body;
 
     if (!image) {
       return NextResponse.json({ error: 'No image provided' }, { status: 400 });
@@ -38,13 +38,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const promptWithContext = questionnaire
+      ? `${STRESS_PROMPT}\n\n[Questionnaire Answers]\n${JSON.stringify(questionnaire, null, 2)}`
+      : STRESS_PROMPT;
+
     const response = await groq.chat.completions.create({
       model: 'meta-llama/llama-4-scout-17b-16e-instruct',
       messages: [
         {
           role: 'user',
           content: [
-            { type: 'text', text: STRESS_PROMPT },
+            { type: 'text', text: promptWithContext },
             {
               type: 'image_url',
               image_url: {

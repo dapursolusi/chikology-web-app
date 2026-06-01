@@ -2,10 +2,7 @@ import { cookies } from 'next/headers';
 
 import { createServerClient } from '@supabase/ssr';
 
-function getBaseUrl() {
-  const raw = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-  return raw.replace('/rest/v1/', '');
-}
+import { getBaseUrl } from './base-url';
 
 export async function createClient() {
   const cookieStore = await cookies();

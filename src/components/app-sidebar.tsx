@@ -2,12 +2,7 @@
 
 import { useEffect, useState } from 'react';
 
-import {
-  BookOpenIcon,
-  BotIcon,
-  NotebookPen,
-  Settings2Icon,
-} from 'lucide-react';
+import { BookOpenIcon, BotIcon, NotebookPen } from 'lucide-react';
 
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
@@ -40,7 +35,7 @@ const navMain = [
     ],
   },
   {
-    title: 'Mood Checker',
+    title: 'Stress Detection',
     url: '#',
     icon: <BotIcon />,
     items: [
@@ -57,30 +52,7 @@ const navMain = [
     items: [
       {
         title: 'Baca E-Book',
-        url: dashboardLink('book'),
-      },
-    ],
-  },
-  {
-    title: 'Settings',
-    url: '#',
-    icon: <Settings2Icon />,
-    items: [
-      {
-        title: 'General',
-        url: dashboardLink('settings/general'),
-      },
-      {
-        title: 'Team',
-        url: dashboardLink('settings/team'),
-      },
-      {
-        title: 'Billing',
-        url: dashboardLink('settings/billing'),
-      },
-      {
-        title: 'Limits',
-        url: dashboardLink('settings/limits'),
+        url: '#',
       },
     ],
   },

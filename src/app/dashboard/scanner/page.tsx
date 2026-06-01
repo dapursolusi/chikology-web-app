@@ -1,8 +1,8 @@
-import FaceScanner from '@/components/FaceScanner';
+import { ScannerFlow } from '@/components/dashboard/scanner/ScannerFlow';
 
 export default function ScannerPage() {
   return (
-    <div className="flex flex-1 flex-col gap-4 p-4 pt-0 md:p-6">
+    <div className="flex flex-1 flex-col gap-4 pt-0 md:p-6">
       <div className="flex flex-col gap-2">
         <h1 className="text-3xl font-bold tracking-tight text-foreground">
           Face Scanner
@@ -12,7 +12,7 @@ export default function ScannerPage() {
           kesehatan mental.
         </p>
       </div>
-      <FaceScanner />
+      <ScannerFlow />
     </div>
   );
 }

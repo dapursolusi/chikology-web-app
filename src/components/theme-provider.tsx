@@ -14,6 +14,7 @@ export function ThemeProvider({
       defaultTheme="light"
       forcedTheme="light"
       disableTransitionOnChange
+      storageKey="chikology-theme"
       {...props}
     >
       {children}
