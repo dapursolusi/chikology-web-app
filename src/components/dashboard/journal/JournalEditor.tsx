@@ -146,6 +146,7 @@ function ToolbarButton({
         <Button
           variant="ghost"
           size="sm"
+          type="button"
           onClick={onClick}
           className={`size-8 p-0 ${active ? 'bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground' : ''}`}
         >

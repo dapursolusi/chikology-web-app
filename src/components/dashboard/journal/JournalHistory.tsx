@@ -132,7 +132,7 @@ function JournalHistoryItem({
             <div>
               <p className="mb-1 text-sm font-medium">Catatan:</p>
               <div
-                className="text-sm"
+                className="journal-content text-sm"
                 dangerouslySetInnerHTML={{ __html: entry.content }}
               />
             </div>
@@ -190,5 +190,17 @@ function formatDate(date: Date): string {
 }
 
 function stripHtml(html: string): string {
-  return html.replace(/<[^>]*>/g, '');
+  return html
+    .replace(/<\/?ul[^>]*>/g, '\n')
+    .replace(/<\/?ol[^>]*>/g, '\n')
+    .replace(/<li[^>]*>/g, '• ')
+    .replace(/<\/li>/g, '\n')
+    .replace(/<[^>]*>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
 }

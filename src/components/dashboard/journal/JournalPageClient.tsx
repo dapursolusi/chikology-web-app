@@ -1,10 +1,10 @@
 'use client';
 
-import { useActionState } from 'react';
+import { useActionState, useTransition } from 'react';
 import { useEffect, useRef, useState } from 'react';
 
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 import { type Mood as MoodType, saveJournalEntry } from '@/actions/journal';
 import {
@@ -41,6 +41,7 @@ type ActionState =
   | null;
 
 export function JournalPageClient({ entries }: JournalPageClientProps) {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const tierParam = searchParams.get('tier');
   const tier =
@@ -56,12 +57,17 @@ export function JournalPageClient({ entries }: JournalPageClientProps) {
     defaultMood
   );
   const [editorContent, setEditorContent] = useState('');
+  const [historyEntries, setHistoryEntries] = useState(entries);
+  const moodRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (hasTier) {
       toast.success('Hasil scan telah diteruskan ke jurnal.');
     }
-  }, [hasTier]);
+    if (defaultMood && moodRef.current) {
+      moodRef.current.value = defaultMood;
+    }
+  }, [hasTier, defaultMood]);
 
   const [state, formAction, isPending] = useActionState<ActionState, FormData>(
     (_state, formData) => {
@@ -77,7 +83,34 @@ export function JournalPageClient({ entries }: JournalPageClientProps) {
     null
   );
 
-  const moodRef = useRef<HTMLInputElement>(null);
+  const [, startSuccessTransition] = useTransition();
+
+  useEffect(() => {
+    if (state && 'success' in state) {
+      toast.success('Jurnal berhasil disimpan!');
+      startSuccessTransition(() => {
+        setEditorContent('');
+        const savedEntry = entries.find((e) => e.id === state.entryId);
+        if (savedEntry) {
+          setHistoryEntries((prev) => [savedEntry, ...prev]);
+        } else {
+          setHistoryEntries((prev) => {
+            const newEntry = {
+              id: state.entryId,
+              mood: preselectedMood ?? null,
+              content: editorContent || null,
+              stressTier: tier ?? null,
+              recommendation: tier ? stressLevels[tier].messages : null,
+              createdAt: new Date(),
+            };
+            return [newEntry, ...prev];
+          });
+        }
+      });
+      router.refresh();
+    }
+     
+  }, [state, editorContent, entries, preselectedMood, tier]);
 
   return (
     <div className="flex flex-1 flex-col gap-4 pt-0 md:p-6">
@@ -140,7 +173,7 @@ export function JournalPageClient({ entries }: JournalPageClientProps) {
         </div>
       )}
 
-      <JournalHistory entries={entries} />
+      <JournalHistory entries={historyEntries} />
     </div>
   );
 }
