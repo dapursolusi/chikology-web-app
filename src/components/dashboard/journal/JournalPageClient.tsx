@@ -84,9 +84,15 @@ export function JournalPageClient({ entries }: JournalPageClientProps) {
   );
 
   const [, startSuccessTransition] = useTransition();
+  const lastSavedIdRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (state && 'success' in state) {
+    if (
+      state &&
+      'success' in state &&
+      state.entryId !== lastSavedIdRef.current
+    ) {
+      lastSavedIdRef.current = state.entryId;
       toast.success('Jurnal berhasil disimpan!');
       startSuccessTransition(() => {
         setEditorContent('');
