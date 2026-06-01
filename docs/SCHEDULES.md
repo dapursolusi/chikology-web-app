@@ -1,6 +1,6 @@
 # Chikology.id — Sprint Schedule
 
-> Last updated: 1 Juni 2026
+> Last updated: 1 Juni 2026 (Phase 2 done ahead of schedule)
 > Rescheduled after Mas Chiko meeting (May 31). All feedback items marked with 🆕
 > Phase 2 PRD published (GitHub issue #7). Architecture decisions finalized.
 
@@ -113,64 +113,59 @@
 
 ---
 
-## PHASE 2: Journal System (Jun 4–6)
+## PHASE 2: Journal System — ✅ Done (Jun 1–3, shipped Jun 1)
 
-### Day 1 — Wednesday, Jun 4: Schema + Editor
+> Accelerated from original Jun 4–6 schedule. All slices merged into `main` on Jun 1.
+
+### Day 1 — Sunday, Jun 1: Foundation + Editor
 
 **Goal:** "Journal page exists. I can write text and save it."
 
-| #   | Task                                                                      | Est.   | Done? |
-| --- | ------------------------------------------------------------------------- | ------ | ----- |
-| 1   | `bun add @tiptap/react @tiptap/starter-kit @tiptap/extension-placeholder` | 10 min | ☐     |
-| 2   | Update Drizzle schema — add `content` column to journal_entries           | 10 min | ☐     |
-| 3   | Rewrite `app/dashboard/journal/page.tsx` — basic layout                   | 15 min | ☐     |
-| 4   | Create `JournalEditor.tsx` — Tiptap with basic toolbar                    | 45 min | ☐     |
-| 5   | Add "Simpan" button → save via Server Action                              | 30 min | ☐     |
-| 6   | Update server action to accept content field                              | 15 min | ☐     |
-| 7   | Test: write → save → check Supabase → content stored ✓                    | 15 min | ☐     |
+| #   | Task                                                        | Est.   | Done? |
+| --- | ----------------------------------------------------------- | ------ | ----- |
+| 1   | Tiptap editor with bold/italic/list toolbar                 | 45 min | ✓     |
+| 2   | Journal server actions: saveJournalEntry, getJournalEntries | 30 min | ✓     |
+| 3   | Journal page layout + MoodSelector                          | 45 min | ✓     |
+| 4   | Bug: navbar1.tsx hydration mismatch + modal.tsx aria        | 20 min | ✓     |
+| 5   | Mobile responsive check                                     | 20 min | ☐     |
 
-**End-of-day checkpoint:** Journal page renders Tiptap editor. Can type and save. Content in DB.
-**Total: ~2.5 hours**
+**End-of-day checkpoint:** Journal page renders. Can type and save. Content in DB.
 
 ---
 
-### Day 2 — Thursday, Jun 5: Mood Selector + History
+### Day 2 — Monday, Jun 2: Mood + History + Scanner Connect
 
-**Goal:** "I can pick my mood, see past entries."
+**Goal:** "I can pick my mood, see past entries. Scanner pre-fills mood."
 
-| #   | Task                                                                   | Est.   | Done? |
-| --- | ---------------------------------------------------------------------- | ------ | ----- |
-| 1   | Create `MoodSelector.tsx` — 5 emoji buttons (😌😊😐😟😰), one selected | 30 min | ☐     |
-| 2   | Wire mood selection into journal form state                            | 15 min | ☐     |
-| 3   | Update save action to include mood in INSERT                           | 10 min | ☐     |
-| 4   | Create GET endpoint — fetch all entries, newest first                  | 30 min | ☐     |
-| 5   | Create `JournalHistory.tsx` — list of past entries                     | 45 min | ☐     |
-| 6   | Add history below editor (or as tab)                                   | 20 min | ☐     |
-| 7   | Test: save 3 entries with different moods → all in history ✓           | 15 min | ☐     |
+| #   | Task                                                             | Est.   | Done? |
+| --- | ---------------------------------------------------------------- | ------ | ----- |
+| 1   | MoodSelector: tiny captions below emojis + aria-label            | 30 min | ✓     |
+| 2   | JournalHistory: expandable entries, soft-delete, stripHtml lists | 45 min | ✓     |
+| 3   | ScannerFlow redirect: router.push(/journal?tier=N) on save       | 20 min | ✓     |
+| 4   | ScanResultAccordion + pre-fill mood from tier URL param          | 30 min | ✓     |
+| 5   | Success toast on save + optimistic history update                | 30 min | ✓     |
+| 6   | Sidebar nav fix + DashboardHeader with dynamic breadcrumb        | 30 min | ✓     |
+| 7   | Deploy to dev + verify E2E                                       | 15 min | ✓     |
 
-**End-of-day checkpoint:** Full journal flow works: pick mood → write → save → see history.
-**Total: ~2.75 hours**
+**End-of-day checkpoint:** Full journal flow works: scan → pre-fills mood → write → save → history updates immediately. Toast appears on save.
 
 ---
 
-### Day 3 — Friday, Jun 6: Polish + Connect to Scanner
+### Day 3 — Tuesday, Jun 3: Bug Fixes + Polish
 
-**Goal:** "Face scanner pre-fills mood. Everything looks good. Mobile ready."
+**Goal:** "Everything solid. Mobile ready."
 
-| #   | Task                                                                                | Est.   | Done? |
-| --- | ----------------------------------------------------------------------------------- | ------ | ----- |
-| 1   | After scan "Simpan ke Jurnal" → redirect to /dashboard/journal with mood pre-filled | 30 min | ☐     |
-| 2   | Journal page reads pre-filled mood from URL param → selects automatically           | 20 min | ☐     |
-| 3   | Add "Scan Wajah Dulu" optional button on journal page                               | 15 min | ☐     |
-| 4   | Add entry detail view — click history item → expand full content                    | 30 min | ☐     |
-| 5   | Style everything: mood selector colors, editor toolbar, history cards               | 45 min | ☐     |
-| 6   | 🆕 Mobile responsive check: all journal components on small screens                 | 20 min | ☐     |
-| 7   | Deploy + test full flow: scan → pre-fills mood → write journal → save → history     | 20 min | ☐     |
+| #   | Task                                                                                          | Est.   | Done? |
+| --- | --------------------------------------------------------------------------------------------- | ------ | ----- |
+| 1   | Bug: toolbar type="button" (prevents form submit on click)                                    | 10 min | ✓     |
+| 2   | Bug: JournalHistory localEntries stale (useState only reads prop on mount)                    | 20 min | ✓     |
+| 3   | Bug: infinite toast loop (startTransition + router.refresh race)                              | 20 min | ✓     |
+| 4   | CSS: .journal-content list styles (bullets/numbers invisible without @tailwindcss/typography) | 15 min | ✓     |
+| 5   | Deploy to dev + E2E verify                                                                    | 15 min | ✓     |
+| 6   | Mobile responsive check                                                                       | 20 min | ☐     |
 
-**End-of-day checkpoint:** Journal feature complete. Connected to scanner. Phase 2 DONE.
+**End-of-day checkpoint:** Journal feature complete. Connected to scanner. All major bugs fixed. Phase 2 DONE.
 **Total: ~3 hours**
-
----
 
 ## PHASE 3: E-Book (Jun 7–8 soft launch scope, Jun 12–15 full launch scope)
 
@@ -283,15 +278,15 @@ May 25–26     ████ Phase 0 ✓ + Phase 1 (Scanner) ✓               �
 May 27–30     ░░░░ Original Phase 2/3 dates (missed)
 May 31        🔄   Mas Chiko meeting + reschedule
 
-Jun  1 (Sun)  ████ Phase 1.5 Day 1 — Landing Page Quick Wins     ← DONE
-Jun  2 (Mon)  ████ Phase 1.5 Day 2 — Pre-Scan Questionnaire     ← DONE
-Jun  3 (Tue)  ████ Phase 1.5 Day 3 — Result Card + CTA           ← DONE
+Jun  1 (Sun)  ████ Phase 1.5 ✓ + Phase 2 Day 1 — Journal Foundation ← DONE (ahead!)
+Jun  2 (Mon)  ████ Phase 2 Day 2 — Mood + History + Scanner Connect  ← DONE
+Jun  3 (Tue)  ████ Phase 2 Day 3 — Bug Fixes + Polish               ← DONE
 
-Jun  4 (Wed)  ░░░░ Phase 2 Day 1 — Journal Schema + Editor
-Jun  5 (Thu)  ░░░░ Phase 2 Day 2 — Mood + History
-Jun  6 (Fri)  ░░░░ Phase 2 Day 3 — Polish + Connect
+Jun  4 (Wed)  ░░░░ Buffer / Mas Chiko UAT
+Jun  5 (Thu)  ░░░░ Phase 3 prep
+Jun  6 (Fri)  ░░░░ Phase 3 (soft launch) — Schema + Countdown
 
-Jun  7 (Sat)  ░░░░ Phase 3 (soft launch) — Schema + Countdown + Nav Gating
+Jun  7 (Sat)  ░░░░ Phase 3 (soft launch) — Countdown + Nav Gating
 Jun  8 (Sun)  ░░░░ Phase 3 (soft launch) — Security + E2E Test
 
 Jun  9 (Mon)  ░░░░ Buffer — bug fixes + Mas Chiko UAT
