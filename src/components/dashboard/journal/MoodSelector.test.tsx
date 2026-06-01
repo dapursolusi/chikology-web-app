@@ -4,42 +4,43 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { MoodSelector } from './MoodSelector';
 
-const EMOJI = ['😌', '😊', '😐', '😟', '😰'];
-const LABELS = [
-  'Sangat tenang',
+const CAPTIONS = [
+  'Sangat Tenang',
   'Tenang',
   'Netral',
   'Tertekan',
-  'Sangat tertekan',
+  'Sangat Tertekan',
 ];
 
+const EMOJIS = ['😌', '😊', '😐', '😟', '😰'];
+
 describe('MoodSelector', () => {
-  it('renders 5 emoji buttons', () => {
+  it('renders 5 emoji buttons with captions', () => {
     render(<MoodSelector onChange={vi.fn()} />);
 
-    EMOJI.forEach((emoji) => {
-      expect(screen.getByText(emoji)).toBeInTheDocument();
+    CAPTIONS.forEach((caption) => {
+      expect(screen.getByText(caption)).toBeInTheDocument();
     });
   });
 
-  it('calls onChange with correct mood when emoji is clicked', async () => {
+  it('calls onChange with correct mood when button is clicked', async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
 
     render(<MoodSelector onChange={onChange} />);
 
-    await user.click(screen.getByText('😊'));
+    await user.click(screen.getByRole('radio', { name: '😊 Tenang' }));
     expect(onChange).toHaveBeenCalledWith('calm');
 
-    await user.click(screen.getByText('😰'));
+    await user.click(screen.getByRole('radio', { name: '😰 Sangat tertekan' }));
     expect(onChange).toHaveBeenCalledWith('very_stressed');
   });
 
   it('renders with aria-checked false for unselected mood', () => {
     render(<MoodSelector onChange={vi.fn()} />);
 
-    EMOJI.forEach((emoji) => {
-      const button = screen.getByText(emoji);
+    const buttons = screen.getAllByRole('radio');
+    buttons.forEach((button) => {
       expect(button).toHaveAttribute('aria-checked', 'false');
     });
   });
@@ -47,15 +48,15 @@ describe('MoodSelector', () => {
   it('pre-fills selected mood via value prop', () => {
     render(<MoodSelector value="neutral" onChange={vi.fn()} />);
 
-    const neutralButton = screen.getByText('😐');
+    const neutralButton = screen.getByRole('radio', { name: '😐 Netral' });
     expect(neutralButton).toHaveAttribute('aria-checked', 'true');
   });
 
-  it('shows correct label as title on each button', () => {
+  it('each button contains the correct emoji', () => {
     render(<MoodSelector onChange={vi.fn()} />);
 
-    LABELS.forEach((label) => {
-      expect(screen.getByTitle(label)).toBeInTheDocument();
+    EMOJIS.forEach((emoji) => {
+      expect(screen.getByText(emoji)).toBeInTheDocument();
     });
   });
 });

@@ -41,8 +41,10 @@ export default function Modal(props: IModalProps) {
       >
         {props.content.variant === 'direct' ? (
           <>
-            {/* Hidden title for accessibility — Radix DialogContent requires a DialogTitle */}
             <DialogTitle className="sr-only">Dialog</DialogTitle>
+            <DialogDescription className="sr-only">
+              Dialog login atau daftar
+            </DialogDescription>
             {props.content.directContent}
           </>
         ) : (
