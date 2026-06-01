@@ -1,7 +1,8 @@
 # Chikology.id — Sprint Schedule
 
-> Last updated: 31 Mei 2026
+> Last updated: 1 Juni 2026
 > Rescheduled after Mas Chiko meeting (May 31). All feedback items marked with 🆕
+> Phase 2 PRD published (GitHub issue #7). Architecture decisions finalized.
 
 ---
 
