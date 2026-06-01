@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 
+import { ensureUserRecord } from '@/actions/auth';
+
 import { createClient } from '@/lib/supabase/server';
 
 export async function GET(request: Request) {
@@ -21,6 +23,19 @@ export async function GET(request: Request) {
         await supabase.auth.exchangeCodeForSession(code);
 
       if (!exchangeError) {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+
+        if (user) {
+          await ensureUserRecord(
+            user.id,
+            user.email ?? '',
+            user.user_metadata?.full_name ?? user.user_metadata?.name,
+            user.user_metadata?.avatar_url ?? user.user_metadata?.picture
+          );
+        }
+
         return NextResponse.redirect(`${origin}/dashboard`);
       }
 
