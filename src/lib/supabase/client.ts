@@ -2,10 +2,7 @@
 
 import { createBrowserClient } from '@supabase/ssr';
 
-function getBaseUrl() {
-  const raw = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-  return raw.replace('/rest/v1/', '');
-}
+import { getBaseUrl } from './base-url';
 
 export function createClient() {
   return createBrowserClient(

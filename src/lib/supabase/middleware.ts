@@ -2,10 +2,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 
 import { createServerClient } from '@supabase/ssr';
 
-function getBaseUrl() {
-  const raw = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-  return raw.replace('/rest/v1/', '');
-}
+import { getBaseUrl } from './base-url';
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });

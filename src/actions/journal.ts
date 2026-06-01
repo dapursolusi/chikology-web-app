@@ -2,10 +2,10 @@
 
 import { revalidatePath } from 'next/cache';
 
+import { MOOD_MAP } from '@/data/stressLevels';
 import { db } from '@/db';
 import { journalEntries } from '@/db/schema';
 
-import { mapToMood } from '@/lib/stressAnalyzer';
 import { createClient } from '@/lib/supabase/server';
 
 export async function saveJournalEntry(data: {
@@ -31,7 +31,7 @@ export async function saveJournalEntry(data: {
   await db.insert(journalEntries).values({
     userId: user.id,
     stressTier: tier,
-    mood: mapToMood(tier),
+    mood: MOOD_MAP[tier],
     recommendation: data.recommendation,
   });
 

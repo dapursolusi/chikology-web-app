@@ -3,6 +3,7 @@
 import { useCallback, useRef, useState, useTransition } from 'react';
 
 import { saveJournalEntry } from '@/actions/journal';
+import { stressLevels } from '@/data/stressLevels';
 import { LoaderCircle } from 'lucide-react';
 import Webcam from 'react-webcam';
 import { toast } from 'sonner';
@@ -19,8 +20,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-
-import { getStressLevel } from '@/lib/stressAnalyzer';
 
 interface FaceScannerProps {
   questionnaireAnswers?: Record<string, string>;
@@ -113,7 +112,7 @@ export default function FaceScanner({
       }
 
       const tier = data.tier as 1 | 2 | 3 | 4 | 5;
-      const level = getStressLevel(tier);
+      const level = stressLevels[tier];
       console.warn('Analysis tier:', tier);
 
       setResult({
