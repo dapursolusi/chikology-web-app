@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { type Mood, deleteJournalEntry } from '@/actions/journal';
 import { stressLevels } from '@/data/stressLevels';
@@ -44,6 +44,11 @@ const MOOD_EMOJI: Record<string, string> = {
 export function JournalHistory({ entries }: JournalHistoryProps) {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [localEntries, setLocalEntries] = useState(entries);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setLocalEntries(entries);
+  }, [entries]);
 
   const handleDelete = async (id: string) => {
     setDeletingId(id);
