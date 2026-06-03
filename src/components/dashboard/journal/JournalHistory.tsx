@@ -46,8 +46,14 @@ export function JournalHistory({ entries }: JournalHistoryProps) {
   const [localEntries, setLocalEntries] = useState(entries);
 
   useEffect(() => {
+    const seen = new Set<string>();
+    const deduped = entries.filter((e) => {
+      if (seen.has(e.id)) return false;
+      seen.add(e.id);
+      return true;
+    });
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setLocalEntries(entries);
+    setLocalEntries(deduped);
   }, [entries]);
 
   const handleDelete = async (id: string) => {
