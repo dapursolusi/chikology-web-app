@@ -1,45 +1,51 @@
 # HANDOFFS
 
-## [Thursday, 04-06-2026 17:54] — CI Quality-Gate Fix: book.test.ts TS2493/TS2352 (SHIPPED)
+## [Thursday, 04-06-2026 18:04] — Resolve `main` divergence: rebase onto origin/main
 
 ### Session Target
 
-Clear CI quality-gate TypeScript failures in `src/test/actions/book.test.ts` around lines 266/268 (TS2493 × 2, TS2352 × 1), then push the fix to `feat/admin/create-chapter`. Lens: test/types (single-file fix).
+Resolve the `main` divergence flagged in the previous handoff (local ahead by 1 housekeeping commit + 1 prior-session handoff, origin ahead by the squash-merge `b350aff`). User confirmed via "yes lets do that". Lens: git.
 
 ### Current State
 
-- Status: **shipped** — typecheck clean, branch pushed.
-- Scope: 1 file, 1 line changed (`src/test/actions/book.test.ts:266`).
-- Verification: `rtk tsc --noEmit -p tsconfig.json` → No errors found.
-- Push: `feat/admin/create-chapter` updated remotely (commit lands on top of `3d96fa4`).
+- Status: **rebased locally, push to `origin/main` pending explicit confirmation** (Tier 3 — protected branch).
+- Local main: `e31c105 docs(handoff): log branch cleanup session…` → `b350aff feat(admin): create chapter form with PDF upload (Phase 3 Slice 2B) (#27)` → … (clean linear history, no divergence).
+- Local main is `[ahead 1]` vs `origin/main` (will be 0 after push).
+- PR #27 status: **MERGED** (squash-merge `b350aff`).
 
 ### What Changed
 
-- `src/test/actions/book.test.ts:266` — Replaced `mockUpload.mock.calls[0] ?? []` with `mockUpload.mock.calls[0] as unknown as [string, File]`. Root cause: `mockUpload` is declared as `vi.fn<() => Promise<...>>()` with **no parameters**, so `mock.calls[0]` is inferred as `[]` (empty tuple). The `?? []` fallback only made it worse — destructure narrowed to a 0-length tuple (TS2493 on indices 0/1) and `uploadPath` ended up typed as `undefined`, breaking the `as string` cast on line 268 (TS2352). The `as unknown as [string, File]` cast declares the real call shape (`upload(path, file)`) and is safe because `expect(mockUpload).toHaveBeenCalledTimes(1)` on line 265 already guarantees the call exists before the destructure runs. The downstream `as string` on line 268 is now a redundant-but-valid no-op cast; left in place for minimal diff.
+- `git fetch origin main` → picked up `b350aff` from `origin/main`.
+- `git rebase origin/main` → replayed 2 local commits on top of `b350aff`.
+  - First conflict: `45ba835 docs: record follow-up issues #25 and #26` (1-line addition to `HANDOFFS.md`, now obsolete because the issues themselves exist on GitHub and PR #27 is merged). **Skipped** with `git rebase --skip`. The 1-line note was the entire content of the commit — safe to drop.
+  - Second conflict: `d07c2d0 docs(handoff): log branch cleanup session…` (a wholesale replacement of `HANDOFFS.md`) vs the post-rebase `HEAD` (which already had the typecheck-fix handoff from `b350aff`). **Resolved by keeping `d07c2d0`** because it's the more recent handoff and supersedes the typecheck-fix entry. Rebase continued and produced `e31c105` (same content, new SHA after rebase).
+- `HANDOFFS.md` — overwritten with this rebase-resolution session entry (this file), then amended into `e31c105` so local main stays at `[ahead 1]`.
 
 ### Verification
 
-- `rtk tsc --noEmit -p tsconfig.json` → **No errors found** (was: 3 errors in `book.test.ts`).
-- `rtk bunx --bun vitest run src/test/actions/book.test.ts` → **14/14 fail**, but **pre-existing on HEAD** (verified by stashing the change and re-running on `3d96fa4` — same 14 failures, root cause is `z.object` undefined in `src/schemas/chapter.ts:15`, an unrelated zod-loading issue). The user's mandate was the CI quality-gate **typecheck**, not test runtime. Flagged below as a known pre-existing issue for the next session.
+- `rtk git log --oneline -5` shows clean linear history: `e31c105 → b350aff → 55e7518 → b3a8b4e → e2e42aa`.
+- `rtk git status` → `clean — nothing to commit`, `[ahead 1]` (just the rebased handoff, not yet pushed).
+- Diff between rebased `e31c105` and original `d07c2d0`: identical file content (the conflict resolution reproduced the prior handoff verbatim, then this overwrite amended the new handoff in place).
 
 ### Decisions
 
-- **D-041** — Used a single `as unknown as [string, File]` on the call tuple, rather than re-typing the `mockUpload` hoisted fixture. Reason: changing the hoisted `vi.fn<() => Promise<...>>` to `vi.fn<(p: string, f: File) => Promise<...>>` would ripple to every other test in the file that uses `mockUpload` (mockReturnValueOnce, mockResolvedValueOnce, etc., would all need re-checking), expanding scope beyond the user's "smallest type-safe change" instruction. The call-site cast localizes the typing to the one assertion that needs it.
+- **D-043** — Skipped `45ba835` instead of resolving its conflict manually. The commit was a 1-line addition to `HANDOFFS.md` that existed only to flag a task ("split #15 into #25 and #26"). The task has been completed in practice (issues exist, PR #27 merged) and the note is now stale. Skipping is the cleanest outcome — preserves the meaningful rebase trajectory without dragging along a now-redundant pointer.
+- **D-044** — Resolved the second conflict (`d07c2d0` vs `b350aff`'s inherited typecheck-fix handoff) by keeping `d07c2d0` because it's the most recent handoff in time order. Per protocol § 1.1, HANDOFFS.md is overwritten at session start — the typecheck-fix entry had already been superseded by `d07c2d0` chronologically, so dropping it on the rebase is the right call.
+- **D-045** — Amended the new rebase-session handoff into `e31c105` instead of creating a second commit on top. Reason: the user just rebased to get back to `[ahead 1]`, and a follow-up commit would push the divergence back to `[ahead 2]`. Amending keeps the divergence at the minimum (1 commit, which will go to 0 on push).
 
 ### Known Issues / Risks
 
-- **Pre-existing test runtime failure**: `src/test/actions/book.test.ts` — 14/14 tests fail at import time with `TypeError: undefined is not an object (evaluating 'z.object')` originating in `src/schemas/chapter.ts:15`. This blocks the `bun run test` quality gate even after this typecheck fix lands. **Out of scope for this session** (user's mandate was typecheck only), but **blocks the full CI green light**. Suggested next-session action: investigate zod resolution in the vitest setup (likely a missing `vi.mock('zod')` or a vitest `server.deps.inline` config gap in `vitest.config.ts`).
-- The `as unknown as [string, File]` cast on line 266 is a deliberate override of TypeScript's narrowing — fine for a test, but if the production `upload(path, file)` signature ever drifts, this assertion will silently lie. Acceptable for a test assertion guarded by `toHaveBeenCalledTimes(1)`.
+- **Push to `origin/main` is required** to actually close the divergence. `local main` is `[ahead 1]` (the rebased handoff); `origin/main` is at `b350aff`. Until the push, anyone else pulling `main` will see the same divergence. **PUSH NOT YET EXECUTED — awaiting user confirmation** (Tier 3, protected branch).
+- The rebase rewrote `d07c2d0` → `e31c105` (new SHA). This commit was never on `origin/main`, so no force-push concerns. A normal `git push origin main` will fast-forward.
+- **Pre-existing test runtime issue** (carried from prior handoff): `src/test/actions/book.test.ts` 14/14 fail with `z.object` undefined from `src/schemas/chapter.ts:15`. Still blocks `bun run test` CI gate. Unchanged by this session.
 
 ### Next Steps (ordered)
 
-1. ~~Apply 1-line type fix~~ ✓ done
-2. ~~Verify typecheck clean~~ ✓ done
-3. ~~Commit + push to `feat/admin/create-chapter`~~ ✓ done
-4. **Re-run CI** on PR #27 — expect typecheck step to flip green; test step will still fail on the pre-existing zod-loading issue
-5. **Open follow-up issue**: "fix vitest zod resolution — `src/test/actions/book.test.ts` 14/14 fail with `z.object` undefined" — assignee: next session, blocks the `bun run test` CI gate for all of Phase 3 Slice 2
-6. **Self-review PR #27** in GitHub UI before merge (the new commit only touches the test file; no production code, no env, no secrets)
+1. **Get explicit confirmation from user to `git push origin main`** to publish `e31c105` (Tier 3 gate). State: 1 commit ahead, fast-forward only, no force-push needed.
+2. ~~Rebase `main` onto `origin/main`~~ ✓ done
+3. **Pre-existing test runtime issue**: open follow-up issue + fix in next session (zod resolution in vitest).
+4. **Manual browser smoke test** for Phase 3 Slice 2B (per D-046 below) — post-merge, before declaring 2B complete in production.
 
 ### Blockers
 
-- None for this session. The pre-existing zod-loading issue is a separate ticket (step 5).
+- Awaiting user "yes" to push `e31c105` to `origin/main`.
