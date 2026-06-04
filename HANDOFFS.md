@@ -1,53 +1,44 @@
 # HANDOFFS
 
-## [Monday, 01-06-2026 15:19] — Journal UI polish + bug fixes (SHIPPED)
+## [Thursday, 04-06-2026 10:44] — Document GitHub Flow workflow (SHIPPED)
 
 ### Session Target
 
-Polish journal UI and fix critical UX bugs after manual testing feedback.
+Extract the GitHub Flow workflow decision (established in prior conversation) into a project rule, following the existing `docs/rules/RULES_*.md` pattern.
+
+### Current State
+
+- Status: shipped
+- Scope: 2 files — `docs/rules/RULES_GIT.md` (new) + `AGENTS.md` (link added)
 
 ### What Changed
 
-All changes on `feat/journal-tiptap-editor` (10 commits ahead of development):
-
-**Phase 2 slices 1–5** — already committed on this branch (journal foundation, tiptap editor, scanner redirect, expandable history, nav + breadcrumbs)
-
-**Bug fixes (this session):**
-
-- `src/components/navbar1.tsx` — auth state lazy init → useEffect (SSR/CSR hydration fix)
-- `src/components/modal.tsx` — add DialogDescription (aria compliance)
-- `src/components/dashboard/journal/MoodSelector.tsx` — tiny captions below emojis + aria-label
-- `src/components/dashboard/journal/JournalEditor.tsx` — Button (not Toggle) + cursor tracking + onSelectionUpdate
-- `src/components/dashboard/journal/JournalPageClient.tsx` — moodRef init, success toast, optimistic update, router.refresh(), lastSavedIdRef (infinite loop fix), remove startTransition
-- `src/components/dashboard/journal/JournalHistory.tsx` — stripHtml preserves list markers; useEffect syncs localEntries with prop (CRITICAL: this was the real stale-history bug)
-- `src/app/globals.css` — .ProseMirror and .journal-content list CSS
-
-### Critical Bug Found (D-013)
-
-`JournalHistory` has `useState(entries)` which reads prop ONLY ON MOUNT. Every subsequent prop update is silently ignored. This was the real reason history never updated after save — not the router.refresh(), not the optimistic update, not the sync effect in JournalPageClient. The fix: add `useEffect(() => setLocalEntries(entries), [entries])` in JournalHistory.
+- `docs/rules/RULES_GIT.md` — **NEW**. Project rule documenting GitHub Flow: single `main` branch, short-lived `feat/*` / `fix/*` / `ref/*` branches, mandatory PR with self-review and squash merge, conventional commits format, carveouts for transient agent state files (HANDOFFS.md, SCHEDULES.md), strict forbidden list, STOP & ASK section. Style matches `RULES_TYPESCRIPT.md` / `RULES_REACT.md` / `RULES_NEXTJS.md`.
+- `AGENTS.md` — added `[Git & Branching](./docs/rules/RULES_GIT.md)` to the "Specific Rules" list so the new rule is auto-loaded by agents on this project.
 
 ### Verification
 
-- `bunx tsc --noEmit` → pass
-- `bun run test --run` → 12 test files, 42 tests, all pass
-- `bun run build` → pass
-- Lint → 0 errors (warnings suppressed with eslint-disable for legitimate setState-in-effect patterns)
+- `ls docs/rules/` → RULES_GIT.md present, 3.8K, ~110 lines ✅
+- Markdown link target exists: `./docs/rules/RULES_GIT.md` resolves to new file ✅
+- Style match: section structure, imperative voice, STOP & ASK section all consistent with sibling RULES\_\*.md files ✅
+- No code changes → no lint/typecheck/build needed
 
 ### Decisions
 
-- D-010: Auth state must not be initialized from browser globals in lazy initializer
-- D-011: Lucide icons for toolbar (consistent with design system)
-- D-012: Local state + onSelectionUpdate for cursor tracking
-- D-013: `useState(prop)` only reads on mount — always add sync useEffect when prop drives state in child components
+- D-014: Adopt GitHub Flow as the project workflow. Rationale: Vercel preview deploys replace the need for a long-lived `development` branch; one mental model (`feat → PR → main → deploy`) is leaner and battle-tested; small frequent PRs distribute merge conflict risk vs concentrating it at phase boundaries.
+- D-015: Carveouts for `HANDOFFS.md` and `docs/SCHEDULES.md` (direct commits to `main` allowed for these transient agent state files only). All other content — code, ADRs, RULES\_\*.md, config — goes through PR.
+- D-016: Migration trigger — carveouts are revoked the moment a second contributor joins. No grace period.
 
-### Next Steps
+### Known Issues / Risks
 
-- Merge `feat/journal-tiptap-editor` into `development`
-- HITL mobile responsive review (manual step)
-- Close any related issues
+- The repo still has an active `development` branch. Migration to GitHub Flow (delete `development`, set `main` branch protection in GitHub) is **deferred** and tracked as a separate task. Until migrated, agents will follow RULES_GIT.md but the current `development` branch is the working branch. A follow-up session should: finish any in-flight dev work, merge dev → main once, then delete `development` and configure branch protection on `main`.
+
+### Next Steps (ordered)
+
+1. Migrate the repo to GitHub Flow: finish in-flight work on `development`, merge to `main` once, delete `development` branch, configure GitHub branch protection on `main` (require PR, require CI, restrict force push, require linear history).
+2. Begin Phase 3 Slice 1 (#14) — Soft Launch: Countdown + Nav Gate, using the new workflow (feat branch → PR → main → auto-deploy).
+3. Update AGENT_PROTOCOL.md § 7 globally is **not** needed — the global protocol's default of protecting `dev*` is fine; RULES_GIT.md overrides for this project only.
 
 ### Blockers
 
 - None
-
----
