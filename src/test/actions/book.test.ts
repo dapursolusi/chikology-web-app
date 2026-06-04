@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 // `from` and `where` are intentionally part of the chainable mock even though
 // some tests exercise only `orderBy` or `limit`. Without them the chain breaks.
- 
+
 const {
   select,
   orderBy,
