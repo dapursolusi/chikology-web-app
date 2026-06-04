@@ -1,10 +1,15 @@
 'use server';
 
+import { revalidatePath } from 'next/cache';
+
 import { db } from '@/db';
 import { bookChapters, users } from '@/db/schema';
+import { type ChapterParsedValues, chapterSchema } from '@/schemas/chapter';
 import { asc, eq } from 'drizzle-orm';
 
 import { createClient } from '@/lib/supabase/server';
+
+const BOOK_BUCKET = 'book-chapters';
 
 export async function getBookChapters() {
   return db
@@ -28,4 +33,72 @@ export async function getAdminRole(): Promise<'user' | 'admin'> {
     .limit(1);
 
   return rows[0]?.role === 'admin' ? 'admin' : 'user';
+}
+
+function formDataToRaw(fd: FormData) {
+  const pdfEntry = fd.get('pdf');
+  return {
+    title: fd.get('title') ?? '',
+    chapter_number: fd.get('chapter_number') ?? '',
+    price_idr: fd.get('price_idr') ?? '',
+    release_date: fd.get('release_date') ?? '',
+    is_free: fd.get('is_free') === 'true' || fd.get('is_free') === 'on',
+    pdf: pdfEntry instanceof File ? pdfEntry : null,
+  };
+}
+
+export async function createChapter(
+  formData: FormData
+): Promise<{ success: true; chapterId: string } | { error: string }> {
+  const role = await getAdminRole();
+  if (role !== 'admin') {
+    return { error: 'Hanya admin yang dapat membuat bab' };
+  }
+
+  const parsed = chapterSchema.safeParse(formDataToRaw(formData));
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? 'Data tidak valid' };
+  }
+  const values: ChapterParsedValues = parsed.data;
+
+  const supabase = await createClient();
+
+  let pdfPath: string | null = null;
+  if (values.pdf) {
+    const objectPath = `${values.chapter_number}-${Date.now()}.pdf`;
+    const { error: uploadError } = await supabase.storage
+      .from(BOOK_BUCKET)
+      .upload(objectPath, values.pdf, { contentType: 'application/pdf' });
+    if (uploadError) {
+      return { error: 'Gagal mengunggah file PDF' };
+    }
+    pdfPath = objectPath;
+  }
+
+  try {
+    const releaseDate =
+      values.release_date && values.release_date.trim() !== ''
+        ? values.release_date
+        : null;
+    const [row] = await db
+      .insert(bookChapters)
+      .values({
+        title: values.title,
+        chapterNumber: values.chapter_number,
+        priceIdr: values.is_free ? 0 : values.price_idr,
+        releaseDate,
+        isFree: values.is_free,
+        pdfPath,
+      })
+      .returning({ id: bookChapters.id });
+
+    revalidatePath('/dashboard/admin/book');
+    return { success: true, chapterId: row.id };
+  } catch (err) {
+    const code = (err as { code?: string } | null)?.code;
+    if (code === '23505') {
+      return { error: 'Nomor bab sudah digunakan' };
+    }
+    return { error: 'Gagal membuat bab' };
+  }
 }

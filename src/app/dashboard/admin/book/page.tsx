@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation';
 
 import { getAdminRole, getBookChapters } from '@/actions/book';
 
-import { ChapterTable } from '@/components/dashboard/admin/ChapterTable';
+import { ChapterForm } from '@/components/dashboard/admin/ChapterForm';
 
 export const metadata = {
   title: 'Kelola E-Book · Chikology',
@@ -26,7 +26,7 @@ export default async function AdminBookPage() {
           Tambah, ubah, dan jadwalkan bab untuk e-book Mas Chiko.
         </p>
       </div>
-      <ChapterTable chapters={chapters} />
+      <ChapterForm chapters={chapters} />
     </div>
   );
 }
