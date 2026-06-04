@@ -1,10 +1,14 @@
 import {
+  boolean,
+  date,
   integer,
   jsonb,
   pgEnum,
   pgTable,
+  smallint,
   text,
   timestamp,
+  unique,
   uuid,
 } from 'drizzle-orm/pg-core';
 
@@ -21,10 +25,40 @@ export const users = pgTable('users', {
   email: text('email').notNull(),
   name: text('name'),
   avatarUrl: text('avatar_url'),
+  role: text('role').default('user').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
   deletedAt: timestamp('deleted_at'),
 });
+
+export const bookChapters = pgTable('book_chapters', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  title: text('title').notNull(),
+  chapterNumber: smallint('chapter_number').unique().notNull(),
+  priceIdr: integer('price_idr').default(0).notNull(),
+  releaseDate: date('release_date'),
+  isFree: boolean('is_free').default(false).notNull(),
+  pdfPath: text('pdf_path'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export const chapterPurchases = pgTable(
+  'chapter_purchases',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id),
+    chapterId: uuid('chapter_id')
+      .notNull()
+      .references(() => bookChapters.id),
+    purchasedAt: timestamp('purchased_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [unique().on(table.userId, table.chapterId)]
+);
 
 export const journalEntries = pgTable('journal_entries', {
   id: uuid('id').primaryKey().defaultRandom(),

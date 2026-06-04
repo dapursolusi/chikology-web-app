@@ -15,6 +15,13 @@
       "when": 1780547621875,
       "tag": "0001_naive_boomerang",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1780552809845,
+      "tag": "0002_chapter_schema",
+      "breakpoints": true
     }
   ]
 }
