@@ -263,7 +263,10 @@ describe('createChapter', () => {
     expect(result).toEqual({ success: true, chapterId: 'new-chapter-id' });
     expect(mockStorageFrom).toHaveBeenCalledWith('book-chapters');
     expect(mockUpload).toHaveBeenCalledTimes(1);
-    const [uploadPath, uploadFile] = mockUpload.mock.calls[0] ?? [];
+    const [uploadPath, uploadFile] = mockUpload.mock.calls[0] as unknown as [
+      string,
+      File,
+    ];
     expect(typeof uploadPath).toBe('string');
     expect(uploadPath as string).toMatch(/^2-\d+\.pdf$/);
     expect(uploadFile).toBe(fakePdf);
