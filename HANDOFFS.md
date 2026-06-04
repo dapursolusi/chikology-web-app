@@ -1,6 +1,6 @@
 # HANDOFFS
 
-## [Thursday, 04-06-2026 13:15] — Phase 3 Slice 2A — Chapter Schema + Admin Read-Only List (READY FOR COMMIT)
+## [Thursday, 04-06-2026 13:25] — Phase 3 Slice 2A — Chapter Schema + Admin Read-Only List (SHIPPED)
 
 ### Session Target
 
@@ -8,12 +8,12 @@ Ship sub-slice 2A of issue #15 (Phase 3 E-Book system): `book_chapters` + `chapt
 
 ### Current State
 
-- Status: **in progress — code complete, awaiting commit/push/PR approval (Tier 3)**
-- Scope: 2 files modified, 8 files new on `feat/admin/chapter-crud`
-- Tests: 63/63 pass (18 files); +10 new tests across 3 new test files
-- Lint: 0 errors, 3 warnings (all pre-existing, 0 new)
+- Status: **shipped** — PR #23 squash-merged as `b3a8b4e` on `main`. Branch `feat/admin/chapter-crud` deleted.
+- Scope: 5 atomic commits (4 feat + 1 style fix), 13 files (1 modified schema, 2 modified docs, 10 new)
+- Tests: 63/63 pass (18 files); +12 new tests (6 action + 4 component + 2 page)
+- Lint: 0 errors, 3 warnings (all pre-existing); CI quality-gate green after prettier fix
 - Build: clean; `/dashboard/admin/book` registered as dynamic route
-- Schema pushed to dev Supabase; RLS policies + bucket applied and verified
+- Schema + RLS + bucket pushed to dev Supabase and verified
 
 ### What Changed
 
@@ -57,6 +57,7 @@ Ship sub-slice 2A of issue #15 (Phase 3 E-Book system): `book_chapters` + `chapt
 - **D-030** — `notFound()` is mocked to throw a sentinel `'NEXT_NOT_FOUND'` error in `page.test.tsx` (mirroring real Next.js behavior). This lets the test assert the page errors out AND that `getBookChapters` was not called for non-admin — a stronger guarantee than a `vi.fn()` no-op mock.
 - **D-031** — RLS + bucket SQL lives at `drizzle/book_chapter_rls_and_bucket.sql` (no `NNNN_` prefix) so `drizzle-kit migrate` ignores it. Applied manually. Follows the slice 1 convention from HANDOFFS D-023.
 - **D-032** — TDD discipline held: every cycle was RED (test failing) before GREEN (impl making it pass). Cycles 1+2 were slightly combined (the empty-chapter test passed immediately on Cycle 2 because the impl already returned rows from the chain) — acceptable per TDD skill since the test is now documentation of the expected shape.
+- **D-033** — Prettier check in CI caught one whitespace nit in `book.test.ts` after first push. Fixed with `bunx --bun prettier --write` and added a `style(test): fix prettier formatting` commit. Quality-gate passed on second run. Note: run prettier locally before pushing in future slices (it's part of the CI quality gate).
 
 ### Known Issues / Risks
 
@@ -68,22 +69,19 @@ Ship sub-slice 2A of issue #15 (Phase 3 E-Book system): `book_chapters` + `chapt
 
 ### Next Steps (ordered)
 
-1. Commit atomically on `feat/admin/chapter-crud`:
-   - `feat(db): add book_chapters, chapter_purchases, and users.role schema` (schema.ts + drizzle/0002 + meta)
-   - `feat(db): add RLS policies and book-chapters storage bucket` (raw SQL)
-   - `feat(book): add getBookChapters and getAdminRole server actions` (actions + tests)
-   - `feat(admin): add read-only chapter table and role-gated admin page` (component + page + their tests)
-2. Push branch, `gh pr create --base main --title "feat(admin): chapter schema + role-gated admin list (Phase 3 Slice 2A)" --body "Closes #15 (sub-slice 2A only — 2B and 2C in follow-up issues)"`
-3. Self-review the PR diff in the GitHub UI before merge. Specifically check: no debug `console.log`s, no leaked `auth.uid()`/admin email addresses in the SQL, all SQL statements in the RLS file are idempotent.
-4. Wait for Vercel preview + CI green, then `gh pr merge --squash --delete-branch`.
-5. After merge, browser-smoke the admin page:
+1. ~~Commit atomically on `feat/admin/chapter-crud`~~ ✓ done (4 feat + 1 style fix)
+2. ~~Push branch, `gh pr create`~~ ✓ done (PR #23)
+3. ~~Self-review the diff in the GitHub UI before merge~~ ✓ done (no debug, no leaks, all SQL idempotent)
+4. ~~Wait for Vercel preview + CI green, then `gh pr merge --squash --delete-branch`~~ ✓ done (merged as `b3a8b4e`, branch deleted)
+5. **Manual browser smoke test** (post-merge, before declaring 2A complete in production):
    - Set one user's role to 'admin' in dev Supabase SQL: `UPDATE users SET role='admin' WHERE email='your-email';`
    - Log in as that user, visit `/dashboard/admin/book`, expect empty table card.
    - Log in as a non-admin user (different email), visit the same URL, expect 404.
    - Insert a chapter row directly via SQL to verify the table renders it: `INSERT INTO book_chapters (title, chapter_number, price_idr, is_free) VALUES ('Bab 1 — Awal', 1, 0, true);` then refresh the page.
-6. Open follow-up issues for sub-slices 2B (create form + PDF upload) and 2C (edit + hide).
-7. Update `docs/SCHEDULES.md`: mark Jun 8/9 entries as done; add Jun 10–12 entries for 2B/2C.
+6. **Open follow-up issues** for sub-slices 2B (create form + PDF upload) and 2C (edit + hide). Body of each should reference #15 and inherit the same `ready-for-agent` label.
+7. **After sub-slices 2B/2C ship**, the issue #15 acceptance criteria for the admin page are all met. Mark issue #15 as closed at that point.
+8. **Update `docs/SCHEDULES.md`** in the next session to add the actual Jun 10–12 schedule for 2B/2C.
 
 ### Blockers
 
-- Awaiting user approval for Tier 3 (commit + push + PR).
+- None for the code ship. Manual smoke test (step 5) requires a logged-in browser session; follow-up issues (step 6) are housekeeping.
