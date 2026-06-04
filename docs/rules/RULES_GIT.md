@@ -56,24 +56,15 @@ A branch must die within ~3 days. If it can't, the slice is too big — split it
 - Wait for: CI green + Vercel preview deployed successfully.
 - Delete the branch on merge (the flag above handles this).
 
-### Carveouts (direct commits to `main`)
+### No carveouts
 
-Allowed for these transient files **only**:
+Everything goes through a PR — including `HANDOFFS.md` and `docs/SCHEDULES.md`. Branch protection with `enforce_admins: true` blocks direct `git push` to `main` regardless of content type, so any carveout would be theoretical anyway. The 30-second PR cost per session is cheap and adds an audit trail (the PR title doubles as a session log entry).
 
-- `HANDOFFS.md` — agent session state, frequent updates, low review value.
-- `docs/SCHEDULES.md` — schedule tracker, updated after every session.
-
-Everything else (including ADRs, CONTEXT.md, RULES\_\*.md, code, tests, config) goes through a PR.
-
-When in doubt, open a PR. The 30-second overhead is cheap.
-
-### Migration trigger
-
-The moment a second contributor joins this repo, the carveouts above are revoked immediately — no grace period. All changes to `main` go through PR, no exceptions.
+When in doubt, open a PR.
 
 ### Forbidden
 
-- No direct commits to `main` outside the carveouts above.
+- No direct commits to `main` — ever. Every change goes through a PR.
 - No `git push --force` to `main` — ever.
 - No `git rebase` on commits that have been pushed and reviewed by others.
 - No merging your own PR without self-reviewing the diff first.
@@ -87,4 +78,3 @@ The moment a second contributor joins this repo, the carveouts above are revoked
 - Force-push or history rewrite on any branch with a PR open: STOP, ask.
 - Merge strategy other than squash (e.g., rebase merge, merge commit): STOP, justify.
 - Branch lifetime exceeding 3 days: STOP, propose how to split or why to extend.
-- Carveout request for a new file type to allow direct commits: STOP, ask.
