@@ -5,6 +5,7 @@ Only read and follow these rule files exactly if touching/writing on specific do
 - [TypeScript](./docs/rules/RULES_TYPESCRIPT.md)
 - [React](./docs/rules/RULES_REACT.md)
 - [Next.js](./docs/rules/RULES_NEXTJS.md)
+- [Git & Branching](./docs/rules/RULES_GIT.md)
 
 ## Universal Guardrails (Always Active)
 
