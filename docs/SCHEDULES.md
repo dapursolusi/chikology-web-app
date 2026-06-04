@@ -176,19 +176,23 @@
 
 **Goal:** "Book chapters table exists. Landing page shows countdown. Nav is greyed."
 
-| #   | Task                                                                                                                                                                    | Est.   | Done? |
-| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ----- |
-| 1   | Add `book_chapters` table: id, title, chapter_number, price_idr, `release_date` (nullable), pdf_path                                                                    | 20 min | ☐     |
-| 2   | Add `chapter_purchases` table: id, user_id, chapter_id, purchased_at                                                                                                    | 15 min | ☐     |
-| 3   | `bunx --bun drizzle-kit push`                                                                                                                                           | 5 min  | ☐     |
-| 4   | 🆕 Create `BookCountdown.tsx` — countdown timer targeting June 16, 2026                                                                                                 | 30 min | ☐     |
-| 5   | 🆕 Replace e-book section CTA with countdown component. Remove "Baca Preview" and "Akses Full E-Book" buttons. Show countdown + "Rilis 16 Juni — Ulang Tahun Mas Chiko" | 20 min | ☐     |
-| 6   | 🆕 Add `EBOOK_LIVE` feature flag (env var) — when false, sidebar "E-book" link renders as greyed/disabled with tooltip "Segera hadir 16 Juni"                           | 20 min | ☐     |
-| 7   | 🆕 Set `EBOOK_LIVE=false` for soft launch                                                                                                                               | 5 min  | ☐     |
-| 8   | Test: landing page shows countdown, dashboard book nav greyed                                                                                                           | 15 min | ☐     |
+> **Update (Jun 4):** Slice 1 (issue #14) shipped early. Scope refined per PRD #13: the soft-launch slice only needs `app_settings` (the feature-flag table). `book_chapters` + `chapter_purchases` schema moved to the full-launch build slice (Jun 12–15) since they're not used by anything during soft launch. The `EBOOK_LIVE` flag is database-driven (row in `app_settings`), not an env var, so it can be flipped via pg_cron at midnight Jun 16 without a deploy.
+
+| #   | Task                                                                                                                                                                    | Est.   | Done?                                                                                                          |
+| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | -------------------------------------------------------------------------------------------------------------- |
+| 1   | ~~Add `book_chapters` table~~ — moved to full-launch build slice                                                                                                        | 20 min | ⏭ deferred                                                                                                    |
+| 2   | ~~Add `chapter_purchases` table~~ — moved to full-launch build slice                                                                                                    | 15 min | ⏭ deferred                                                                                                    |
+| 2a  | 🆕 Add `app_settings` table: `key TEXT PK`, `value TEXT NOT NULL`, `updated_at TIMESTAMPTZ` (backs the database-driven feature flag)                                    | 10 min | ✓ (Jun 4)                                                                                                      |
+| 3   | `bunx --bun drizzle-kit push` (applied `app_settings` only this slice)                                                                                                  | 5 min  | ✓ (Jun 4)                                                                                                      |
+| 3a  | 🆕 Seed row `('ebook_live', 'false')` into `app_settings` (manual `bun -e` script since `drizzle-kit push` ignores SQL INSERT statements)                               | 5 min  | ✓ (Jun 4)                                                                                                      |
+| 4   | 🆕 Create `BookCountdown.tsx` — countdown timer targeting June 16, 2026                                                                                                 | 30 min | ✓ (Jun 4) — TDD, 4 tests                                                                                       |
+| 5   | 🆕 Replace e-book section CTA with countdown component. Remove "Baca Preview" and "Akses Full E-Book" buttons. Show countdown + "Rilis 16 Juni — Ulang Tahun Mas Chiko" | 20 min | ✓ (Jun 4) — TDD, 2 tests                                                                                       |
+| 6   | 🆕 Add `EBOOK_LIVE` feature flag (DB row, not env var) — when false, sidebar "E-book" link renders as greyed/disabled with tooltip "Segera hadir 16 Juni"               | 20 min | ✓ (Jun 4) — TDD, 3 sidebar tests + getEbookLive helper                                                         |
+| 7   | 🆕 Set `EBOOK_LIVE=false` for soft launch (done via seeded `app_settings` row above)                                                                                    | 5 min  | ✓ (Jun 4)                                                                                                      |
+| 8   | Test: landing page shows countdown, dashboard book nav greyed                                                                                                           | 15 min | ◐ landing page smoke-tested in headless chrome; dashboard sidebar pending real-user verification post-PR-merge |
 
 **End-of-day checkpoint:** Countdown visible on landing page. Book nav greyed. Schema ready for full launch.
-**Total: ~2 hours**
+**Total: ~2 hours** — Actual: ~2 hours from session start to all-green tests + build. PR open and squash-merge pending.
 
 ---
 
@@ -282,7 +286,7 @@ Jun  1 (Sun)  ████ Phase 1.5 ✓ + Phase 2 Day 1 — Journal Foundation 
 Jun  2 (Mon)  ████ Phase 2 Day 2 — Mood + History + Scanner Connect  ← DONE
 Jun  3 (Tue)  ████ Phase 2 Day 3 — Bug Fixes + Polish               ← DONE
 
-Jun  4 (Wed)  ░░░░ Buffer / Mas Chiko UAT
+Jun  4 (Thu)  ████ Phase 3 Slice 1 — Soft launch countdown + nav gate (issue #14) ← DONE (3 days early)
 Jun  5 (Thu)  ░░░░ Phase 3 prep
 Jun  6 (Fri)  ░░░░ Phase 3 (soft launch) — Schema + Countdown
 
