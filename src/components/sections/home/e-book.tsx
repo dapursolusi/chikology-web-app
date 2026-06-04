@@ -1,30 +1,8 @@
-'use client';
+import { BookOpen } from 'lucide-react';
 
-import { useState } from 'react';
-
-import Link from 'next/link';
-
-import { ArrowRight, BookOpen } from 'lucide-react';
-
-import { LoginForm } from '@/components/login-form';
-import Modal from '@/components/modal';
-import { SignupForm } from '@/components/signup-form';
-import { Button } from '@/components/ui/button';
+import { BookCountdown } from '@/components/sections/home/BookCountdown';
 
 export default function EBook() {
-  const [activeAuth, setActiveAuth] = useState<'login' | 'signup' | null>(null);
-
-  const handleOpenLogin = () => setActiveAuth('login');
-  const handleOpenSignup = () => setActiveAuth('signup');
-  const handleClose = () => setActiveAuth(null);
-
-  const authContent =
-    activeAuth === 'login' ? (
-      <LoginForm onSwitchToSignup={handleOpenSignup} />
-    ) : activeAuth === 'signup' ? (
-      <SignupForm onSwitchToLogin={handleOpenLogin} />
-    ) : null;
-
   return (
     <section className="relative overflow-hidden bg-background">
       <div className="mx-auto max-w-6xl px-4 md:px-8">
@@ -57,24 +35,9 @@ export default function EBook() {
                 hubungan yang healthier dengan diri kamu.
               </p>
 
-              {/* Action buttons */}
-              <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-                <Button
-                  asChild
-                  variant="secondary"
-                  className="h-11 rounded-lg px-6"
-                >
-                  <Link href="/e-book" className="inline-flex items-center">
-                    Baca Preview (Gratis)
-                    <ArrowRight className="ml-2 size-4" />
-                  </Link>
-                </Button>
-                <Button
-                  className="h-11 rounded-lg px-6"
-                  onClick={handleOpenLogin}
-                >
-                  Akses Full E-Book
-                </Button>
+              {/* Countdown (replaces CTAs until Jun 16, 2026 launch) */}
+              <div className="mt-6">
+                <BookCountdown />
               </div>
 
               {/* Trust indicators */}
@@ -111,18 +74,6 @@ export default function EBook() {
           </div>
         </div>
       </div>
-
-      <Modal
-        trigger={null}
-        open={activeAuth !== null}
-        onOpenChange={(open) => {
-          if (!open) handleClose();
-        }}
-        content={{
-          variant: 'direct',
-          directContent: authContent,
-        }}
-      />
     </section>
   );
 }

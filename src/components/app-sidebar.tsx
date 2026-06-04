@@ -22,43 +22,51 @@ const DASHBOARD_PREFIX = '/dashboard';
 const dashboardLink = (path: string = '') =>
   path ? `${DASHBOARD_PREFIX}/${path}` : DASHBOARD_PREFIX;
 
-const navMain = [
-  {
-    title: 'Jurnal Pribadi',
-    url: '#',
-    icon: <NotebookPen />,
-    items: [
-      {
-        title: 'Isi Jurnal',
-        url: dashboardLink('journal'),
-      },
-    ],
-  },
-  {
-    title: 'Stress Detection',
-    url: '#',
-    icon: <BotIcon />,
-    items: [
-      {
-        title: 'Deteksi Wajah',
-        url: dashboardLink('scanner'),
-      },
-    ],
-  },
-  {
-    title: 'E-Book',
-    url: '#',
-    icon: <BookOpenIcon />,
-    items: [
-      {
-        title: 'Baca E-Book',
-        url: '#',
-      },
-    ],
-  },
-];
+function buildNavMain(ebookLive: boolean) {
+  return [
+    {
+      title: 'Jurnal Pribadi',
+      url: '#',
+      icon: <NotebookPen />,
+      items: [
+        {
+          title: 'Isi Jurnal',
+          url: dashboardLink('journal'),
+        },
+      ],
+    },
+    {
+      title: 'Stress Detection',
+      url: '#',
+      icon: <BotIcon />,
+      items: [
+        {
+          title: 'Deteksi Wajah',
+          url: dashboardLink('scanner'),
+        },
+      ],
+    },
+    {
+      title: 'E-Book',
+      url: '#',
+      icon: <BookOpenIcon />,
+      disabled: !ebookLive,
+      tooltipMessage: ebookLive ? undefined : 'Segera hadir 16 Juni',
+      items: [
+        {
+          title: 'Baca E-Book',
+          url: '#',
+        },
+      ],
+    },
+  ];
+}
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+type AppSidebarProps = React.ComponentProps<typeof Sidebar> & {
+  ebookLive?: boolean;
+};
+
+export function AppSidebar({ ebookLive = false, ...props }: AppSidebarProps) {
   const [user, setUser] = useState<{
     name: string;
     email: string;
@@ -80,6 +88,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       }
     });
   }, []);
+
+  const navMain = buildNavMain(ebookLive);
 
   return (
     <Sidebar collapsible="icon" {...props} className="mobile:w-64">
