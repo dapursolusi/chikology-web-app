@@ -1,149 +1,58 @@
 # HANDOFFS
 
-## [Friday, 05-06-2026 14:32] — Ship Phase 3 Slice 2C: admin edit + hide chapter (TDD)
+## [Friday, 05-06-2026 16:20] — Fix production 500: FileList undefined in server runtime
 
 ### Session Target
 
-Ship issue #26 (Phase 3 Slice 2C — Admin: Edit + hide chapter) end-to-end via
-vertical-slice TDD. Lens: frontend (admin book page) + backend (server
-actions). Outcome: `updateChapter` and `hideChapter` server actions, refactored
-`<ChapterForm>` with edit mode, and `<ChapterTable>` Edit + Hide buttons with
-`AlertDialog` confirmation. All green; PR opened for review.
+- Diagnose and fix the production 500 on `POST /dashboard/admin/book` (follow-up to the earlier 404 misdiagnosis). User-reported error: `ReferenceError: FileList is not defined at Object.readFile (src/schemas/chapter.ts:6:24) at createChapter (src/actions/book.ts:58:32)`.
 
 ### Current State
 
-- Status: **shipped — awaiting PR merge.**
-- Branch: `feat/admin/edit-hide-chapter` (HEAD ahead of `main` by 7 files).
-- 107/107 tests pass locally; `bunx --bun tsc --noEmit` clean; `bun run build`
-  clean; `bunx --bun prettier --check .` clean.
-- 9 new tests for `updateChapter` (admin gate, validation, no-PDF update,
-  PDF-replace update, `is_free → priceIdr=0`, unique violation, revalidate) +
-  2 new tests for `hideChapter` (admin gate, `releaseDate=NULL` + revalidate).
-- 4 new tests for `ChapterTable` (Edit button per row, Hide button only when
-  `releaseDate !== null`, AlertDialog confirm, AlertDialog cancel) + 3 new
-  tests for `ChapterForm` edit mode (pre-population, `updateChapter` call,
-  `hideChapter` call from table's Hide button).
+- Status: fixed and committed locally as `a92fd00`. Awaiting Vercel auto-deploy + smoke test.
+- Scope: `src/schemas/chapter.ts`, `src/schemas/chapter.test.ts`, `src/test/setup.ts`.
 
 ### What Changed
 
-- `src/actions/book.ts` — Added `updateChapter(id, formData)` and
-  `hideChapter(id)` server actions. Both admin-gate via `getAdminRole()`,
-  validate input through `chapterSchema` (update only), revalidate
-  `/dashboard/admin/book` on success. `updateChapter` re-uses the existing PDF
-  when none is provided; uploads to `book-chapters` bucket with
-  `<chapterNumber>-<timestamp>.pdf` when provided. Catches Postgres `23505`
-  for chapter_number collisions on update.
-- `src/components/dashboard/admin/ChapterTable.tsx` — Added `onEdit` and `onHide`
-  optional callbacks. Each row now has an "Edit" button (always visible when
-  `onEdit` is provided) and a "Sembunyikan" button (only when
-  `releaseDate !== null`). Hide opens a shadcn `AlertDialog` with a destructive
-  confirmation; confirming calls `onHide(chapter)`, canceling closes the
-  dialog without side effects. Extracted per-row UI into a `ChapterRowItem`
-  sub-component to keep dialog state local.
-- `src/components/dashboard/admin/ChapterForm.tsx` — Added internal
-  `editingId` state. When set, the form card title changes to
-  `Edit Bab <number>`, the submit button label changes to "Simpan Perubahan",
-  the PDF field label changes to "File PDF (opsional — kosongkan untuk
-  mempertahankan)", and the existing `pdfPath` is shown beneath the file
-  input. A "Batal" button appears to exit edit mode. `useForm.reset()` is
-  invoked in a `useEffect` keyed on the editing chapter so default values
-  switch between create and edit. Submits to `updateChapter(id, fd)` in edit
-  mode, `createChapter(fd)` otherwise. `onHide` is wired to call the new
-  `hideChapter` action and toast the result.
-- `src/test/actions/book.test.ts` — Extended the `vi.hoisted` chainable mock
-  to support `update().set().where().returning()`. Added `describe('updateChapter', …)`
-  with 7 tests and `describe('hideChapter', …)` with 2 tests, covering the
-  full behavior matrix per the issue spec.
-- `src/components/dashboard/admin/chapter-table.test.tsx` — Added
-  `userEvent` import, mocked `onEdit` and `onHide` callbacks, 4 new tests
-  for button rendering and AlertDialog flow.
-- `src/components/dashboard/admin/ChapterForm.test.tsx` — Mocked
-  `updateChapter` and `hideChapter` alongside the existing `createChapter`.
-  3 new tests cover edit-mode pre-population, edit-mode submit, and
-  Hide-from-table invokes `hideChapter`.
+- `src/schemas/chapter.ts:5-9` — Added `isFileList(value): value is FileList` type predicate that guards with `typeof FileList !== 'undefined'`. Used it in both the `readFile` transform (line 6) and the `custom()` predicate (line 33) in place of bare `value instanceof FileList` references. The FileList branch remains reachable on the browser (where FileList is defined) and is skipped on node (where it's not).
+- `src/schemas/chapter.test.ts:1` — Added `// @vitest-environment node` directive at the top of the file. This file now runs in node env, so the schema is exercised under the same runtime the server actions use. This is what catches the FileList ReferenceError.
+- `src/schemas/chapter.test.ts:172-187` — New describe block `chapterSchema — node env compatibility` with one test asserting `chapterSchema.safeParse(...)` does not throw when `FileList` is undefined. Regression test for the production bug.
+- `src/test/setup.ts:3,17` — Guarded `document.elementFromPoint` and `window.matchMedia` patches with `typeof document !== 'undefined'` / `typeof window !== 'undefined'` so the same setup file works for both jsdom and node env tests.
 
 ### Verification
 
-- `bun run test --run` → 20 files, 107 tests, all green.
-- `bunx --bun tsc --noEmit` → exit 0.
-- `bun run build` → compiles cleanly, all routes generated.
-- `bunx --bun prettier --check .` → all files conform.
-- `bun lint` → 0 errors. The 6 pre-existing warnings (4 unrelated `<img>`
-  warnings, 1 `react-hooks/incompatible-library` on the existing `watch()`
-  call, 1 anonymous-default-export in an existing test) are unchanged from
-  the pre-slice state. No new warnings introduced.
+- Commands run: `bun run test --run`, `tsc --noEmit`, `bun run build`, `prettier --check`, bun repro of `chapterSchema.safeParse` and `createChapter()` in node.
+- Results:
+  - 108/108 tests pass (was 107; +1 new node-env test, all 11 original schema tests preserved)
+  - tsc clean, build clean, prettier clean
+  - bun repro before fix: `ReferenceError: FileList is not defined at chapterSchema.safeParse` (reproduced on local and Vercel per user)
+  - bun repro after fix: `safeParse` returns `{ success: true, data: {...} }` (no throw); `createChapter` reaches the expected "cookies was called outside a request scope" error from a script context, confirming the schema path no longer throws
 
 ### Decisions
 
-- **D-049** — `<ChapterForm>` owns the `editingId` state (not lifted to
-  `page.tsx`). Rationale: the table's Edit button and the form are siblings
-  inside `<ChapterForm>`, so co-locating the state avoids a prop-drill to
-  the page. The page stays a thin role-gate + data fetch.
-- **D-050** — `<ChapterTable>` takes `onEdit` / `onHide` callbacks instead
-  of importing `updateChapter` / `hideChapter` directly. Rationale: the
-  table shouldn't know about server actions. The wrapper `<ChapterForm>` is
-  the right place to wire those. Keeps the table reusable for read-only
-  previews in future slices (e.g., slice 3 chapter list).
-- **D-051** — Hide dialog state lives in `ChapterRowItem` (per-row local
-  state), not in `<ChapterTable>`. Rationale: only one row's dialog is ever
-  open at a time, and per-row state keeps the dialog tied to the chapter
-  it represents without any "currently-open row" bookkeeping in the parent.
-- **D-052** — `updateChapter` does NOT delete the old PDF from storage when
-  a new one is uploaded. The issue explicitly scoped this out ("the old file
-  stays — cleanup is out of scope for this slice"). Documented in code
-  intent: leaked files will be cleaned up in a future admin-storage
-  maintenance slice.
-- **D-053** — `updateChapter` does NOT validate the chapter's existence
-  before updating. A `.returning([])` from drizzle would yield `undefined`
-  from `row.id`; we accept the current behavior (crash on a typo'd id) and
-  add it to deferred items. A real-world admin UI would not exercise this
-  path because the id is supplied by the server-rendered list.
+- D-058: Schema must work in both browser (jsdom) and node runtimes. The minimal change is a `typeof FileList !== 'undefined'` guard, not removing the FileList branch. The branch is reachable on the client (`zodResolver` may receive a `FileList` from react-hook-form's file input). Server always receives a `File` (form converts FileList → File before appending to FormData at `ChapterForm.tsx:90`), so the branch is dead code on the server path but harmless with the guard.
+- D-059: Pin `chapter.test.ts` to node env via the per-file `// @vitest-environment node` directive. The file tests a pure data schema with no DOM dependencies, so node env is the correct match for the production runtime. This catches browser-global leaks in the schema going forward. Component tests remain in jsdom via the global config.
+- D-060: Make `setup.ts` defensively guard `document` / `window` accesses. Both are jsdom-only; skipping them when undefined allows node-env test files to use the same setup. Minimal change, no per-env split.
+- D-061: No follow-up to switch ALL tests to node. Component tests legitimately need jsdom (RTL, document, window). Only this schema file, which has no DOM dependency, gets the node directive.
 
 ### Known Issues / Risks
 
-- **The "local-vs-CI test gap" from the previous handoff was a runner
-  divergence, not a code bug.** Investigation: `bun run test` invokes
-  `node_modules/.bin/vitest` and resolves `zod` correctly. `bunx --bun vitest
-run` runs vitest under bun, and bun's CJS↔ESM interop drops the named
-  `z` export from zod 4.4.3 — so `import { z } from 'zod'` evaluates to
-  `undefined`, which crashes the chapter schema on import. AGENTS.md and
-  `docs/rules/RULES_GIT.md` both prescribe `bunx --bun`, but vitest under
-  bun is broken in this project. **Recommendation: update AGENTS.md to say
-  `bun run test` for vitest specifically** (keeping `bunx --bun` for
-  one-shot tools like `drizzle-kit`, `prettier`, `tsc`). The CI workflow
-  already uses `bun run test --run --passWithNoTests`, which works. Local
-  pre-push verification is unblocked. Filed as protocol override D-054.
-- **`updateChapter` does not handle "chapter id not found" gracefully.**
-  A typo'd id would crash with `Cannot read properties of undefined
-(reading 'id')`. Acceptable for v1 (admins operate on a server-rendered
-  list); can be hardened by wrapping the update in a length check on the
-  returning array.
-- **Hide button visibility is based purely on `releaseDate !== null`.**
-  This matches the PRD ("hiding = `release_date = NULL`") and the issue spec,
-  but it means a freshly-created chapter with no release date has no Hide
-  button. That's intentional — there's nothing to hide.
+- The architectural finding: **the test environment (jsdom) masked a server-runtime bug**. Any future code that runs in both envs and references browser-only globals (FileList, Image, Notification, etc.) needs to either guard with `typeof X !== 'undefined'` or have node-env tests. Worth keeping in mind for `src/lib/`, `src/schemas/`, and `src/actions/` files specifically.
+- D-054 still applies: use `bun run test` (not `bunx --bun vitest`) for vitest — bun's CJS↔ESM interop drops zod 4's `z` named export.
+- HANDOFFS entry for the previous (wrong) "stale cache" diagnosis has been overwritten. The git history (`git log -p --follow -- HANDOFFS.md`) preserves it.
 
 ### Next Steps (ordered)
 
-1. ~~Write TDD tests for all behaviors~~ ✓ done
-2. ~~Implement `updateChapter` and `hideChapter`~~ ✓ done
-3. ~~Refactor `ChapterForm` for edit mode, add table buttons + AlertDialog~~ ✓ done
-4. ~~Run lint + typecheck + all tests + build + prettier~~ ✓ all green
-5. **Open PR `feat/admin/edit-hide-chapter → main`**, title
-   `feat(admin): edit + hide chapter (Phase 3 Slice 2C)`, body `Closes #26`
-6. **Wait for CI + Vercel preview**, then squash-merge with
-   `gh pr merge --squash --delete-branch`
-7. **Update `docs/SCHEDULES.md`** to mark Slice 2C as done (will do on this
-   branch before opening the PR)
-8. **Update `AGENTS.md`** with the vitest runner note (D-054) — small
-   follow-up commit, can ride along on the PR or be a separate docs PR
-9. **Manual browser smoke test** of the edit + hide flow on the Vercel
-   preview before soft launch (Jun 12)
-10. **Post-merge: open issue for `updateChapter` "id not found" hardening**
-    if the v1 behavior is still a concern
+1. Wait for Vercel auto-deploy of `a92fd00` to production. Confirm new deploy hash from `vercel ls --prod`.
+2. Smoke-test create chapter on production with iPhone Safari: hard-refresh `/dashboard/admin/book`, submit a valid (free, no-PDF) chapter. Expect: row created in Supabase, success toast, no console errors.
+3. If the smoke test passes, no further action. The bug is fixed end-to-end.
+4. Optional follow-up (low priority): audit other files in `src/lib/`, `src/schemas/`, `src/actions/` for browser-only global references. Add node-env tests where appropriate.
 
-### Blockers
+### Blockers (if any)
 
-- None. The known local-vs-CI test gap is a tooling quirk, not a code
-  defect; logged in the prior handoff and in D-054. CI gates will not be
-  affected.
+- None. Awaiting Vercel deploy.
+
+---
+
+## [Friday, 05-06-2026 15:30] — (SUPERSEDED) Stale-cache misdiagnosis for createChapter 404
+
+> **Note**: this entry was based on a wrong hypothesis. The action ID mismatch I attributed to iPhone Safari cache was a coincidence (or a separate concern); the real bug was a `FileList is not defined` ReferenceError in `src/schemas/chapter.ts` that returned 500, not 404, on the server. The 500 was apparently misrendered in the user's earlier console as a 404 due to the way the FormData POST was being retried. See the new entry above for the correct fix (`a92fd00`).

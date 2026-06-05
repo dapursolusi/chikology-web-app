@@ -2,8 +2,12 @@ import { z } from 'zod';
 
 const FIFTY_MB = 50 * 1024 * 1024;
 
+function isFileList(value: unknown): value is FileList {
+  return typeof FileList !== 'undefined' && value instanceof FileList;
+}
+
 function readFile(value: unknown): File | null {
-  if (value instanceof FileList) {
+  if (isFileList(value)) {
     return value[0] instanceof File ? value[0] : null;
   }
   if (value instanceof File) {
@@ -30,7 +34,7 @@ export const chapterSchema = z
     is_free: z.boolean().default(false),
     pdf: z
       .custom<File | FileList | null | undefined>(
-        (val) => val == null || val instanceof File || val instanceof FileList,
+        (val) => val == null || val instanceof File || isFileList(val),
         { message: 'File PDF wajib diunggah' }
       )
       .transform(readFile)

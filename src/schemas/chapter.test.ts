@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { describe, expect, it } from 'vitest';
 
 import { chapterSchema } from './chapter';
@@ -170,5 +171,22 @@ describe('chapterSchema', () => {
     if (result.success) {
       expect(result.data.pdf).toBeNull();
     }
+  });
+});
+
+describe('chapterSchema — node env compatibility', () => {
+  it('does not throw ReferenceError when FileList is undefined', () => {
+    expect(typeof FileList).toBe('undefined');
+
+    const result = chapterSchema.safeParse({
+      title: 'Bab 1',
+      chapter_number: 1,
+      price_idr: 0,
+      release_date: '',
+      is_free: true,
+      pdf: null,
+    });
+
+    expect(result.success).toBe(true);
   });
 });
