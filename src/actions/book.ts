@@ -102,3 +102,81 @@ export async function createChapter(
     return { error: 'Gagal membuat bab' };
   }
 }
+
+export async function updateChapter(
+  id: string,
+  formData: FormData
+): Promise<{ success: true; chapterId: string } | { error: string }> {
+  const role = await getAdminRole();
+  if (role !== 'admin') {
+    return { error: 'Hanya admin yang dapat mengubah bab' };
+  }
+
+  const parsed = chapterSchema.safeParse(formDataToRaw(formData));
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? 'Data tidak valid' };
+  }
+  const values: ChapterParsedValues = parsed.data;
+
+  const supabase = await createClient();
+
+  let pdfPath: string | undefined;
+  if (values.pdf) {
+    const objectPath = `${values.chapter_number}-${Date.now()}.pdf`;
+    const { error: uploadError } = await supabase.storage
+      .from(BOOK_BUCKET)
+      .upload(objectPath, values.pdf, { contentType: 'application/pdf' });
+    if (uploadError) {
+      return { error: 'Gagal mengunggah file PDF' };
+    }
+    pdfPath = objectPath;
+  }
+
+  const releaseDate =
+    values.release_date && values.release_date.trim() !== ''
+      ? values.release_date
+      : null;
+
+  const setValues: Partial<typeof bookChapters.$inferInsert> = {
+    title: values.title,
+    chapterNumber: values.chapter_number,
+    priceIdr: values.is_free ? 0 : values.price_idr,
+    releaseDate,
+    isFree: values.is_free,
+  };
+  if (pdfPath !== undefined) {
+    setValues.pdfPath = pdfPath;
+  }
+
+  try {
+    const [row] = await db
+      .update(bookChapters)
+      .set(setValues)
+      .where(eq(bookChapters.id, id))
+      .returning({ id: bookChapters.id });
+
+    revalidatePath('/dashboard/admin/book');
+    return { success: true, chapterId: row.id };
+  } catch (err) {
+    const code = (err as { code?: string } | null)?.code;
+    if (code === '23505') {
+      return { error: 'Nomor bab sudah digunakan' };
+    }
+    return { error: 'Gagal mengubah bab' };
+  }
+}
+
+export async function hideChapter(
+  id: string
+): Promise<{ success: true } | { error: string }> {
+  const role = await getAdminRole();
+  if (role !== 'admin') {
+    return { error: 'Hanya admin yang dapat menyembunyikan bab' };
+  }
+  await db
+    .update(bookChapters)
+    .set({ releaseDate: null })
+    .where(eq(bookChapters.id, id));
+  revalidatePath('/dashboard/admin/book');
+  return { success: true };
+}
