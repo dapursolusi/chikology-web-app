@@ -4,6 +4,10 @@ import { eq } from 'drizzle-orm';
 
 export type ChapterState = 'unreleased' | 'locked' | 'buyable' | 'owned';
 
+export type ChapterAccess =
+  | { canRead: true; reason: 'owned' | 'free-claimable' }
+  | { canRead: false; reason: 'unreleased' | 'locked' | 'paid' | 'not-found' };
+
 export type ChapterWithState = {
   id: string;
   title: string;
@@ -97,4 +101,61 @@ export function computeChapterState(
   }
 
   return 'buyable';
+}
+
+export async function canUserReadChapter(
+  userId: string,
+  chapterId: string
+): Promise<ChapterAccess> {
+  const targetChapters = await db
+    .select()
+    .from(bookChapters)
+    .where(eq(bookChapters.id, chapterId));
+  const chapter = targetChapters[0];
+
+  if (!chapter) {
+    return { canRead: false, reason: 'not-found' };
+  }
+
+  if (!isReleased(chapter, new Date())) {
+    return { canRead: false, reason: 'unreleased' };
+  }
+
+  const allChapters = await db
+    .select({
+      id: bookChapters.id,
+      chapterNumber: bookChapters.chapterNumber,
+      releaseDate: bookChapters.releaseDate,
+      priceIdr: bookChapters.priceIdr,
+      isFree: bookChapters.isFree,
+    })
+    .from(bookChapters)
+    .orderBy(bookChapters.chapterNumber);
+
+  const purchases = await db
+    .select({ chapterId: chapterPurchases.chapterId })
+    .from(chapterPurchases)
+    .where(eq(chapterPurchases.userId, userId));
+
+  const ownedChapterIds = new Set(purchases.map((p) => p.chapterId));
+  const ownedChapterNumbers = new Set(
+    allChapters
+      .filter((c) => ownedChapterIds.has(c.id))
+      .map((c) => c.chapterNumber)
+  );
+
+  const state = computeChapterState(chapter, ownedChapterNumbers, allChapters);
+
+  if (state === 'owned') {
+    return { canRead: true, reason: 'owned' };
+  }
+  if (state === 'buyable') {
+    return chapter.isFree
+      ? { canRead: true, reason: 'free-claimable' }
+      : { canRead: false, reason: 'paid' };
+  }
+  if (state === 'locked') {
+    return { canRead: false, reason: 'locked' };
+  }
+  return { canRead: false, reason: 'unreleased' };
 }

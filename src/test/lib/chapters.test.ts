@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { computeChapterState } from '@/lib/chapters';
+import { canUserReadChapter, computeChapterState } from '@/lib/chapters';
 
 // Mock DB for getChaptersWithState tests
 const mockOrderBy = vi.hoisted(() =>
@@ -148,5 +148,202 @@ describe('getChaptersWithState', () => {
       chapterNumber: 2,
       state: 'buyable',
     });
+  });
+});
+
+// ─── canUserReadChapter — async integration tests ────────────────────
+
+describe('canUserReadChapter', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('returns "owned" when user has a purchase for the chapter', async () => {
+    // Call 1: chapter lookup → released, free
+    mockWhere.mockResolvedValueOnce([
+      {
+        id: 'ch1',
+        title: 'Bab 1',
+        chapterNumber: 1,
+        priceIdr: 0,
+        isFree: true,
+        releaseDate: '2025-01-01',
+        pdfPath: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    ]);
+    // Call 2: all chapters
+    mockOrderBy.mockResolvedValueOnce([
+      {
+        id: 'ch1',
+        title: 'Bab 1',
+        chapterNumber: 1,
+        priceIdr: 0,
+        isFree: true,
+        releaseDate: '2025-01-01',
+        pdfPath: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    ]);
+    // Call 3: user purchases → owns ch1
+    mockWhere.mockResolvedValueOnce([{ chapterId: 'ch1' }]);
+
+    const result = await canUserReadChapter('user-id', 'ch1');
+
+    expect(result).toEqual({ canRead: true, reason: 'owned' });
+  });
+
+  it('returns "free-claimable" when chapter is free, released, and not owned', async () => {
+    // Call 1: chapter lookup → released, free
+    mockWhere.mockResolvedValueOnce([
+      {
+        id: 'ch-free',
+        title: 'Bab Gratis',
+        chapterNumber: 1,
+        priceIdr: 0,
+        isFree: true,
+        releaseDate: '2025-01-01',
+        pdfPath: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    ]);
+    // Call 2: all chapters
+    mockOrderBy.mockResolvedValueOnce([
+      {
+        id: 'ch-free',
+        title: 'Bab Gratis',
+        chapterNumber: 1,
+        priceIdr: 0,
+        isFree: true,
+        releaseDate: '2025-01-01',
+        pdfPath: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    ]);
+    // Call 3: user purchases → none
+    mockWhere.mockResolvedValueOnce([]);
+
+    const result = await canUserReadChapter('user-id', 'ch-free');
+
+    expect(result).toEqual({ canRead: true, reason: 'free-claimable' });
+  });
+
+  it('returns "paid" when chapter is paid, released, and not owned', async () => {
+    // Call 1: chapter lookup → released, paid
+    mockWhere.mockResolvedValueOnce([
+      {
+        id: 'ch-paid',
+        title: 'Bab Berbayar',
+        chapterNumber: 1,
+        priceIdr: 49000,
+        isFree: false,
+        releaseDate: '2025-01-01',
+        pdfPath: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    ]);
+    // Call 2: all chapters
+    mockOrderBy.mockResolvedValueOnce([
+      {
+        id: 'ch-paid',
+        title: 'Bab Berbayar',
+        chapterNumber: 1,
+        priceIdr: 49000,
+        isFree: false,
+        releaseDate: '2025-01-01',
+        pdfPath: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    ]);
+    // Call 3: user purchases → none
+    mockWhere.mockResolvedValueOnce([]);
+
+    const result = await canUserReadChapter('user-id', 'ch-paid');
+
+    expect(result).toEqual({ canRead: false, reason: 'paid' });
+  });
+
+  it('returns "unreleased" when chapter release_date is in the future', async () => {
+    // Call 1: chapter lookup → future release date
+    mockWhere.mockResolvedValueOnce([
+      {
+        id: 'ch-future',
+        title: 'Bab Masa Depan',
+        chapterNumber: 1,
+        priceIdr: 0,
+        isFree: true,
+        releaseDate: '2099-12-31',
+        pdfPath: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    ]);
+
+    const result = await canUserReadChapter('user-id', 'ch-future');
+
+    expect(result).toEqual({ canRead: false, reason: 'unreleased' });
+  });
+
+  it('returns "locked" when previous chapter is released but not owned', async () => {
+    // Call 1: chapter lookup → chapter 2, released, paid
+    mockWhere.mockResolvedValueOnce([
+      {
+        id: 'ch-2',
+        title: 'Bab 2',
+        chapterNumber: 2,
+        priceIdr: 49000,
+        isFree: false,
+        releaseDate: '2025-06-01',
+        pdfPath: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    ]);
+    // Call 2: all chapters → chapter 1 (released, not owned) + chapter 2
+    mockOrderBy.mockResolvedValueOnce([
+      {
+        id: 'ch-1',
+        title: 'Bab 1',
+        chapterNumber: 1,
+        priceIdr: 0,
+        isFree: true,
+        releaseDate: '2025-01-01',
+        pdfPath: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        id: 'ch-2',
+        title: 'Bab 2',
+        chapterNumber: 2,
+        priceIdr: 49000,
+        isFree: false,
+        releaseDate: '2025-06-01',
+        pdfPath: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    ]);
+    // Call 3: user purchases → empty
+    mockWhere.mockResolvedValueOnce([]);
+
+    const result = await canUserReadChapter('user-id', 'ch-2');
+
+    expect(result).toEqual({ canRead: false, reason: 'locked' });
+  });
+
+  it('returns "not-found" when chapter does not exist', async () => {
+    // Call 1: chapter lookup → empty
+    mockWhere.mockResolvedValueOnce([]);
+
+    const result = await canUserReadChapter('user-id', 'nonexistent');
+
+    expect(result).toEqual({ canRead: false, reason: 'not-found' });
   });
 });
