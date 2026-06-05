@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 
-import { createChapter } from '@/actions/book';
+import { createChapter, hideChapter, updateChapter } from '@/actions/book';
 import { type ChapterFormValues, chapterSchema } from '@/schemas/chapter';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -19,7 +19,34 @@ interface ChapterFormProps {
   chapters: ChapterRow[];
 }
 
+const EMPTY_DEFAULTS: ChapterFormValues = {
+  title: '',
+  chapter_number: 1,
+  price_idr: 0,
+  release_date: '',
+  is_free: false,
+  pdf: undefined,
+};
+
+function chapterToDefaults(chapter: ChapterRow): ChapterFormValues {
+  return {
+    title: chapter.title,
+    chapter_number: chapter.chapterNumber,
+    price_idr: chapter.priceIdr,
+    release_date: chapter.releaseDate ?? '',
+    is_free: chapter.isFree,
+    pdf: undefined,
+  };
+}
+
 export function ChapterForm({ chapters }: ChapterFormProps) {
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const editingChapter =
+    editingId !== null
+      ? (chapters.find((c) => c.id === editingId) ?? null)
+      : null;
+  const isEditing = editingChapter !== null;
+
   const {
     register,
     handleSubmit,
@@ -29,15 +56,16 @@ export function ChapterForm({ chapters }: ChapterFormProps) {
     formState: { errors, isSubmitting },
   } = useForm<ChapterFormValues>({
     resolver: zodResolver(chapterSchema),
-    defaultValues: {
-      title: '',
-      chapter_number: 1,
-      price_idr: 0,
-      release_date: '',
-      is_free: false,
-      pdf: undefined,
-    },
+    defaultValues: EMPTY_DEFAULTS,
   });
+
+  useEffect(() => {
+    reset(
+      isEditing && editingChapter
+        ? chapterToDefaults(editingChapter)
+        : EMPTY_DEFAULTS
+    );
+  }, [isEditing, editingChapter, reset]);
 
   const isFree = watch('is_free');
   const [serverError, setServerError] = useState<string | null>(null);
@@ -63,20 +91,51 @@ export function ChapterForm({ chapters }: ChapterFormProps) {
       fd.append('pdf', pdfValue[0]);
     }
 
-    const result = await createChapter(fd);
+    const result =
+      isEditing && editingChapter
+        ? await updateChapter(editingChapter.id, fd)
+        : await createChapter(fd);
     if ('error' in result) {
       setServerError(result.error);
       return;
     }
-    reset();
-    toast.success('Bab berhasil dibuat');
+    if (isEditing) {
+      setEditingId(null);
+      toast.success('Bab berhasil diperbarui');
+    } else {
+      reset(EMPTY_DEFAULTS);
+      toast.success('Bab berhasil dibuat');
+    }
+  };
+
+  const onEdit = (chapter: ChapterRow) => {
+    setServerError(null);
+    setEditingId(chapter.id);
+  };
+
+  const onHide = async (chapter: ChapterRow) => {
+    const result = await hideChapter(chapter.id);
+    if ('error' in result) {
+      toast.error(result.error);
+      return;
+    }
+    toast.success('Bab berhasil disembunyikan');
+  };
+
+  const onCancelEdit = () => {
+    setServerError(null);
+    setEditingId(null);
   };
 
   return (
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Buat Bab Baru</CardTitle>
+          <CardTitle>
+            {isEditing && editingChapter
+              ? `Edit Bab ${editingChapter.chapterNumber}`
+              : 'Buat Bab Baru'}
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <form
@@ -143,7 +202,16 @@ export function ChapterForm({ chapters }: ChapterFormProps) {
               <Label htmlFor="is_free">Jadikan gratis</Label>
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="pdf">File PDF (opsional, maks 50MB)</Label>
+              <Label htmlFor="pdf">
+                {isEditing
+                  ? 'File PDF (opsional — kosongkan untuk mempertahankan)'
+                  : 'File PDF (opsional, maks 50MB)'}
+              </Label>
+              {isEditing && editingChapter?.pdfPath && (
+                <p className="text-xs text-muted-foreground">
+                  File saat ini: {editingChapter.pdfPath}
+                </p>
+              )}
               <Input
                 id="pdf"
                 type="file"
@@ -156,13 +224,29 @@ export function ChapterForm({ chapters }: ChapterFormProps) {
                 {serverError}
               </div>
             )}
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Menyimpan...' : 'Simpan Bab'}
-            </Button>
+            <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+              {isEditing && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={onCancelEdit}
+                  disabled={isSubmitting}
+                >
+                  Batal
+                </Button>
+              )}
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting
+                  ? 'Menyimpan...'
+                  : isEditing
+                    ? 'Simpan Perubahan'
+                    : 'Simpan Bab'}
+              </Button>
+            </div>
           </form>
         </CardContent>
       </Card>
-      <ChapterTable chapters={chapters} />
+      <ChapterTable chapters={chapters} onEdit={onEdit} onHide={onHide} />
     </div>
   );
 }

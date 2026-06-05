@@ -4,14 +4,24 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { ChapterForm } from '@/components/dashboard/admin/ChapterForm';
 
-const { mockCreateChapter } = vi.hoisted(() => ({
-  mockCreateChapter: vi.fn<
-    () => Promise<{ success: true; chapterId: string } | { error: string }>
-  >(async () => ({ success: true, chapterId: 'new-chapter-id' })),
-}));
+const { mockCreateChapter, mockUpdateChapter, mockHideChapter } = vi.hoisted(
+  () => ({
+    mockCreateChapter: vi.fn<
+      () => Promise<{ success: true; chapterId: string } | { error: string }>
+    >(async () => ({ success: true, chapterId: 'new-chapter-id' })),
+    mockUpdateChapter: vi.fn<
+      () => Promise<{ success: true; chapterId: string } | { error: string }>
+    >(async () => ({ success: true, chapterId: 'updated-chapter-id' })),
+    mockHideChapter: vi.fn<
+      () => Promise<{ success: true } | { error: string }>
+    >(async () => ({ success: true })),
+  })
+);
 
 vi.mock('@/actions/book', () => ({
   createChapter: mockCreateChapter,
+  updateChapter: mockUpdateChapter,
+  hideChapter: mockHideChapter,
 }));
 
 vi.mock('sonner', () => ({
@@ -138,5 +148,68 @@ describe('ChapterForm', () => {
         screen.getByText(/nomor bab sudah digunakan/i)
       ).toBeInTheDocument();
     });
+  });
+
+  it('switches to edit mode when Edit button is clicked and pre-populates fields from the chapter', async () => {
+    const user = userEvent.setup();
+    render(<ChapterForm chapters={[baseChapter]} />);
+
+    await user.click(screen.getByRole('button', { name: /edit/i }));
+
+    expect(screen.getByText(/edit bab/i)).toBeInTheDocument();
+    expect((screen.getByLabelText(/judul/i) as HTMLInputElement).value).toBe(
+      baseChapter.title
+    );
+    expect(
+      (screen.getByLabelText(/nomor bab/i) as HTMLInputElement).value
+    ).toBe(String(baseChapter.chapterNumber));
+    expect((screen.getByLabelText(/harga/i) as HTMLInputElement).value).toBe(
+      String(baseChapter.priceIdr)
+    );
+    expect(
+      (screen.getByLabelText(/tanggal rilis/i) as HTMLInputElement).value
+    ).toBe(baseChapter.releaseDate ?? '');
+  });
+
+  it('submits the edit form to updateChapter with the chapter id and a FormData built from the current values', async () => {
+    const user = userEvent.setup();
+    mockCreateChapter.mockClear();
+    mockUpdateChapter.mockClear();
+    mockUpdateChapter.mockResolvedValueOnce({
+      success: true,
+      chapterId: baseChapter.id,
+    });
+    render(<ChapterForm chapters={[baseChapter]} />);
+
+    await user.click(screen.getByRole('button', { name: /edit/i }));
+    await user.clear(screen.getByLabelText(/judul/i));
+    await user.type(screen.getByLabelText(/judul/i), 'Bab 1 — Updated Title');
+
+    await user.click(screen.getByRole('button', { name: /simpan perubahan/i }));
+
+    await waitFor(() => {
+      expect(mockUpdateChapter).toHaveBeenCalledTimes(1);
+    });
+    const [chapterId, fd] = mockUpdateChapter.mock.calls[0] as unknown as [
+      string,
+      FormData,
+    ];
+    expect(chapterId).toBe(baseChapter.id);
+    expect(fd).toBeInstanceOf(FormData);
+    expect(fd.get('title')).toBe('Bab 1 — Updated Title');
+    expect(mockCreateChapter).not.toHaveBeenCalled();
+  });
+
+  it('clicking the Hide confirmation calls hideChapter with the chapter id and exits edit mode if applicable', async () => {
+    const user = userEvent.setup();
+    render(<ChapterForm chapters={[baseChapter]} />);
+
+    await user.click(screen.getByRole('button', { name: /sembunyikan/i }));
+    await user.click(screen.getByRole('button', { name: /sembunyikan/i }));
+
+    await waitFor(() => {
+      expect(mockHideChapter).toHaveBeenCalledTimes(1);
+    });
+    expect(mockHideChapter).toHaveBeenCalledWith(baseChapter.id);
   });
 });

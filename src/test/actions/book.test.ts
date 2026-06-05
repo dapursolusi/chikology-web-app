@@ -6,6 +6,8 @@ import { describe, expect, it, vi } from 'vitest';
 const {
   select,
   insert,
+  update,
+  set: _set,
   orderBy,
   limit,
   from: _from,
@@ -14,13 +16,26 @@ const {
 } = vi.hoisted(() => {
   const orderBy = vi.fn<() => Promise<unknown[]>>(async () => []);
   const limit = vi.fn<() => Promise<unknown[]>>(async () => []);
-  const where = vi.fn(() => ({ limit, orderBy }));
   const returning = vi.fn<() => Promise<unknown[]>>(async () => []);
+  const where = vi.fn(() => ({ limit, orderBy, returning }));
+  const set = vi.fn(() => ({ where }));
   const values = vi.fn(() => ({ returning }));
   const from = vi.fn(() => ({ where, orderBy, limit }));
   const select = vi.fn(() => ({ from }));
   const insert = vi.fn(() => ({ values }));
-  return { select, insert, from, orderBy, where, limit, returning, values };
+  const update = vi.fn(() => ({ set }));
+  return {
+    select,
+    insert,
+    update,
+    set,
+    from,
+    orderBy,
+    where,
+    limit,
+    returning,
+    values,
+  };
 });
 
 const { mockUpload, mockStorageFrom } = vi.hoisted(() => {
@@ -39,7 +54,7 @@ vi.mock('next/cache', () => ({
 }));
 
 vi.mock('@/db', () => ({
-  db: { select, insert },
+  db: { select, insert, update },
 }));
 
 vi.mock('drizzle-orm', () => ({
@@ -318,5 +333,196 @@ describe('createChapter', () => {
       error: expect.stringMatching(/unggah|upload/i),
     });
     expect(insert).not.toHaveBeenCalled();
+  });
+});
+
+describe('updateChapter', () => {
+  function adminAuth() {
+    mockGetUser.mockReturnValueOnce({
+      data: { user: { id: 'admin-user-id', email: 'a@t.com' } },
+    });
+    limit.mockResolvedValueOnce([{ role: 'admin' }]);
+  }
+
+  it('returns Forbidden when current user is not authenticated', async () => {
+    mockGetUser.mockReturnValueOnce({ data: { user: null as MockUser } });
+
+    const { updateChapter } = await import('@/actions/book');
+    const fd = makeFormData({
+      title: 'Bab 1 — Updated',
+      chapter_number: '1',
+      price_idr: '0',
+      release_date: '',
+      is_free: 'true',
+    });
+    const result = await updateChapter('chapter-uuid', fd);
+    expect(result).toEqual({ error: 'Hanya admin yang dapat mengubah bab' });
+  });
+
+  it('returns validation error for empty title', async () => {
+    adminAuth();
+
+    const { updateChapter } = await import('@/actions/book');
+    const fd = makeFormData({
+      title: '',
+      chapter_number: '1',
+      price_idr: '0',
+      release_date: '',
+      is_free: 'true',
+    });
+    const result = await updateChapter('chapter-uuid', fd);
+    expect(result).toMatchObject({ error: expect.any(String) });
+    expect(update).not.toHaveBeenCalled();
+  });
+
+  it('updates the row without uploading a new PDF when none is provided', async () => {
+    adminAuth();
+    mockUpload.mockClear();
+    _returning.mockResolvedValueOnce([{ id: 'chapter-uuid' }]);
+
+    const { updateChapter } = await import('@/actions/book');
+    const fd = makeFormData({
+      title: 'Bab 1 — Updated',
+      chapter_number: '1',
+      price_idr: '49000',
+      release_date: '2026-07-01',
+      is_free: 'false',
+    });
+    const result = await updateChapter('chapter-uuid', fd);
+
+    expect(result).toEqual({ success: true, chapterId: 'chapter-uuid' });
+    expect(update).toHaveBeenCalledTimes(1);
+    expect(mockUpload).not.toHaveBeenCalled();
+  });
+
+  it('uploads a new PDF and includes the new path in the update set when a file is provided', async () => {
+    adminAuth();
+    mockUpload.mockClear();
+    mockUpload.mockResolvedValueOnce({
+      data: { path: '5-9876543210.pdf' },
+      error: null,
+    });
+    _returning.mockResolvedValueOnce([{ id: 'chapter-uuid' }]);
+
+    const { updateChapter } = await import('@/actions/book');
+    const fakePdf = new File(['pdf-bytes'], 'source.pdf', {
+      type: 'application/pdf',
+    });
+    const fd = makeFormData({
+      title: 'Bab 5 — Revisi',
+      chapter_number: '5',
+      price_idr: '59000',
+      release_date: '',
+      is_free: 'false',
+      pdf: fakePdf,
+    });
+    const result = await updateChapter('chapter-uuid', fd);
+
+    expect(result).toEqual({ success: true, chapterId: 'chapter-uuid' });
+    expect(mockUpload).toHaveBeenCalledTimes(1);
+    const [uploadPath] = mockUpload.mock.calls[0] as unknown as [string, File];
+    expect(uploadPath as string).toMatch(/^5-\d+\.pdf$/);
+  });
+
+  it('updates a chapter to be free (is_free=true, price_idr=0) and writes priceIdr=0 to the row', async () => {
+    adminAuth();
+    _set.mockClear();
+    _returning.mockResolvedValueOnce([{ id: 'chapter-uuid' }]);
+
+    const { updateChapter } = await import('@/actions/book');
+    const fd = makeFormData({
+      title: 'Bab 2 — Free Edition',
+      chapter_number: '2',
+      price_idr: '0',
+      release_date: '2026-07-01',
+      is_free: 'true',
+    });
+    const result = await updateChapter('chapter-uuid', fd);
+
+    expect(result).toEqual({ success: true, chapterId: 'chapter-uuid' });
+    expect(_set).toHaveBeenCalledTimes(1);
+    const setArg = (
+      _set.mock.calls[0] as unknown as [Record<string, unknown>]
+    )[0];
+    expect(setArg.priceIdr).toBe(0);
+    expect(setArg.isFree).toBe(true);
+  });
+
+  it('returns friendly error on chapter_number unique violation', async () => {
+    adminAuth();
+    const uniqueError = Object.assign(new Error('duplicate key value'), {
+      code: '23505',
+    });
+    update.mockImplementationOnce(() => {
+      throw uniqueError;
+    });
+
+    const { updateChapter } = await import('@/actions/book');
+    const fd = makeFormData({
+      title: 'Bab 3',
+      chapter_number: '3',
+      price_idr: '0',
+      release_date: '',
+      is_free: 'true',
+    });
+    const result = await updateChapter('chapter-uuid', fd);
+    expect(result).toMatchObject({
+      error: expect.stringMatching(/nomor bab/i),
+    });
+  });
+
+  it('revalidates /dashboard/admin/book on a successful update', async () => {
+    const { revalidatePath } = await import('next/cache');
+    adminAuth();
+    _returning.mockResolvedValueOnce([{ id: 'chapter-uuid' }]);
+
+    const { updateChapter } = await import('@/actions/book');
+    const fd = makeFormData({
+      title: 'Bab 1',
+      chapter_number: '1',
+      price_idr: '0',
+      release_date: '',
+      is_free: 'true',
+    });
+    await updateChapter('chapter-uuid', fd);
+    expect(revalidatePath).toHaveBeenCalledWith('/dashboard/admin/book');
+  });
+});
+
+describe('hideChapter', () => {
+  function adminAuth() {
+    mockGetUser.mockReturnValueOnce({
+      data: { user: { id: 'admin-user-id', email: 'a@t.com' } },
+    });
+    limit.mockResolvedValueOnce([{ role: 'admin' }]);
+  }
+
+  it('returns Forbidden when current user is not authenticated', async () => {
+    mockGetUser.mockReturnValueOnce({ data: { user: null as MockUser } });
+
+    const { hideChapter } = await import('@/actions/book');
+    const result = await hideChapter('chapter-uuid');
+    expect(result).toEqual({
+      error: 'Hanya admin yang dapat menyembunyikan bab',
+    });
+  });
+
+  it('sets releaseDate to NULL on the row and revalidates /dashboard/admin/book', async () => {
+    const { revalidatePath } = await import('next/cache');
+    adminAuth();
+    update.mockClear();
+    _set.mockClear();
+
+    const { hideChapter } = await import('@/actions/book');
+    const result = await hideChapter('chapter-uuid');
+
+    expect(result).toEqual({ success: true });
+    expect(update).toHaveBeenCalledTimes(1);
+    expect(_set).toHaveBeenCalledTimes(1);
+    const setArg = (
+      _set.mock.calls[0] as unknown as [Record<string, unknown>]
+    )[0];
+    expect(setArg).toEqual({ releaseDate: null });
+    expect(revalidatePath).toHaveBeenCalledWith('/dashboard/admin/book');
   });
 });
