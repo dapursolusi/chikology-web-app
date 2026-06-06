@@ -23,21 +23,7 @@ export default async function BookPage() {
   const ebookLive = await getEbookLive();
 
   if (!ebookLive) {
-    return (
-      <div
-        data-testid="ebook-coming-soon"
-        className="flex flex-1 items-center justify-center p-8"
-      >
-        <div className="max-w-md text-center">
-          <h1 className="text-2xl font-bold text-foreground">
-            E-Book Segera Hadir
-          </h1>
-          <p className="mt-2 text-muted-foreground">
-            E-Book Mas Chiko akan segera tersedia. Nantikan ya!
-          </p>
-        </div>
-      </div>
-    );
+    redirect('/');
   }
 
   const allChapters = await getChaptersWithState(user.id);
