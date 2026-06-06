@@ -21,10 +21,6 @@ vi.mock('next/link', () => ({
   ),
 }));
 
-vi.mock('@/components/sections/home/BookCountdown', () => ({
-  BookCountdown: () => <div data-testid="book-countdown" />,
-}));
-
 vi.mock('@/components/sections/home/embedded-chapter-row', () => ({
   EmbeddedChapterRow: ({ chapters }: { chapters: ChapterWithState[] }) => (
     <div
@@ -62,9 +58,9 @@ const releasedChapter: ChapterWithState = {
 };
 
 describe('EBook section', () => {
-  it('renders BookCountdown in the CTA zone when ebookLive is false', () => {
+  it('renders nothing in the CTA zone when ebookLive is false (countdown moved to hero)', () => {
     render(<EBook ebookLive={false} userId={null} chapters={[]} />);
-    expect(screen.getByTestId('book-countdown')).toBeInTheDocument();
+    expect(screen.queryByTestId('book-countdown')).not.toBeInTheDocument();
     expect(screen.queryByTestId('visitor-chapter-row')).not.toBeInTheDocument();
     expect(
       screen.queryByTestId('embedded-chapter-row')
