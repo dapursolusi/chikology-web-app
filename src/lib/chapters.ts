@@ -43,6 +43,28 @@ export function isReleased(
   );
 }
 
+export async function getPublicChapters(): Promise<ChapterWithState[]> {
+  const chapters = await db
+    .select()
+    .from(bookChapters)
+    .orderBy(bookChapters.chapterNumber);
+
+  const now = new Date();
+
+  return chapters
+    .filter((c) => isReleased(c, now))
+    .map((c) => ({
+      id: c.id,
+      title: c.title,
+      chapterNumber: c.chapterNumber,
+      priceIdr: c.priceIdr,
+      isFree: c.isFree,
+      releaseDate: c.releaseDate,
+      pdfPath: c.pdfPath,
+      state: 'buyable' as const,
+    }));
+}
+
 export async function getChaptersWithState(
   userId: string
 ): Promise<ChapterWithState[]> {

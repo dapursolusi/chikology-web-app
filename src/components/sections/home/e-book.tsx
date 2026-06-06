@@ -1,8 +1,18 @@
 import { BookOpen } from 'lucide-react';
 
 import { BookCountdown } from '@/components/sections/home/BookCountdown';
+import { EmbeddedChapterRow } from '@/components/sections/home/embedded-chapter-row';
+import { VisitorChapterRow } from '@/components/sections/home/visitor-chapter-row';
 
-export default function EBook() {
+import type { ChapterWithState } from '@/lib/chapters';
+
+type Props = {
+  ebookLive: boolean;
+  userId: string | null;
+  chapters: ChapterWithState[];
+};
+
+export default function EBook({ ebookLive, userId, chapters }: Props) {
   return (
     <section className="relative overflow-hidden bg-background">
       <div className="mx-auto max-w-6xl px-4 md:px-8">
@@ -35,9 +45,17 @@ export default function EBook() {
                 hubungan yang healthier dengan diri kamu.
               </p>
 
-              {/* Countdown (replaces CTAs until Jun 16, 2026 launch) */}
-              <div className="mt-6">
-                <BookCountdown />
+              {/* CTA zone: countdown before launch, chapter row after */}
+              <div className="mt-6" data-testid="ebook-cta-zone">
+                {ebookLive ? (
+                  userId ? (
+                    <EmbeddedChapterRow chapters={chapters} />
+                  ) : (
+                    <VisitorChapterRow chapters={chapters} />
+                  )
+                ) : (
+                  <BookCountdown />
+                )}
               </div>
 
               {/* Trust indicators */}
