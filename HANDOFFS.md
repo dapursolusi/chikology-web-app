@@ -8,7 +8,7 @@ Ship issue #18 end-to-end with TDD on a feature branch — chapter reader page, 
 
 ### Current State
 
-- Status: shipped on branch `feat/reader/chapter-reader`. Local only; not committed (per protocol — awaiting explicit ask).
+- Status: committed (`ba15a5f`) and pushed. PR #32 opened against `main` — https://github.com/dapursolusi/chikology-web-app/pull/32. Awaiting Vercel preview + self-review.
 - Scope: `src/actions/chapters.ts`, `src/lib/chapters.ts`, `src/app/dashboard/book/[chapterId]/{page,ReaderClient}.tsx`, `src/components/dashboard/book/NextChapterButton.tsx`, plus tests.
 - Test count: 187/187 passing (was 108; **+21 new tests** for slice 4; remaining growth was from accumulated slice-2/3 tests merged in earlier PRs).
 
@@ -66,10 +66,11 @@ Ship issue #18 end-to-end with TDD on a feature branch — chapter reader page, 
 
 ### Next Steps (ordered)
 
-1. Review `git diff` on `feat/reader/chapter-reader`. Approve or request changes.
-2. `gh pr create` (or local commit + push) when satisfied. Suggested commit message: `feat(reader): chapter reader, signed URL action, and 5-scenario next-chapter button (#18)`.
-3. Wait for Vercel auto-deploy. Smoke test on phone: scanner → journal → book → chapter 1 (free claim) → read in iframe → tap "Lanjut ke Bab 2" (redirect to list, since Bab 2 is paid).
-4. If smoke passes, merge. Slice 5 (landing page full launch) and slice 6 (RLS + polish) remain — both labeled `ready-for-agent` in issues #19 and #16.
+1. Review PR #32 diff in the GitHub UI. Self-review per the project git rules (RULES_GIT.md).
+2. Wait for Vercel preview to deploy successfully.
+3. Smoke test on phone: scanner → journal → book → chapter 1 (free claim) → read in iframe → tap "Lanjut ke Bab 2" (redirect to list, since Bab 2 is paid).
+4. `gh pr merge --squash --delete-branch` once CI + Vercel preview green. Issue #18 auto-closes.
+5. Slice 5 (landing page full launch) and slice 6 (RLS + polish) remain — both labeled `ready-for-agent` in issues #19 and #16.
 
 ### Blockers (if any)
 
