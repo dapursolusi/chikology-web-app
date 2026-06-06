@@ -3,6 +3,9 @@ import { notFound } from 'next/navigation';
 import { getAdminRole, getBookChapters } from '@/actions/book';
 
 import { ChapterForm } from '@/components/dashboard/admin/ChapterForm';
+import { EbookLiveToggle } from '@/components/dashboard/admin/EbookLiveToggle';
+
+import { getEbookLive } from '@/lib/feature-flags';
 
 export const metadata = {
   title: 'Kelola E-Book · Chikology',
@@ -14,7 +17,10 @@ export default async function AdminBookPage() {
     notFound();
   }
 
-  const chapters = await getBookChapters();
+  const [chapters, ebookLive] = await Promise.all([
+    getBookChapters(),
+    getEbookLive(),
+  ]);
 
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 pt-0 md:p-6">
@@ -26,6 +32,7 @@ export default async function AdminBookPage() {
           Tambah, ubah, dan jadwalkan bab untuk e-book Mas Chiko.
         </p>
       </div>
+      <EbookLiveToggle initialLive={ebookLive} />
       <ChapterForm chapters={chapters} />
     </div>
   );
