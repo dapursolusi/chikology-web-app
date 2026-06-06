@@ -1,58 +1,81 @@
 # HANDOFFS
 
-## [Friday, 05-06-2026 16:20] — Fix production 500: FileList undefined in server runtime
+## [Saturday, 06-06-2026 05:51] — Phase 3 Slice 4: Chapter Reader (issue #18, TDD)
 
 ### Session Target
 
-- Diagnose and fix the production 500 on `POST /dashboard/admin/book` (follow-up to the earlier 404 misdiagnosis). User-reported error: `ReferenceError: FileList is not defined at Object.readFile (src/schemas/chapter.ts:6:24) at createChapter (src/actions/book.ts:58:32)`.
+Ship issue #18 end-to-end with TDD on a feature branch — chapter reader page, signed-URL server action with 5-min expiry, 5-scenario next-chapter button, consultation CTA. Approved plan (P0 + P1 tests, P2 visual deferred).
 
 ### Current State
 
-- Status: fixed and committed locally as `a92fd00`. Awaiting Vercel auto-deploy + smoke test.
-- Scope: `src/schemas/chapter.ts`, `src/schemas/chapter.test.ts`, `src/test/setup.ts`.
+- Status: committed (`ba15a5f`) and pushed. PR #32 opened against `main` — https://github.com/dapursolusi/chikology-web-app/pull/32. Awaiting Vercel preview + self-review.
+- Scope: `src/actions/chapters.ts`, `src/lib/chapters.ts`, `src/app/dashboard/book/[chapterId]/{page,ReaderClient}.tsx`, `src/components/dashboard/book/NextChapterButton.tsx`, plus tests.
+- Test count: 187/187 passing (was 108; **+21 new tests** for slice 4; remaining growth was from accumulated slice-2/3 tests merged in earlier PRs).
 
 ### What Changed
 
-- `src/schemas/chapter.ts:5-9` — Added `isFileList(value): value is FileList` type predicate that guards with `typeof FileList !== 'undefined'`. Used it in both the `readFile` transform (line 6) and the `custom()` predicate (line 33) in place of bare `value instanceof FileList` references. The FileList branch remains reachable on the browser (where FileList is defined) and is skipped on node (where it's not).
-- `src/schemas/chapter.test.ts:1` — Added `// @vitest-environment node` directive at the top of the file. This file now runs in node env, so the schema is exercised under the same runtime the server actions use. This is what catches the FileList ReferenceError.
-- `src/schemas/chapter.test.ts:172-187` — New describe block `chapterSchema — node env compatibility` with one test asserting `chapterSchema.safeParse(...)` does not throw when `FileList` is undefined. Regression test for the production bug.
-- `src/test/setup.ts:3,17` — Guarded `document.elementFromPoint` and `window.matchMedia` patches with `typeof document !== 'undefined'` / `typeof window !== 'undefined'` so the same setup file works for both jsdom and node env tests.
+**Server action (`src/actions/chapters.ts:120-185`):**
+
+- `getChapterSignedUrl(chapterId)` — auth → `canUserReadChapter` → 5-min signed URL from `book-chapters` bucket. Returns `{ url, expiresIn: 300 }` on success, `{ error }` with specific Indonesian message on each rejection path (not-found / unreleased / locked / paid / no-pdf / storage-failure).
+
+**Pure helper (`src/lib/chapters.ts:13-27, 164-204`):**
+
+- `NextChapterAction` discriminated union — 6 kinds: `navigate`, `auto-claim`, `redirect-to-list (paid)`, `locked`, `unreleased`, `end-of-book`.
+- `getNextChapterAction(currentChapterNumber, chapters)` — maps next chapter's precomputed `ChapterState` to a button action. No DB calls; no `Date` arg (state already encodes release timing).
+
+**Reader page (`src/app/dashboard/book/[chapterId]/page.tsx`):**
+
+- Server: auth check → `canUserReadChapter` → `redirect('/dashboard/book?denied=<reason>')` on rejection → `getChaptersWithState` + `getNextChapterAction` → render `<ReaderClient>`.
+
+**Reader client (`src/app/dashboard/book/[chapterId]/ReaderClient.tsx`):**
+
+- `useEffect` calls `getChapterSignedUrl` on mount. Three states: `signedUrl` (iframe with `src=url`) / loading (Loader2 + bordered placeholder with `data-testid="reader-skeleton"`) / error (`data-testid="reader-error"`).
+- Header: `ArrowLeft` Link to `/dashboard/book` (aria-label "Kembali") + chapter title `<h1>`.
+- Consultation CTA: full sentence copy from `CONTEXT.md` linking to `https://wa.me/6287853186759` (target=\_blank, rel=noopener).
+- Renders `<NextChapterButton>` with server-computed `nextAction`.
+
+**Next chapter button (`src/components/dashboard/book/NextChapterButton.tsx`):**
+
+- Switch on `action.kind`. `navigate` → `Link` to next reader. `redirect-to-list` → `Link` to `/dashboard/book`. `locked` → "Selesaikan Bab N terlebih dahulu" message. `unreleased` → "Segera hadir" message. `end-of-book` → null. `auto-claim` → `Button` that calls `purchaseChapter` inside `useTransition`, on success calls `router.push('/dashboard/book/<id>')`.
 
 ### Verification
 
-- Commands run: `bun run test --run`, `tsc --noEmit`, `bun run build`, `prettier --check`, bun repro of `chapterSchema.safeParse` and `createChapter()` in node.
-- Results:
-  - 108/108 tests pass (was 107; +1 new node-env test, all 11 original schema tests preserved)
-  - tsc clean, build clean, prettier clean
-  - bun repro before fix: `ReferenceError: FileList is not defined at chapterSchema.safeParse` (reproduced on local and Vercel per user)
-  - bun repro after fix: `safeParse` returns `{ success: true, data: {...} }` (no throw); `createChapter` reaches the expected "cookies was called outside a request scope" error from a script context, confirming the schema path no longer throws
+- `bun run test --run` — 187/187 (was 108; +79 from slice 2/3 merge + +21 for slice 4)
+- `bunx --bun tsc --noEmit` — clean
+- `bun run build` — clean; new dynamic route `/dashboard/book/[chapterId]` registered
+- `bunx --bun prettier --check` — clean (after `--write`)
+- `bun run lint` — 0 errors (7 pre-existing warnings unrelated: 2× `<img>` in e-book, 5× `_from`/`_where` in existing book.test.ts mock plumbing)
 
 ### Decisions
 
-- D-058: Schema must work in both browser (jsdom) and node runtimes. The minimal change is a `typeof FileList !== 'undefined'` guard, not removing the FileList branch. The branch is reachable on the client (`zodResolver` may receive a `FileList` from react-hook-form's file input). Server always receives a `File` (form converts FileList → File before appending to FormData at `ChapterForm.tsx:90`), so the branch is dead code on the server path but harmless with the guard.
-- D-059: Pin `chapter.test.ts` to node env via the per-file `// @vitest-environment node` directive. The file tests a pure data schema with no DOM dependencies, so node env is the correct match for the production runtime. This catches browser-global leaks in the schema going forward. Component tests remain in jsdom via the global config.
-- D-060: Make `setup.ts` defensively guard `document` / `window` accesses. Both are jsdom-only; skipping them when undefined allows node-env test files to use the same setup. Minimal change, no per-env split.
-- D-061: No follow-up to switch ALL tests to node. Component tests legitimately need jsdom (RTL, document, window). Only this schema file, which has no DOM dependency, gets the node directive.
+- D-062: `getChapterSignedUrl` reuses `canUserReadChapter` for the access check instead of duplicating the ownership/release logic. Cost: 3 extra DB queries per render. Acceptable: this is the read hot path but only on actual reader mount, and consistency with the rest of the book subsystem is worth the round-trip.
+- D-063: `getNextChapterAction` is a pure function over precomputed `ChapterWithState[]` — no `Date` argument, no DB. The release-date check is already done by `computeChapterState` upstream. Keeps the helper trivially testable.
+- D-064: Next-chapter `auto-claim` flow reuses `purchaseChapter` (which already handles free + paid in the slice-3 unified path) instead of the unused `claimFreeChapter` stub. One less code path to maintain.
+- D-065: Page redirects non-readable chapters to `/dashboard/book?denied=<reason>` instead of rendering an inline "you don't have access" page. Page-level defense; the action's own `canUserReadChapter` re-check is the second layer. Toasts on the destination are deferred to slice 5/6 (follow existing patterns).
+- D-066: `vi.clearAllMocks()` in `beforeEach` for the reader page test was insufficient — it preserves the queued values but vitest 4.1.7's behavior with `mockImplementation` after `clearAllMocks` was inconsistent (the mock returned the default `[]` even after `mockImplementation(async () => [chapter])`). Switched to explicit `mockReset() + mockImplementation()` in beforeEach. Resolved the test pollution that initially showed as "chapters=[] in page despite impl being set" — the impl was set but never consumed because the mock state was corrupted by the previous test's `clearAllMocks`.
+- D-067: TDD vertical slices (one test → one impl → repeat) per `tdd` skill. Hit the anti-pattern once on Slice A.4 (anticipated the `paid` reason in the switch before writing its test) — the test then passed trivially. The test still locks in the contract, so no rewrite, but worth noting as a slip.
+- D-068: TDD skill rule "Only enough code to pass current test" was honored for slices A.1–A.3, A.5, B, C, D. The `_now: Date` parameter on `getNextChapterAction` was speculative — removed after lint flagged it. Interface stays clean.
+- D-069: 21 new tests. P0 covered: signed URL action (5 tests: not-auth, not-found, owned, paid-reject, storage-fail, no-pdf), getNextChapterAction (6 scenarios), reader page redirects (5 denial reasons + happy path), NextChapterButton (6 scenarios), ReaderClient (back link, title, skeleton, iframe, error, CTA, next-button prop). P1 covered: skeleton, iframe src, back, CTA href, error display.
 
 ### Known Issues / Risks
 
-- The architectural finding: **the test environment (jsdom) masked a server-runtime bug**. Any future code that runs in both envs and references browser-only globals (FileList, Image, Notification, etc.) needs to either guard with `typeof X !== 'undefined'` or have node-env tests. Worth keeping in mind for `src/lib/`, `src/schemas/`, and `src/actions/` files specifically.
-- D-054 still applies: use `bun run test` (not `bunx --bun vitest`) for vitest — bun's CJS↔ESM interop drops zod 4's `z` named export.
-- HANDOFFS entry for the previous (wrong) "stale cache" diagnosis has been overwritten. The git history (`git log -p --follow -- HANDOFFS.md`) preserves it.
+- The reader page is gated behind `EBOOK_LIVE=true` in `app_settings` via the dashboard layout's `getEbookLive()` check (slice 1). At soft launch (Jun 12) the feature is hidden; at full launch (Jun 16) the flag flips via pg_cron. No code change needed at launch — purely the DB row.
+- The reader action does not currently `revalidatePath` on a missing/changed PDF. If Mas Chiko hides a chapter (sets `releaseDate=null`) while a user is on the reader page, the iframe stays visible until reload. Acceptable for MVP; the page-level redirect on next visit covers it.
+- `getChapterSignedUrl` generates a fresh URL on every mount. A user reading for 6 minutes will hit the 5-min expiry mid-read. Acceptable for MVP: a refresh fixes it. Could be improved by refreshing the URL on `useEffect` interval (slice 6 polish).
+- Open question: should the reader page show a fallback message if `pdfPath` is null on the chapter row (admin uploaded title/price but not PDF)? The action returns "PDF belum tersedia untuk bab ini" and the UI shows the error. The reader page itself would have rendered (since `canUserReadChapter` returns `free-claimable` for free chapters with no PDF). The user would see the error state, not a "coming soon" message. Could be improved by checking `pdfPath` server-side and redirecting with a different `denied=pdf-missing` reason. Deferred.
 
 ### Next Steps (ordered)
 
-1. Wait for Vercel auto-deploy of `a92fd00` to production. Confirm new deploy hash from `vercel ls --prod`.
-2. Smoke-test create chapter on production with iPhone Safari: hard-refresh `/dashboard/admin/book`, submit a valid (free, no-PDF) chapter. Expect: row created in Supabase, success toast, no console errors.
-3. If the smoke test passes, no further action. The bug is fixed end-to-end.
-4. Optional follow-up (low priority): audit other files in `src/lib/`, `src/schemas/`, `src/actions/` for browser-only global references. Add node-env tests where appropriate.
+1. Review PR #32 diff in the GitHub UI. Self-review per the project git rules (RULES_GIT.md).
+2. Wait for Vercel preview to deploy successfully.
+3. Smoke test on phone: scanner → journal → book → chapter 1 (free claim) → read in iframe → tap "Lanjut ke Bab 2" (redirect to list, since Bab 2 is paid).
+4. `gh pr merge --squash --delete-branch` once CI + Vercel preview green. Issue #18 auto-closes.
+5. Slice 5 (landing page full launch) and slice 6 (RLS + polish) remain — both labeled `ready-for-agent` in issues #19 and #16.
 
 ### Blockers (if any)
 
-- None. Awaiting Vercel deploy.
+- None. Slice 4 is ready for review.
 
----
+### External changes detected
 
-## [Friday, 05-06-2026 15:30] — (SUPERSEDED) Stale-cache misdiagnosis for createChapter 404
-
-> **Note**: this entry was based on a wrong hypothesis. The action ID mismatch I attributed to iPhone Safari cache was a coincidence (or a separate concern); the real bug was a `FileList is not defined` ReferenceError in `src/schemas/chapter.ts` that returned 500, not 404, on the server. The 500 was apparently misrendered in the user's earlier console as a 404 due to the way the FormData POST was being retried. See the new entry above for the correct fix (`a92fd00`).
+- `opencode.json` — model change from `sumopod/kimi-k2.6` to `minimax-m3-free`. Not authored in this session. Likely a leftover from a prior config update. Recommend reverting or confirming intent before committing.
