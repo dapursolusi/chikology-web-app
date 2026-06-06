@@ -9,6 +9,7 @@ const {
   mockGetEbookLive,
   mockGetChaptersWithState,
   BookPageClient,
+  mockRedirect,
 } = vi.hoisted(() => {
   const BookPageClient = vi.fn(
     ({ chapters }: { chapters: ChapterWithState[] }) => (
@@ -24,6 +25,9 @@ const {
       async () => []
     ),
     BookPageClient,
+    mockRedirect: vi.fn((url: string) => {
+      throw new Error(`NEXT_REDIRECT:${url}`);
+    }),
   };
 });
 
@@ -46,7 +50,7 @@ vi.mock('./BookPageClient', () => ({
 }));
 
 vi.mock('next/navigation', () => ({
-  redirect: vi.fn(),
+  redirect: mockRedirect,
 }));
 
 function makeChapter(
@@ -70,13 +74,11 @@ describe('BookPage', () => {
     vi.clearAllMocks();
   });
 
-  it('renders the "coming soon" placeholder when EBOOK_LIVE is false', async () => {
+  it('redirects to / when EBOOK_LIVE is false (soft-launch gate)', async () => {
     mockGetEbookLive.mockResolvedValueOnce(false);
 
-    const element = await BookPage();
-    render(element);
-
-    expect(screen.getByText(/segera hadir/i)).toBeInTheDocument();
+    await expect(BookPage()).rejects.toThrow('NEXT_REDIRECT:/');
+    expect(mockRedirect).toHaveBeenCalledWith('/');
     expect(BookPageClient).not.toHaveBeenCalled();
     expect(mockGetChaptersWithState).not.toHaveBeenCalled();
   });
