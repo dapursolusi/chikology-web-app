@@ -8,10 +8,15 @@ import { ArrowRight, MessageCircle, Sparkles } from 'lucide-react';
 
 import { LoginForm } from '@/components/login-form';
 import Modal from '@/components/modal';
+import { BookCountdown } from '@/components/sections/home/BookCountdown';
 import { SignupForm } from '@/components/signup-form';
 import { Button } from '@/components/ui/button';
 
-export function Hero() {
+type Props = {
+  ebookLive: boolean;
+};
+
+export function Hero({ ebookLive }: Props) {
   const [activeAuth, setActiveAuth] = useState<'login' | 'signup' | null>(null);
   const handleOpenLogin = () => setActiveAuth('login');
   const handleOpenSignup = () => setActiveAuth('signup');
@@ -54,6 +59,16 @@ export function Hero() {
             eksklusif dengan Chiko.
           </p>
         </div>
+
+        {/* Pre-launch countdown (only when ebook is not yet live) */}
+        {!ebookLive && (
+          <div
+            data-testid="hero-countdown-zone"
+            className="mx-auto mb-6 flex w-fit justify-center"
+          >
+            <BookCountdown />
+          </div>
+        )}
 
         {/* CTA Buttons */}
         <div className="mb-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
