@@ -2,7 +2,17 @@ import { type NextRequest, NextResponse } from 'next/server';
 
 import { createServerClient } from '@supabase/ssr';
 
+import { getEbookLive } from '@/lib/feature-flags';
+
 import { getBaseUrl } from './base-url';
+
+export function shouldRedirectLandingToDashboard(
+  path: string,
+  user: { id: string } | null,
+  ebookLive: boolean
+): boolean {
+  return path === '/' && user !== null && !ebookLive;
+}
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
@@ -42,8 +52,11 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Redirect authenticated users from landing to dashboard
-  if (path === '/' && user) {
+  // Redirect authenticated users from landing to dashboard,
+  // but only when the e-book hasn't launched yet. At full launch
+  // (EBOOK_LIVE=true) the landing page is the marketing surface that
+  // shows the embedded chapter list.
+  if (shouldRedirectLandingToDashboard(path, user, await getEbookLive())) {
     const url = request.nextUrl.clone();
     url.pathname = '/dashboard';
     return NextResponse.redirect(url);

@@ -260,7 +260,7 @@ Scanner + Journal + Landing Page live. E-book = countdown to June 16.
 | 9   | Disable PDF right-click + hide download in iframe                                                                                        | 20 min | ☐                                                              |
 | 10  | RLS policy: users access only owned chapter PDFs                                                                                         | 30 min | ☐                                                              |
 | 11  | Create admin page for chapter upload (title, number, price, release date, PDF) — split into 2A/2B/2C sub-slices; 2A + 2B shipped Jun 4   | 60 min | ✓ (2A + 2B + 2C shipped Jun 5)                                 |
-| 12  | 🆕 Replace landing page countdown with chapter button group                                                                              | 20 min | ☐                                                              |
+| 12  | 🆕 Replace landing page countdown with chapter button group                                                                              | 20 min | ✓ (Jun 6) — TDD, 25 new tests, branch `feat/landing/full-launch` |
 | 13  | 🆕 Set `EBOOK_LIVE=true` + deploy                                                                                                        | 5 min  | ☐                                                              |
 | 14  | 🆕 Mobile responsive: chapter button group on phone                                                                                      | 20 min | ☐                                                              |
 | 15  | Full E2E: scan → journal → browse chapters → buy → read ✓                                                                                | 30 min | ☐                                                              |
@@ -294,7 +294,7 @@ Jun  4 (Thu)  ████ Phase 3 Slice 2A — Chapter schema + admin role-gate
 Jun  4 (Thu)  ████ Phase 3 Slice 2B — Admin create chapter form + PDF upload (issue #25) ← DONE
 Jun  5 (Thu)  ████ Phase 3 Slice 2C — Admin edit + hide chapter (issue #26) ← DONE
 Jun  6 (Sat)  ████ Phase 3 Slice 4 — Chapter Reader (issue #18) ← DONE (TDD, 21 new tests, branch feat/reader/chapter-reader, awaiting commit)
-Jun  6 (Fri)  ░░░░ Phase 3 (soft launch) — Schema + Countdown
+Jun  6 (Sat)  ████ Phase 3 Slice 5 — Landing Page Full Launch (issue #19) ← DONE (TDD, 25 new tests, branch feat/landing/full-launch)
 
 Jun  7 (Sat)  ░░░░ Phase 3 (soft launch) — Countdown + Nav Gating
 Jun  8 (Sun)  ░░░░ Phase 3 (soft launch) — Security + E2E Test

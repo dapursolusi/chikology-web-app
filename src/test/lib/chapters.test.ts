@@ -92,6 +92,66 @@ describe('computeChapterState', () => {
   });
 });
 
+// ─── getPublicChapters — public visitor list ─────────────────────────
+
+describe('getPublicChapters', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('returns only released chapters with state="buyable" for visitors', async () => {
+    const released = {
+      id: 'ch1',
+      title: 'Bab 1 — Awal',
+      chapterNumber: 1,
+      priceIdr: 0,
+      isFree: true,
+      releaseDate: '2025-01-01',
+      pdfPath: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    const unreleased = {
+      id: 'ch2',
+      title: 'Bab 2 — Lanjutan',
+      chapterNumber: 2,
+      priceIdr: 49000,
+      isFree: false,
+      releaseDate: '2099-01-01',
+      pdfPath: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    mockOrderBy.mockResolvedValueOnce([released, unreleased]);
+
+    const { getPublicChapters } = await import('@/lib/chapters');
+    const result = await getPublicChapters();
+
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchObject({
+      id: 'ch1',
+      title: 'Bab 1 — Awal',
+      chapterNumber: 1,
+      state: 'buyable',
+    });
+    expect(mockSelect).toHaveBeenCalledTimes(1);
+    expect(mockFrom).toHaveBeenCalledTimes(1);
+    expect(mockOrderBy).toHaveBeenCalledTimes(1);
+    expect(mockWhere).not.toHaveBeenCalled();
+  });
+
+  it('returns empty array when no chapters are released', async () => {
+    mockOrderBy.mockResolvedValueOnce([]);
+
+    const { getPublicChapters } = await import('@/lib/chapters');
+    const result = await getPublicChapters();
+
+    expect(result).toEqual([]);
+    expect(mockSelect).toHaveBeenCalledTimes(1);
+  });
+});
+
 // ─── getChaptersWithState — async integration tests ──────────────────
 
 describe('getChaptersWithState', () => {

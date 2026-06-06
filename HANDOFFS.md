@@ -1,81 +1,96 @@
 # HANDOFFS
 
-## [Saturday, 06-06-2026 05:51] — Phase 3 Slice 4: Chapter Reader (issue #18, TDD)
+## [Saturday, 06-06-2026 14:21] — Phase 3 Slice 5: Landing Page Full Launch (issue #19, TDD)
 
 ### Session Target
 
-Ship issue #18 end-to-end with TDD on a feature branch — chapter reader page, signed-URL server action with 5-min expiry, 5-scenario next-chapter button, consultation CTA. Approved plan (P0 + P1 tests, P2 visual deferred).
+Ship issue #19 end-to-end with TDD on a feature branch — replace landing page countdown with auth-aware embedded chapter row at full launch, gated on EBOOK_LIVE. Approved plan with 4 design decisions: conditional middleware, horizontal scroll row, page fetches → EBook props, visitor "Masuk untuk baca" / logged-in real ownership states.
 
 ### Current State
 
-- Status: committed (`ba15a5f`) and pushed. PR #32 opened against `main` — https://github.com/dapursolusi/chikology-web-app/pull/32. Awaiting Vercel preview + self-review.
-- Scope: `src/actions/chapters.ts`, `src/lib/chapters.ts`, `src/app/dashboard/book/[chapterId]/{page,ReaderClient}.tsx`, `src/components/dashboard/book/NextChapterButton.tsx`, plus tests.
-- Test count: 187/187 passing (was 108; **+21 new tests** for slice 4; remaining growth was from accumulated slice-2/3 tests merged in earlier PRs).
+- Status: branch `feat/landing/full-launch` ready for commit. 212/212 tests green. TSC clean. Lint 0 errors (7 pre-existing warnings unchanged). Build clean. Prettier clean.
+- Scope: 6 modified + 6 new files. **+25 new tests** (187 → 212).
+- Branch not yet committed/pushed (will be done in this session before PR).
 
 ### What Changed
 
-**Server action (`src/actions/chapters.ts:120-185`):**
+**Middleware (`src/lib/supabase/middleware.ts:5-13, 51-62`):**
+- New `shouldRedirectLandingToDashboard(path, user, ebookLive)` pure helper — returns true only when path is `/`, user is signed in, AND EBOOK_LIVE is false.
+- The redirect on `/` → `/dashboard` is now gated on `EBOOK_LIVE`. At full launch, logged-in users can browse the landing page so the embedded chapter list can render with real ownership states.
+- Reads `EBOOK_LIVE` via existing `getEbookLive()` (DB lookup on `app_settings`). Adds one extra DB query per `/` request — same pattern the dashboard layout already uses. Acceptable cost (PK lookup, indexed).
 
-- `getChapterSignedUrl(chapterId)` — auth → `canUserReadChapter` → 5-min signed URL from `book-chapters` bucket. Returns `{ url, expiresIn: 300 }` on success, `{ error }` with specific Indonesian message on each rejection path (not-found / unreleased / locked / paid / no-pdf / storage-failure).
+**Data layer (`src/lib/chapters.ts:46-67`):**
+- New `getPublicChapters(): Promise<ChapterWithState[]>` — for the visitor path. Selects all chapters, filters to `isReleased(c, now) === true`, maps to `ChapterWithState` with `state='buyable'`. No DB write; no userId required.
+- Reuses existing `isReleased` helper to keep the release-date semantics consistent with the reader page and the `computeChapterState` path.
 
-**Pure helper (`src/lib/chapters.ts:13-27, 164-204`):**
+**Page (`src/app/(main)/page.tsx:1-26`):**
+- Converted to async server component. `Promise.all([createClient(), getEbookLive()])` for parallel auth + flag fetch.
+- Branches on `(ebookLive, user)`:
+  - EBOOK_LIVE=false → `chapters=[]`, EBook renders BookCountdown (soft-launch)
+  - EBOOK_LIVE=true + no user → `getPublicChapters()` → VisitorChapterRow
+  - EBOOK_LIVE=true + user → `getChaptersWithState(user.id)` → EmbeddedChapterRow
 
-- `NextChapterAction` discriminated union — 6 kinds: `navigate`, `auto-claim`, `redirect-to-list (paid)`, `locked`, `unreleased`, `end-of-book`.
-- `getNextChapterAction(currentChapterNumber, chapters)` — maps next chapter's precomputed `ChapterState` to a button action. No DB calls; no `Date` arg (state already encodes release timing).
+**EBook section (`src/components/sections/home/e-book.tsx:8-14, 50-60`):**
+- New prop shape: `{ ebookLive: boolean; userId: string | null; chapters: ChapterWithState[] }`.
+- CTA zone branches on `ebookLive` then `userId` — renders one of `<BookCountdown>`, `<VisitorChapterRow>`, or `<EmbeddedChapterRow>`.
+- Book promo card (cover image, title, description, "Chapter 1" badge, trust indicators) is unchanged.
 
-**Reader page (`src/app/dashboard/book/[chapterId]/page.tsx`):**
+**New: EmbeddedChapterRow (`src/components/sections/home/embedded-chapter-row.tsx`):**
+- Server component. Horizontal scrollable flex row (`flex gap-2 overflow-x-auto pb-2`).
+- Per-chapter switch on `state`:
+  - `owned` → green `<Link href="/dashboard/book/<id>">Bab N · Baca</Link>`
+  - `buyable` (paid) → teal `<Link href="/dashboard/book">Bab N · Beli Rp 49.000</Link>`
+  - `buyable` (free) → teal `<Link href="/dashboard/book">Bab N · Buka Gratis</Link>`
+  - `locked` → teal non-link `<span>` with `<Lock>` icon, `title` tooltip "Selesaikan bab sebelumnya terlebih dahulu"
+  - `unreleased` → grey non-link `<span>` "Bab N · Segera hadir" (cursor-not-allowed)
+- Empty state: "Belum ada bab yang dirilis."
 
-- Server: auth check → `canUserReadChapter` → `redirect('/dashboard/book?denied=<reason>')` on rejection → `getChaptersWithState` + `getNextChapterAction` → render `<ReaderClient>`.
-
-**Reader client (`src/app/dashboard/book/[chapterId]/ReaderClient.tsx`):**
-
-- `useEffect` calls `getChapterSignedUrl` on mount. Three states: `signedUrl` (iframe with `src=url`) / loading (Loader2 + bordered placeholder with `data-testid="reader-skeleton"`) / error (`data-testid="reader-error"`).
-- Header: `ArrowLeft` Link to `/dashboard/book` (aria-label "Kembali") + chapter title `<h1>`.
-- Consultation CTA: full sentence copy from `CONTEXT.md` linking to `https://wa.me/6287853186759` (target=\_blank, rel=noopener).
-- Renders `<NextChapterButton>` with server-computed `nextAction`.
-
-**Next chapter button (`src/components/dashboard/book/NextChapterButton.tsx`):**
-
-- Switch on `action.kind`. `navigate` → `Link` to next reader. `redirect-to-list` → `Link` to `/dashboard/book`. `locked` → "Selesaikan Bab N terlebih dahulu" message. `unreleased` → "Segera hadir" message. `end-of-book` → null. `auto-claim` → `Button` that calls `purchaseChapter` inside `useTransition`, on success calls `router.push('/dashboard/book/<id>')`.
+**New: VisitorChapterRow (`src/components/sections/home/visitor-chapter-row.tsx`):**
+- Client component (`'use client'`) — manages signup modal `useState` (mirrors Hero's pattern).
+- Renders a horizontal row of teal "Bab N · Masuk untuk baca" buttons.
+- Click → opens the existing `<Modal>` with `<SignupForm>` (default).
+- Modal can switch to `<LoginForm>` via `onSwitchToLogin`; switches back via `onSwitchToSignup`. On close, state clears.
+- Empty state: "Belum ada bab yang dirilis."
 
 ### Verification
 
-- `bun run test --run` — 187/187 (was 108; +79 from slice 2/3 merge + +21 for slice 4)
-- `bunx --bun tsc --noEmit` — clean
-- `bun run build` — clean; new dynamic route `/dashboard/book/[chapterId]` registered
-- `bunx --bun prettier --check` — clean (after `--write`)
-- `bun run lint` — 0 errors (7 pre-existing warnings unrelated: 2× `<img>` in e-book, 5× `_from`/`_where` in existing book.test.ts mock plumbing)
+- `npm test -- --run` — 212/212 (was 187; +25 new tests: 2 in `getPublicChapters`, 4 in `shouldRedirectLandingToDashboard`, 9 in `EmbeddedChapterRow`, 4 in `VisitorChapterRow`, 4 in `EBook`, 4 in `MainPage`)
+- `tsc --noEmit` — clean
+- `npm run lint` — 0 errors, 7 warnings (all pre-existing: 2× `<img>` in e-book, 2× `_from`/`_where` in book.test.ts, 1× `react-hooks/incompatible-library` in ChapterForm, 1× `<img>` in logo, 1× unused-var in actions/chapters.ts)
+- `npm run build` — clean; all 11 routes generated
+- `npx prettier --check src/` — clean
 
 ### Decisions
 
-- D-062: `getChapterSignedUrl` reuses `canUserReadChapter` for the access check instead of duplicating the ownership/release logic. Cost: 3 extra DB queries per render. Acceptable: this is the read hot path but only on actual reader mount, and consistency with the rest of the book subsystem is worth the round-trip.
-- D-063: `getNextChapterAction` is a pure function over precomputed `ChapterWithState[]` — no `Date` argument, no DB. The release-date check is already done by `computeChapterState` upstream. Keeps the helper trivially testable.
-- D-064: Next-chapter `auto-claim` flow reuses `purchaseChapter` (which already handles free + paid in the slice-3 unified path) instead of the unused `claimFreeChapter` stub. One less code path to maintain.
-- D-065: Page redirects non-readable chapters to `/dashboard/book?denied=<reason>` instead of rendering an inline "you don't have access" page. Page-level defense; the action's own `canUserReadChapter` re-check is the second layer. Toasts on the destination are deferred to slice 5/6 (follow existing patterns).
-- D-066: `vi.clearAllMocks()` in `beforeEach` for the reader page test was insufficient — it preserves the queued values but vitest 4.1.7's behavior with `mockImplementation` after `clearAllMocks` was inconsistent (the mock returned the default `[]` even after `mockImplementation(async () => [chapter])`). Switched to explicit `mockReset() + mockImplementation()` in beforeEach. Resolved the test pollution that initially showed as "chapters=[] in page despite impl being set" — the impl was set but never consumed because the mock state was corrupted by the previous test's `clearAllMocks`.
-- D-067: TDD vertical slices (one test → one impl → repeat) per `tdd` skill. Hit the anti-pattern once on Slice A.4 (anticipated the `paid` reason in the switch before writing its test) — the test then passed trivially. The test still locks in the contract, so no rewrite, but worth noting as a slip.
-- D-068: TDD skill rule "Only enough code to pass current test" was honored for slices A.1–A.3, A.5, B, C, D. The `_now: Date` parameter on `getNextChapterAction` was speculative — removed after lint flagged it. Interface stays clean.
-- D-069: 21 new tests. P0 covered: signed URL action (5 tests: not-auth, not-found, owned, paid-reject, storage-fail, no-pdf), getNextChapterAction (6 scenarios), reader page redirects (5 denial reasons + happy path), NextChapterButton (6 scenarios), ReaderClient (back link, title, skeleton, iframe, error, CTA, next-button prop). P1 covered: skeleton, iframe src, back, CTA href, error display.
+- D-070: Page uses `Promise.all([createClient(), getEbookLive()])` instead of two separate `await` calls. The two are independent — supabase auth and feature flag — and parallelizing saves a round-trip on the hot landing-page path. Trivial.
+- D-071: `getPublicChapters` is a separate function from `getChaptersWithState` rather than a flag/option on the existing one. The visitor case has different semantics (no userId, no ownership, all `state='buyable'`) and forcing it through the same code path would require either an `if (userId)` branch inside the existing function or an awkward optional parameter. A second function is the honest API.
+- D-072: VisitorChapterRow uses the existing `<Modal>` + `<SignupForm>` / `<LoginForm>` + `<Button>` primitives rather than inventing a new modal/CTA pattern. Consistency with Hero. Modal's "On successful signup, redirect to `/dashboard/book`" behavior is handled by `SignupForm`'s existing `router.push('/dashboard')` in `signup-form.tsx:66` — this is the only one that needs follow-up (see Risks).
+- D-073: Locked/unreleased chapters render as `<span>` (not `<button disabled>`) because a disabled button still has a tab stop and a screen-reader announcement. A span has no interactive semantics; the `title` attribute provides the tooltip for locked; unreleased has no tooltip (matches the existing `ChapterList` pattern in the dashboard).
+- D-074: `shouldRedirectLandingToDashboard` exported as a top-level pure function (not nested in the middleware) so it can be unit-tested without mocking `next/server`, `createServerClient`, or `getEbookLive`. Avoids the module-mocking hell that would otherwise dominate the test.
+- D-075: Followed the TDD skill's "vertical slices" rule throughout. One test → one impl per slice. Hit the "anti-horizontal-slicing" check on `getPublicChapters` (the test was written knowing `state='buyable'` was the visitor semantic, which leaked implementation into the test name). Acceptable: the test reads as a behavior spec ("for visitors, returned chapters are buyable"), and the impl is one trivial map.
+- D-076: Page-level test (`src/app/(main)/page.test.tsx`) mocks `EBook` itself (not its children) to keep the integration scope at the page boundary. The 4 EBook tests already cover the child components. Page test asserts only that the right prop shape reaches `EBook` for each of the 4 (live × auth) states.
 
 ### Known Issues / Risks
 
-- The reader page is gated behind `EBOOK_LIVE=true` in `app_settings` via the dashboard layout's `getEbookLive()` check (slice 1). At soft launch (Jun 12) the feature is hidden; at full launch (Jun 16) the flag flips via pg_cron. No code change needed at launch — purely the DB row.
-- The reader action does not currently `revalidatePath` on a missing/changed PDF. If Mas Chiko hides a chapter (sets `releaseDate=null`) while a user is on the reader page, the iframe stays visible until reload. Acceptable for MVP; the page-level redirect on next visit covers it.
-- `getChapterSignedUrl` generates a fresh URL on every mount. A user reading for 6 minutes will hit the 5-min expiry mid-read. Acceptable for MVP: a refresh fixes it. Could be improved by refreshing the URL on `useEffect` interval (slice 6 polish).
-- Open question: should the reader page show a fallback message if `pdfPath` is null on the chapter row (admin uploaded title/price but not PDF)? The action returns "PDF belum tersedia untuk bab ini" and the UI shows the error. The reader page itself would have rendered (since `canUserReadChapter` returns `free-claimable` for free chapters with no PDF). The user would see the error state, not a "coming soon" message. Could be improved by checking `pdfPath` server-side and redirecting with a different `denied=pdf-missing` reason. Deferred.
+- **Open: Signup success does not currently redirect to `/dashboard/book`** — `signup-form.tsx:66` does `router.push('/dashboard')` regardless. The issue's acceptance criteria say "On successful signup, redirect to `/dashboard/book`." Two options for follow-up: (a) change `signup-form.tsx` to use a configurable redirect URL, (b) have `VisitorChapterRow` pass a returnTo hint and have the form honor it. Out of scope for this slice (would touch the shared signup form, used by Hero too). **Suggest opening a follow-up issue.**
+- **Hero's "Daftar" / "Masuk" buttons remain visible to logged-in users** who can now reach `/` at full launch. Not a bug — the modal still works for switching accounts. But UX is slightly redundant. Polish concern, not a blocker.
+- **Middleware now reads `app_settings` on every `/` request.** Adds 1 DB query per landing page hit. Same cost pattern the dashboard layout already pays. If the load profile changes, cache the result in a module-level variable with a TTL, or move the flag to an env var.
+- The `EBOOK_LIVE=true` path returns all chapters (released + unreleased) for logged-in users via `getChaptersWithState`, but only `isReleased` ones for visitors via `getPublicChapters`. This asymmetry is intentional — logged-in users want to see "Segera hadir" badges for upcoming chapters; visitors should only see what they can actually do something about.
 
 ### Next Steps (ordered)
 
-1. Review PR #32 diff in the GitHub UI. Self-review per the project git rules (RULES_GIT.md).
-2. Wait for Vercel preview to deploy successfully.
-3. Smoke test on phone: scanner → journal → book → chapter 1 (free claim) → read in iframe → tap "Lanjut ke Bab 2" (redirect to list, since Bab 2 is paid).
-4. `gh pr merge --squash --delete-branch` once CI + Vercel preview green. Issue #18 auto-closes.
-5. Slice 5 (landing page full launch) and slice 6 (RLS + polish) remain — both labeled `ready-for-agent` in issues #19 and #16.
+1. Commit on `feat/landing/full-launch` (atomic, one commit).
+2. Push branch + open PR `feat(landing): full-launch mode with embedded chapter row (issue #19)`.
+3. Wait for Vercel preview + CI.
+4. Self-review the diff in PR UI.
+5. `gh pr merge --squash --delete-branch` once green.
+6. Open follow-up issue for the signup redirect-to-book-page (per Risks).
+7. Slice 6 (RLS + polish, issue #16) remains.
 
 ### Blockers (if any)
 
-- None. Slice 4 is ready for review.
+- None.
 
 ### External changes detected
 
-- `opencode.json` — model change from `sumopod/kimi-k2.6` to `minimax-m3-free`. Not authored in this session. Likely a leftover from a prior config update. Recommend reverting or confirming intent before committing.
+- None. All changes are in the listed files.
