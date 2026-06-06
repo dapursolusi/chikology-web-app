@@ -1,3 +1,4 @@
+import MainPage from '@/app/(main)/page';
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -70,9 +71,9 @@ vi.mock('@/components/sections/home/hero', () => ({
   Hero: () => <div data-testid="hero-section" />,
 }));
 
-import MainPage from '@/app/(main)/page';
-
-function makeChapter(overrides: Partial<ChapterWithState> = {}): ChapterWithState {
+function makeChapter(
+  overrides: Partial<ChapterWithState> = {}
+): ChapterWithState {
   return {
     id: 'ch-1',
     title: 'Bab 1',

@@ -4,6 +4,8 @@ import { describe, expect, it, vi } from 'vitest';
 
 import type { ChapterWithState } from '@/lib/chapters';
 
+import { VisitorChapterRow } from './visitor-chapter-row';
+
 vi.mock('@/components/login-form', () => ({
   LoginForm: ({ onSwitchToSignup }: { onSwitchToSignup?: () => void }) => (
     <div data-testid="login-form">
@@ -31,10 +33,9 @@ vi.mock('@/components/modal', () => ({
   }: {
     open: boolean;
     content: { variant: string; directContent?: React.ReactNode };
-  }) => (open ? <div data-testid="auth-modal">{content.directContent}</div> : null),
+  }) =>
+    open ? <div data-testid="auth-modal">{content.directContent}</div> : null,
 }));
-
-import { VisitorChapterRow } from './visitor-chapter-row';
 
 const chapters: ChapterWithState[] = [
   {
@@ -62,7 +63,9 @@ const chapters: ChapterWithState[] = [
 describe('VisitorChapterRow', () => {
   it('renders one "Masuk untuk baca" button per released chapter', () => {
     render(<VisitorChapterRow chapters={chapters} />);
-    const buttons = screen.getAllByRole('button', { name: /masuk untuk baca/i });
+    const buttons = screen.getAllByRole('button', {
+      name: /masuk untuk baca/i,
+    });
     expect(buttons).toHaveLength(2);
   });
 
@@ -71,7 +74,9 @@ describe('VisitorChapterRow', () => {
     render(<VisitorChapterRow chapters={chapters} />);
 
     expect(screen.queryByTestId('auth-modal')).not.toBeInTheDocument();
-    await user.click(screen.getAllByRole('button', { name: /masuk untuk baca/i })[0]);
+    await user.click(
+      screen.getAllByRole('button', { name: /masuk untuk baca/i })[0]
+    );
     expect(screen.getByTestId('auth-modal')).toBeInTheDocument();
     expect(screen.getByTestId('signup-form')).toBeInTheDocument();
   });
@@ -80,7 +85,9 @@ describe('VisitorChapterRow', () => {
     const user = userEvent.setup();
     render(<VisitorChapterRow chapters={chapters} />);
 
-    await user.click(screen.getAllByRole('button', { name: /masuk untuk baca/i })[0]);
+    await user.click(
+      screen.getAllByRole('button', { name: /masuk untuk baca/i })[0]
+    );
     expect(screen.getByTestId('signup-form')).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: /switch to login/i }));

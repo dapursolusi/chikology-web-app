@@ -247,26 +247,26 @@ Scanner + Journal + Landing Page live. E-book = countdown to June 16.
 
 > These tasks happen AFTER soft launch. Build the full e-book experience for June 16.
 
-| #   | Task                                                                                                                                     | Est.   | Done?                                                          |
-| --- | ---------------------------------------------------------------------------------------------------------------------------------------- | ------ | -------------------------------------------------------------- |
-| 1   | 🆕 Create `ChapterList.tsx` — horizontal button group [Bab 1] [Bab 2] [Bab 3] ...                                                        | 30 min | ☐                                                              |
-| 2   | Button state logic: unreleased → grey ("Segera hadir"), released + not purchased → price + "Beli", released + purchased → open reader    | 30 min | ☐                                                              |
-| 3   | Create `app/dashboard/book/page.tsx` — chapter list page                                                                                 | 20 min | ☐                                                              |
-| 4   | Create `app/dashboard/book/[chapterId]/page.tsx` — chapter reader                                                                        | 20 min | ☐                                                              |
-| 5   | Access check: not purchased → redirect / show "Beli" button                                                                              | 20 min | ☐                                                              |
-| 6   | Mock payment flow: button inserts into `chapter_purchases`                                                                               | 30 min | ☐                                                              |
-| 7   | PDF viewer: signed Supabase URL (5-min expiry) + render in `<iframe>`                                                                    | 45 min | ☐                                                              |
-| 8   | Sequential purchase: can only buy chapter N if N-1 is owned                                                                              | 30 min | ☐                                                              |
-| 9   | Disable PDF right-click + hide download in iframe                                                                                        | 20 min | ☐                                                              |
-| 10  | RLS policy: users access only owned chapter PDFs                                                                                         | 30 min | ☐                                                              |
-| 11  | Create admin page for chapter upload (title, number, price, release date, PDF) — split into 2A/2B/2C sub-slices; 2A + 2B shipped Jun 4   | 60 min | ✓ (2A + 2B + 2C shipped Jun 5)                                 |
+| #   | Task                                                                                                                                     | Est.   | Done?                                                            |
+| --- | ---------------------------------------------------------------------------------------------------------------------------------------- | ------ | ---------------------------------------------------------------- |
+| 1   | 🆕 Create `ChapterList.tsx` — horizontal button group [Bab 1] [Bab 2] [Bab 3] ...                                                        | 30 min | ☐                                                                |
+| 2   | Button state logic: unreleased → grey ("Segera hadir"), released + not purchased → price + "Beli", released + purchased → open reader    | 30 min | ☐                                                                |
+| 3   | Create `app/dashboard/book/page.tsx` — chapter list page                                                                                 | 20 min | ☐                                                                |
+| 4   | Create `app/dashboard/book/[chapterId]/page.tsx` — chapter reader                                                                        | 20 min | ☐                                                                |
+| 5   | Access check: not purchased → redirect / show "Beli" button                                                                              | 20 min | ☐                                                                |
+| 6   | Mock payment flow: button inserts into `chapter_purchases`                                                                               | 30 min | ☐                                                                |
+| 7   | PDF viewer: signed Supabase URL (5-min expiry) + render in `<iframe>`                                                                    | 45 min | ☐                                                                |
+| 8   | Sequential purchase: can only buy chapter N if N-1 is owned                                                                              | 30 min | ☐                                                                |
+| 9   | Disable PDF right-click + hide download in iframe                                                                                        | 20 min | ☐                                                                |
+| 10  | RLS policy: users access only owned chapter PDFs                                                                                         | 30 min | ☐                                                                |
+| 11  | Create admin page for chapter upload (title, number, price, release date, PDF) — split into 2A/2B/2C sub-slices; 2A + 2B shipped Jun 4   | 60 min | ✓ (2A + 2B + 2C shipped Jun 5)                                   |
 | 12  | 🆕 Replace landing page countdown with chapter button group                                                                              | 20 min | ✓ (Jun 6) — TDD, 25 new tests, branch `feat/landing/full-launch` |
-| 13  | 🆕 Set `EBOOK_LIVE=true` + deploy                                                                                                        | 5 min  | ☐                                                              |
-| 14  | 🆕 Mobile responsive: chapter button group on phone                                                                                      | 20 min | ☐                                                              |
-| 15  | Full E2E: scan → journal → browse chapters → buy → read ✓                                                                                | 30 min | ☐                                                              |
-| 16  | 🆕 Admin edit chapter (title, number, price, release date, is_free, replace PDF) — sub-slice 2C of issue #15                             | 30 min | ✓ (Jun 5)                                                      |
-| 17  | 🆕 Admin hide / unhide chapter (is_published=false) — sub-slice 2C of issue #15                                                          | 15 min | ✓ (Jun 5)                                                      |
-| 18  | 🆕 Chapter Reader page at `/dashboard/book/[chapterId]`: signed-URL iframe, 5-scenario next-chapter button, consultation CTA (issue #18) | 90 min | ✓ (Jun 6) — TDD, 21 tests, branch `feat/reader/chapter-reader` |
+| 13  | 🆕 Set `EBOOK_LIVE=true` + deploy                                                                                                        | 5 min  | ☐                                                                |
+| 14  | 🆕 Mobile responsive: chapter button group on phone                                                                                      | 20 min | ☐                                                                |
+| 15  | Full E2E: scan → journal → browse chapters → buy → read ✓                                                                                | 30 min | ☐                                                                |
+| 16  | 🆕 Admin edit chapter (title, number, price, release date, is_free, replace PDF) — sub-slice 2C of issue #15                             | 30 min | ✓ (Jun 5)                                                        |
+| 17  | 🆕 Admin hide / unhide chapter (is_published=false) — sub-slice 2C of issue #15                                                          | 15 min | ✓ (Jun 5)                                                        |
+| 18  | 🆕 Chapter Reader page at `/dashboard/book/[chapterId]`: signed-URL iframe, 5-scenario next-chapter button, consultation CTA (issue #18) | 90 min | ✓ (Jun 6) — TDD, 21 tests, branch `feat/reader/chapter-reader`   |
 
 **Total: ~6.5 hours (spread across Jun 12–15)**
 

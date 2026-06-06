@@ -27,7 +27,11 @@ export default async function MainPage() {
   return (
     <div className="flex flex-col gap-8 min-h-screen">
       <Hero />
-      <EBook ebookLive={ebookLive} userId={user?.id ?? null} chapters={chapters} />
+      <EBook
+        ebookLive={ebookLive}
+        userId={user?.id ?? null}
+        chapters={chapters}
+      />
       <Features />
     </div>
   );

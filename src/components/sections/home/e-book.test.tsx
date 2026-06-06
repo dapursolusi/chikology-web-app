@@ -1,9 +1,9 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import type { ChapterWithState } from '@/lib/chapters';
-
 import EBook from '@/components/sections/home/e-book';
+
+import type { ChapterWithState } from '@/lib/chapters';
 
 vi.mock('next/link', () => ({
   default: ({
@@ -66,17 +66,13 @@ describe('EBook section', () => {
     render(<EBook ebookLive={false} userId={null} chapters={[]} />);
     expect(screen.getByTestId('book-countdown')).toBeInTheDocument();
     expect(screen.queryByTestId('visitor-chapter-row')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('embedded-chapter-row')).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId('embedded-chapter-row')
+    ).not.toBeInTheDocument();
   });
 
   it('renders VisitorChapterRow when ebookLive is true and no user is signed in', () => {
-    render(
-      <EBook
-        ebookLive
-        userId={null}
-        chapters={[releasedChapter]}
-      />
-    );
+    render(<EBook ebookLive userId={null} chapters={[releasedChapter]} />);
     expect(screen.queryByTestId('book-countdown')).not.toBeInTheDocument();
     const visitor = screen.getByTestId('visitor-chapter-row');
     expect(visitor).toBeInTheDocument();
@@ -89,9 +85,7 @@ describe('EBook section', () => {
       ...releasedChapter,
       state: 'owned',
     };
-    render(
-      <EBook ebookLive userId="user-1" chapters={[ownedChapter]} />
-    );
+    render(<EBook ebookLive userId="user-1" chapters={[ownedChapter]} />);
     expect(screen.queryByTestId('book-countdown')).not.toBeInTheDocument();
     const embedded = screen.getByTestId('embedded-chapter-row');
     expect(embedded).toBeInTheDocument();
@@ -111,20 +105,12 @@ describe('EBook section', () => {
     ).toBeInTheDocument();
     expect(screen.getByText(/Chapter 1/i)).toBeInTheDocument();
 
-    rerender(
-      <EBook
-        ebookLive
-        userId={null}
-        chapters={[releasedChapter]}
-      />
-    );
+    rerender(<EBook ebookLive userId={null} chapters={[releasedChapter]} />);
     expect(
       screen.getByText(/Seni Berdamain Dengan Diri Sendiri/i)
     ).toBeInTheDocument();
 
-    rerender(
-      <EBook ebookLive userId="user-1" chapters={[releasedChapter]} />
-    );
+    rerender(<EBook ebookLive userId="user-1" chapters={[releasedChapter]} />);
     expect(
       screen.getByText(/Seni Berdamain Dengan Diri Sendiri/i)
     ).toBeInTheDocument();

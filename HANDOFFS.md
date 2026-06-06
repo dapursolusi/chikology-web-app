@@ -15,15 +15,18 @@ Ship issue #19 end-to-end with TDD on a feature branch — replace landing page 
 ### What Changed
 
 **Middleware (`src/lib/supabase/middleware.ts:5-13, 51-62`):**
+
 - New `shouldRedirectLandingToDashboard(path, user, ebookLive)` pure helper — returns true only when path is `/`, user is signed in, AND EBOOK_LIVE is false.
 - The redirect on `/` → `/dashboard` is now gated on `EBOOK_LIVE`. At full launch, logged-in users can browse the landing page so the embedded chapter list can render with real ownership states.
 - Reads `EBOOK_LIVE` via existing `getEbookLive()` (DB lookup on `app_settings`). Adds one extra DB query per `/` request — same pattern the dashboard layout already uses. Acceptable cost (PK lookup, indexed).
 
 **Data layer (`src/lib/chapters.ts:46-67`):**
+
 - New `getPublicChapters(): Promise<ChapterWithState[]>` — for the visitor path. Selects all chapters, filters to `isReleased(c, now) === true`, maps to `ChapterWithState` with `state='buyable'`. No DB write; no userId required.
 - Reuses existing `isReleased` helper to keep the release-date semantics consistent with the reader page and the `computeChapterState` path.
 
 **Page (`src/app/(main)/page.tsx:1-26`):**
+
 - Converted to async server component. `Promise.all([createClient(), getEbookLive()])` for parallel auth + flag fetch.
 - Branches on `(ebookLive, user)`:
   - EBOOK_LIVE=false → `chapters=[]`, EBook renders BookCountdown (soft-launch)
@@ -31,11 +34,13 @@ Ship issue #19 end-to-end with TDD on a feature branch — replace landing page 
   - EBOOK_LIVE=true + user → `getChaptersWithState(user.id)` → EmbeddedChapterRow
 
 **EBook section (`src/components/sections/home/e-book.tsx:8-14, 50-60`):**
+
 - New prop shape: `{ ebookLive: boolean; userId: string | null; chapters: ChapterWithState[] }`.
 - CTA zone branches on `ebookLive` then `userId` — renders one of `<BookCountdown>`, `<VisitorChapterRow>`, or `<EmbeddedChapterRow>`.
 - Book promo card (cover image, title, description, "Chapter 1" badge, trust indicators) is unchanged.
 
 **New: EmbeddedChapterRow (`src/components/sections/home/embedded-chapter-row.tsx`):**
+
 - Server component. Horizontal scrollable flex row (`flex gap-2 overflow-x-auto pb-2`).
 - Per-chapter switch on `state`:
   - `owned` → green `<Link href="/dashboard/book/<id>">Bab N · Baca</Link>`
@@ -46,6 +51,7 @@ Ship issue #19 end-to-end with TDD on a feature branch — replace landing page 
 - Empty state: "Belum ada bab yang dirilis."
 
 **New: VisitorChapterRow (`src/components/sections/home/visitor-chapter-row.tsx`):**
+
 - Client component (`'use client'`) — manages signup modal `useState` (mirrors Hero's pattern).
 - Renders a horizontal row of teal "Bab N · Masuk untuk baca" buttons.
 - Click → opens the existing `<Modal>` with `<SignupForm>` (default).

@@ -89,7 +89,10 @@ describe('EmbeddedChapterRow', () => {
     render(<EmbeddedChapterRow chapters={[lockedChapter]} />);
     const item = screen.getByTestId('embedded-chapter-ch-3');
     expect(item).toHaveAttribute('data-state', 'locked');
-    expect(item).toHaveAttribute('title', 'Selesaikan bab sebelumnya terlebih dahulu');
+    expect(item).toHaveAttribute(
+      'title',
+      'Selesaikan bab sebelumnya terlebih dahulu'
+    );
   });
 
   it('shows "Segera hadir" for unreleased chapters (non-interactive)', () => {
