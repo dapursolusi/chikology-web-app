@@ -415,6 +415,75 @@ describe('getChapterSignedUrl', () => {
     expect(mockCreateSignedUrl).not.toHaveBeenCalled();
   });
 
+  it('returns "Bab belum dirilis" when chapter is released in the future', async () => {
+    // canUserReadChapter call 1: chapter lookup → unreleased chapter (future releaseDate)
+    mockWhere.mockResolvedValueOnce([
+      {
+        id: 'ch-future',
+        title: 'Bab Masa Depan',
+        chapterNumber: 1,
+        priceIdr: 0,
+        isFree: true,
+        releaseDate: '2099-12-31',
+        pdfPath: 'chapters/future.pdf',
+        createdAt: new Date('2025-01-01'),
+        updatedAt: new Date('2025-01-01'),
+      },
+    ]);
+    // canUserReadChapter short-circuits on unreleased → no further DB or storage calls.
+
+    const { getChapterSignedUrl } = await import('@/actions/chapters');
+    const result = await getChapterSignedUrl('ch-future');
+
+    expect(result).toEqual({ error: 'Bab belum dirilis' });
+    expect(mockCreateSignedUrl).not.toHaveBeenCalled();
+  });
+
+  it('returns "Selesaikan bab sebelumnya terlebih dahulu" when chapter is locked by sequential gating', async () => {
+    // canUserReadChapter call 1: chapter lookup → ch-2 (released, paid)
+    mockWhere.mockResolvedValueOnce([
+      {
+        id: 'ch-2',
+        title: 'Bab 2',
+        chapterNumber: 2,
+        priceIdr: 49000,
+        isFree: false,
+        releaseDate: '2025-01-01',
+        pdfPath: 'chapters/2.pdf',
+        createdAt: new Date('2025-01-01'),
+        updatedAt: new Date('2025-01-01'),
+      },
+    ]);
+    // canUserReadChapter call 2: all chapters (ch-1 released, ch-2 released)
+    mockOrderBy.mockResolvedValueOnce([
+      {
+        id: 'ch-1',
+        chapterNumber: 1,
+        releaseDate: '2024-01-01',
+        priceIdr: 0,
+        isFree: true,
+      },
+      {
+        id: 'ch-2',
+        chapterNumber: 2,
+        releaseDate: '2025-01-01',
+        priceIdr: 49000,
+        isFree: false,
+      },
+    ]);
+    // canUserReadChapter call 3: purchases → empty (user owns nothing, so ch-2 is locked behind ch-1)
+    mockWhere.mockResolvedValueOnce([]);
+    // getChapterSignedUrl short-circuits on locked → no storage call.
+
+    const { getChapterSignedUrl } = await import('@/actions/chapters');
+    const result = await getChapterSignedUrl('ch-2');
+
+    expect(result).toEqual({
+      error: 'Selesaikan bab sebelumnya terlebih dahulu',
+    });
+    expect(mockCreateSignedUrl).not.toHaveBeenCalled();
+  });
+
   it('returns a signed URL with 300s expiry when user owns the chapter', async () => {
     // canUserReadChapter call 1: chapter lookup via where → released chapter with pdf
     mockWhere.mockResolvedValueOnce([
