@@ -27,6 +27,23 @@ const mockFrom = vi.hoisted(() =>
 );
 const mockSelect = vi.hoisted(() => vi.fn(() => ({ from: mockFrom })));
 
+const mockCreateSignedUrl = vi.hoisted(() =>
+  vi.fn<
+    () => Promise<{
+      data: { signedUrl: string } | null;
+      error: { message: string } | null;
+    }>
+  >(async () => ({
+    data: {
+      signedUrl: 'https://example.supabase.co/storage/v1/object/signed/x',
+    },
+    error: null,
+  }))
+);
+const mockStorageFrom = vi.hoisted(() =>
+  vi.fn(() => ({ createSignedUrl: mockCreateSignedUrl }))
+);
+
 vi.mock('next/cache', () => ({
   revalidatePath: vi.fn(),
 }));
@@ -43,6 +60,7 @@ vi.mock('drizzle-orm', () => ({
 vi.mock('@/lib/supabase/server', () => ({
   createClient: vi.fn(() => ({
     auth: { getUser: mockGetUser },
+    storage: { from: mockStorageFrom },
   })),
 }));
 
@@ -214,5 +232,243 @@ describe('claimFreeChapter', () => {
     const result = await claimFreeChapter('chapter-id');
 
     expect(result).toEqual({ error: 'Not authenticated' });
+  });
+});
+
+describe('getChapterSignedUrl', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('returns error when user is not authenticated and does not call storage', async () => {
+    mockGetUser.mockReturnValueOnce({ data: { user: null } });
+
+    const { getChapterSignedUrl } = await import('@/actions/chapters');
+    const result = await getChapterSignedUrl('chapter-id');
+
+    expect(result).toEqual({ error: 'Not authenticated' });
+    expect(mockCreateSignedUrl).not.toHaveBeenCalled();
+    expect(mockStorageFrom).not.toHaveBeenCalled();
+  });
+
+  it('returns error when chapter does not exist', async () => {
+    // canUserReadChapter: call 1 = chapter lookup via where → empty
+    mockWhere.mockResolvedValueOnce([]);
+
+    const { getChapterSignedUrl } = await import('@/actions/chapters');
+    const result = await getChapterSignedUrl('nonexistent-id');
+
+    expect(result).toEqual({ error: 'Bab tidak ditemukan' });
+    expect(mockCreateSignedUrl).not.toHaveBeenCalled();
+  });
+
+  it('returns error when createSignedUrl fails on storage side', async () => {
+    // canUserReadChapter call 1: chapter lookup → owned
+    mockWhere.mockResolvedValueOnce([
+      {
+        id: 'ch-1',
+        title: 'Bab 1 — Awal',
+        chapterNumber: 1,
+        priceIdr: 0,
+        isFree: true,
+        releaseDate: '2025-01-01',
+        pdfPath: 'chapters/1.pdf',
+        createdAt: new Date('2025-01-01'),
+        updatedAt: new Date('2025-01-01'),
+      },
+    ]);
+    // call 2: all chapters
+    mockOrderBy.mockResolvedValueOnce([
+      {
+        id: 'ch-1',
+        title: 'Bab 1 — Awal',
+        chapterNumber: 1,
+        priceIdr: 0,
+        isFree: true,
+        releaseDate: '2025-01-01',
+        pdfPath: 'chapters/1.pdf',
+        createdAt: new Date('2025-01-01'),
+        updatedAt: new Date('2025-01-01'),
+      },
+    ]);
+    // call 3: purchases → owned
+    mockWhere.mockResolvedValueOnce([{ chapterId: 'ch-1' }]);
+    // call 4: pdfPath lookup
+    mockWhere.mockResolvedValueOnce([
+      {
+        id: 'ch-1',
+        title: 'Bab 1 — Awal',
+        chapterNumber: 1,
+        priceIdr: 0,
+        isFree: true,
+        releaseDate: '2025-01-01',
+        pdfPath: 'chapters/1.pdf',
+        createdAt: new Date('2025-01-01'),
+        updatedAt: new Date('2025-01-01'),
+      },
+    ]);
+    // storage fails
+    mockCreateSignedUrl.mockResolvedValueOnce({
+      data: null,
+      error: { message: 'bucket offline' },
+    });
+
+    const { getChapterSignedUrl } = await import('@/actions/chapters');
+    const result = await getChapterSignedUrl('ch-1');
+
+    expect(result).toMatchObject({
+      error: expect.stringMatching(/gagal|url|pdf/i),
+    });
+  });
+
+  it('returns error when chapter has no PDF path', async () => {
+    // canUserReadChapter call 1: chapter lookup → free, released, but no pdf
+    mockWhere.mockResolvedValueOnce([
+      {
+        id: 'ch-no-pdf',
+        title: 'Bab Tanpa PDF',
+        chapterNumber: 1,
+        priceIdr: 0,
+        isFree: true,
+        releaseDate: '2025-01-01',
+        pdfPath: null,
+        createdAt: new Date('2025-01-01'),
+        updatedAt: new Date('2025-01-01'),
+      },
+    ]);
+    // call 2: all chapters
+    mockOrderBy.mockResolvedValueOnce([
+      {
+        id: 'ch-no-pdf',
+        title: 'Bab Tanpa PDF',
+        chapterNumber: 1,
+        priceIdr: 0,
+        isFree: true,
+        releaseDate: '2025-01-01',
+        pdfPath: null,
+        createdAt: new Date('2025-01-01'),
+        updatedAt: new Date('2025-01-01'),
+      },
+    ]);
+    // call 3: purchases → none (free claim path is canRead=true)
+    mockWhere.mockResolvedValueOnce([]);
+    // call 4: pdfPath lookup → null
+    mockWhere.mockResolvedValueOnce([
+      {
+        id: 'ch-no-pdf',
+        title: 'Bab Tanpa PDF',
+        chapterNumber: 1,
+        priceIdr: 0,
+        isFree: true,
+        releaseDate: '2025-01-01',
+        pdfPath: null,
+        createdAt: new Date('2025-01-01'),
+        updatedAt: new Date('2025-01-01'),
+      },
+    ]);
+
+    const { getChapterSignedUrl } = await import('@/actions/chapters');
+    const result = await getChapterSignedUrl('ch-no-pdf');
+
+    expect(result).toMatchObject({
+      error: expect.stringMatching(/pdf|tidak tersedia/i),
+    });
+    expect(mockCreateSignedUrl).not.toHaveBeenCalled();
+  });
+
+  it('returns "Beli bab ini terlebih dahulu" when chapter is paid and not owned', async () => {
+    // canUserReadChapter call 1: chapter lookup → paid released chapter
+    mockWhere.mockResolvedValueOnce([
+      {
+        id: 'ch-paid',
+        title: 'Bab Berbayar',
+        chapterNumber: 1,
+        priceIdr: 49000,
+        isFree: false,
+        releaseDate: '2025-01-01',
+        pdfPath: 'chapters/paid.pdf',
+        createdAt: new Date('2025-01-01'),
+        updatedAt: new Date('2025-01-01'),
+      },
+    ]);
+    // call 2: all chapters
+    mockOrderBy.mockResolvedValueOnce([
+      {
+        id: 'ch-paid',
+        title: 'Bab Berbayar',
+        chapterNumber: 1,
+        priceIdr: 49000,
+        isFree: false,
+        releaseDate: '2025-01-01',
+        pdfPath: 'chapters/paid.pdf',
+        createdAt: new Date('2025-01-01'),
+        updatedAt: new Date('2025-01-01'),
+      },
+    ]);
+    // call 3: purchases → none
+    mockWhere.mockResolvedValueOnce([]);
+
+    const { getChapterSignedUrl } = await import('@/actions/chapters');
+    const result = await getChapterSignedUrl('ch-paid');
+
+    expect(result).toEqual({ error: 'Beli bab ini terlebih dahulu' });
+    expect(mockCreateSignedUrl).not.toHaveBeenCalled();
+  });
+
+  it('returns a signed URL with 300s expiry when user owns the chapter', async () => {
+    // canUserReadChapter call 1: chapter lookup via where → released chapter with pdf
+    mockWhere.mockResolvedValueOnce([
+      {
+        id: 'ch-1',
+        title: 'Bab 1 — Awal',
+        chapterNumber: 1,
+        priceIdr: 0,
+        isFree: true,
+        releaseDate: '2025-01-01',
+        pdfPath: 'chapters/1.pdf',
+        createdAt: new Date('2025-01-01'),
+        updatedAt: new Date('2025-01-01'),
+      },
+    ]);
+    // canUserReadChapter call 2: all chapters via orderBy
+    mockOrderBy.mockResolvedValueOnce([
+      {
+        id: 'ch-1',
+        title: 'Bab 1 — Awal',
+        chapterNumber: 1,
+        priceIdr: 0,
+        isFree: true,
+        releaseDate: '2025-01-01',
+        pdfPath: 'chapters/1.pdf',
+        createdAt: new Date('2025-01-01'),
+        updatedAt: new Date('2025-01-01'),
+      },
+    ]);
+    // canUserReadChapter call 3: purchases via where → owns ch-1
+    mockWhere.mockResolvedValueOnce([{ chapterId: 'ch-1' }]);
+    // getChapterSignedUrl's own chapter lookup for pdfPath
+    mockWhere.mockResolvedValueOnce([
+      {
+        id: 'ch-1',
+        title: 'Bab 1 — Awal',
+        chapterNumber: 1,
+        priceIdr: 0,
+        isFree: true,
+        releaseDate: '2025-01-01',
+        pdfPath: 'chapters/1.pdf',
+        createdAt: new Date('2025-01-01'),
+        updatedAt: new Date('2025-01-01'),
+      },
+    ]);
+
+    const { getChapterSignedUrl } = await import('@/actions/chapters');
+    const result = await getChapterSignedUrl('ch-1');
+
+    expect(result).toEqual({
+      url: 'https://example.supabase.co/storage/v1/object/signed/x',
+      expiresIn: 300,
+    });
+    expect(mockStorageFrom).toHaveBeenCalledWith('book-chapters');
+    expect(mockCreateSignedUrl).toHaveBeenCalledWith('chapters/1.pdf', 300);
   });
 });

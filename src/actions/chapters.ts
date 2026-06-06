@@ -6,7 +6,11 @@ import { db } from '@/db';
 import { bookChapters, chapterPurchases } from '@/db/schema';
 import { asc, eq } from 'drizzle-orm';
 
-import { computeChapterState, isReleased } from '@/lib/chapters';
+import {
+  canUserReadChapter,
+  computeChapterState,
+  isReleased,
+} from '@/lib/chapters';
 import { createClient } from '@/lib/supabase/server';
 
 export async function purchaseChapter(chapterId: string): Promise<
@@ -114,4 +118,52 @@ export async function claimFreeChapter(_chapterId: string): Promise<
   }
 
   return { error: 'Not implemented' };
+}
+
+export async function getChapterSignedUrl(
+  chapterId: string
+): Promise<{ url: string; expiresIn: 300 } | { error: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: 'Not authenticated' };
+  }
+
+  const access = await canUserReadChapter(user.id, chapterId);
+
+  if (access.canRead === false) {
+    switch (access.reason) {
+      case 'not-found':
+        return { error: 'Bab tidak ditemukan' };
+      case 'unreleased':
+        return { error: 'Bab belum dirilis' };
+      case 'locked':
+        return { error: 'Selesaikan bab sebelumnya terlebih dahulu' };
+      case 'paid':
+        return { error: 'Beli bab ini terlebih dahulu' };
+    }
+  }
+
+  const rows = await db
+    .select({ pdfPath: bookChapters.pdfPath })
+    .from(bookChapters)
+    .where(eq(bookChapters.id, chapterId));
+  const pdfPath = rows[0]?.pdfPath;
+
+  if (!pdfPath) {
+    return { error: 'PDF belum tersedia untuk bab ini' };
+  }
+
+  const { data, error } = await supabase.storage
+    .from('book-chapters')
+    .createSignedUrl(pdfPath, 300);
+
+  if (error || !data) {
+    return { error: 'Gagal membuat URL PDF' };
+  }
+
+  return { url: data.signedUrl, expiresIn: 300 };
 }

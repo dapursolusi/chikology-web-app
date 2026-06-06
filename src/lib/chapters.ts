@@ -19,6 +19,20 @@ export type ChapterWithState = {
   state: ChapterState;
 };
 
+export type NextChapterAction =
+  | {
+      kind: 'navigate';
+      nextChapter: { id: string; title: string; chapterNumber: number };
+    }
+  | {
+      kind: 'auto-claim';
+      nextChapter: { id: string; title: string; chapterNumber: number };
+    }
+  | { kind: 'redirect-to-list'; reason: 'paid' }
+  | { kind: 'locked'; previousChapterNumber: number }
+  | { kind: 'unreleased' }
+  | { kind: 'end-of-book' };
+
 export function isReleased(
   chapter: { releaseDate: string | null },
   now: Date
@@ -158,4 +172,41 @@ export async function canUserReadChapter(
     return { canRead: false, reason: 'locked' };
   }
   return { canRead: false, reason: 'unreleased' };
+}
+
+export function getNextChapterAction(
+  currentChapterNumber: number,
+  chapters: ChapterWithState[]
+): NextChapterAction {
+  const next = chapters.find(
+    (c) => c.chapterNumber === currentChapterNumber + 1
+  );
+  if (!next) return { kind: 'end-of-book' };
+
+  switch (next.state) {
+    case 'unreleased':
+      return { kind: 'unreleased' };
+    case 'owned':
+      return {
+        kind: 'navigate',
+        nextChapter: {
+          id: next.id,
+          title: next.title,
+          chapterNumber: next.chapterNumber,
+        },
+      };
+    case 'buyable':
+      return next.isFree
+        ? {
+            kind: 'auto-claim',
+            nextChapter: {
+              id: next.id,
+              title: next.title,
+              chapterNumber: next.chapterNumber,
+            },
+          }
+        : { kind: 'redirect-to-list', reason: 'paid' };
+    case 'locked':
+      return { kind: 'locked', previousChapterNumber: next.chapterNumber - 1 };
+  }
 }

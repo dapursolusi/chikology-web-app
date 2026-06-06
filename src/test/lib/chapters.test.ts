@@ -1,6 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { canUserReadChapter, computeChapterState } from '@/lib/chapters';
+import {
+  canUserReadChapter,
+  computeChapterState,
+  getNextChapterAction,
+} from '@/lib/chapters';
 
 // Mock DB for getChaptersWithState tests
 const mockOrderBy = vi.hoisted(() =>
@@ -345,5 +349,87 @@ describe('canUserReadChapter', () => {
     const result = await canUserReadChapter('user-id', 'nonexistent');
 
     expect(result).toEqual({ canRead: false, reason: 'not-found' });
+  });
+});
+
+// ─── getNextChapterAction — pure function tests ──────────────────────
+
+describe('getNextChapterAction', () => {
+  function chapter(
+    overrides: Partial<import('@/lib/chapters').ChapterWithState>
+  ) {
+    return {
+      id: 'ch-1',
+      title: 'Bab 1 — Awal',
+      chapterNumber: 1,
+      priceIdr: 0,
+      isFree: true,
+      releaseDate: '2025-01-01',
+      pdfPath: null,
+      state: 'buyable' as const,
+      ...overrides,
+    };
+  }
+
+  it('returns "end-of-book" when there is no next chapter', () => {
+    const action = getNextChapterAction(3, [chapter({ chapterNumber: 3 })]);
+    expect(action).toEqual({ kind: 'end-of-book' });
+  });
+
+  it('returns "navigate" when next chapter is owned', () => {
+    const action = getNextChapterAction(1, [
+      chapter({ chapterNumber: 1 }),
+      chapter({ id: 'ch-2', chapterNumber: 2, state: 'owned' }),
+    ]);
+    expect(action).toEqual({
+      kind: 'navigate',
+      nextChapter: { id: 'ch-2', title: 'Bab 1 — Awal', chapterNumber: 2 },
+    });
+  });
+
+  it('returns "auto-claim" when next chapter is free, released, and not owned', () => {
+    const action = getNextChapterAction(1, [
+      chapter({ chapterNumber: 1 }),
+      chapter({ id: 'ch-2', chapterNumber: 2, state: 'buyable', isFree: true }),
+    ]);
+    expect(action).toEqual({
+      kind: 'auto-claim',
+      nextChapter: { id: 'ch-2', title: 'Bab 1 — Awal', chapterNumber: 2 },
+    });
+  });
+
+  it('returns "redirect-to-list" with reason "paid" when next chapter is paid and buyable', () => {
+    const action = getNextChapterAction(1, [
+      chapter({ chapterNumber: 1 }),
+      chapter({
+        id: 'ch-2',
+        chapterNumber: 2,
+        state: 'buyable',
+        isFree: false,
+        priceIdr: 49000,
+      }),
+    ]);
+    expect(action).toEqual({ kind: 'redirect-to-list', reason: 'paid' });
+  });
+
+  it('returns "locked" with previous chapter number when next chapter is locked', () => {
+    const action = getNextChapterAction(1, [
+      chapter({ chapterNumber: 1 }),
+      chapter({ id: 'ch-2', chapterNumber: 2, state: 'locked' }),
+    ]);
+    expect(action).toEqual({ kind: 'locked', previousChapterNumber: 1 });
+  });
+
+  it('returns "unreleased" when next chapter is unreleased', () => {
+    const action = getNextChapterAction(1, [
+      chapter({ chapterNumber: 1 }),
+      chapter({
+        id: 'ch-2',
+        chapterNumber: 2,
+        state: 'unreleased',
+        releaseDate: null,
+      }),
+    ]);
+    expect(action).toEqual({ kind: 'unreleased' });
   });
 });
