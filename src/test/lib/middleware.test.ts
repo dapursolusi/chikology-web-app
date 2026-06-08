@@ -1,6 +1,26 @@
 import { describe, expect, it } from 'vitest';
 
-import { shouldRedirectLandingToDashboard } from '@/lib/supabase/middleware';
+import {
+  shouldRedirectLandingToDashboard,
+  getBypassRedirect,
+} from '@/lib/supabase/middleware';
+
+describe('getBypassRedirect', () => {
+  it('returns true when bypass-redirect query param is "true"', () => {
+    const url = new URL('http://localhost/?bypass-redirect=true');
+    expect(getBypassRedirect(url)).toBe(true);
+  });
+
+  it('returns false when bypass-redirect query param is absent', () => {
+    const url = new URL('http://localhost/');
+    expect(getBypassRedirect(url)).toBe(false);
+  });
+
+  it('returns false when bypass-redirect query param is not "true"', () => {
+    const url = new URL('http://localhost/?bypass-redirect=yes');
+    expect(getBypassRedirect(url)).toBe(false);
+  });
+});
 
 describe('shouldRedirectLandingToDashboard', () => {
   it('does not redirect logged-in user on / when EBOOK_LIVE is true', () => {
@@ -31,5 +51,24 @@ describe('shouldRedirectLandingToDashboard', () => {
         false
       )
     ).toBe(false);
+  });
+
+  it('bypasses redirect when bypassRedirect is true even if EBOOK_LIVE is false', () => {
+    expect(
+      shouldRedirectLandingToDashboard('/', { id: 'user-1' }, false, true)
+    ).toBe(false);
+  });
+
+  it('still redirects when bypassRedirect is false and EBOOK_LIVE is false', () => {
+    expect(
+      shouldRedirectLandingToDashboard('/', { id: 'user-1' }, false, false)
+    ).toBe(true);
+  });
+
+  it('defaults bypassRedirect to false for backward compatibility', () => {
+    // Calling with 3 args (no bypassRedirect) should behave like false
+    expect(
+      shouldRedirectLandingToDashboard('/', { id: 'user-1' }, false)
+    ).toBe(true);
   });
 });

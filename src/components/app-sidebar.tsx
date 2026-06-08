@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 
-import { BookOpenIcon, BotIcon, NotebookPen } from 'lucide-react';
+import { BookOpenIcon, BotIcon, NotebookPen, Settings } from 'lucide-react';
 
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/sidebar';
 
 import { createClient } from '@/lib/supabase/client';
+import { EbookLiveToggle } from '@/components/dashboard/admin/EbookLiveToggle';
 
 import Logo from './logo';
 
@@ -22,8 +23,8 @@ const DASHBOARD_PREFIX = '/dashboard';
 const dashboardLink = (path: string = '') =>
   path ? `${DASHBOARD_PREFIX}/${path}` : DASHBOARD_PREFIX;
 
-function buildNavMain(ebookLive: boolean) {
-  return [
+function buildNavMain(ebookLive: boolean, isAdmin: boolean) {
+  const mainNav = [
     {
       title: 'Jurnal Pribadi',
       url: '#',
@@ -55,11 +56,35 @@ function buildNavMain(ebookLive: boolean) {
       items: [
         {
           title: 'Baca E-Book',
-          url: '#',
+          url: dashboardLink('book'),
         },
       ],
     },
   ];
+
+  if (isAdmin) {
+    mainNav.push({
+      title: 'Admin',
+      url: '#',
+      icon: <Settings />,
+      items: [
+        {
+          title: 'Kelola Bab',
+          url: dashboardLink('admin/book'),
+        },
+        {
+          title: 'Fitur E-Book',
+          url: '#',
+        },
+        {
+          title: 'Pengaturan',
+          url: dashboardLink('admin/settings'),
+        },
+      ],
+    });
+  }
+
+  return mainNav;
 }
 
 type AppSidebarProps = React.ComponentProps<typeof Sidebar> & {
@@ -71,6 +96,7 @@ export function AppSidebar({ ebookLive = false, ...props }: AppSidebarProps) {
     name: string;
     email: string;
     avatar: string;
+    isAdmin: boolean;
   } | null>(null);
 
   useEffect(() => {
@@ -84,12 +110,14 @@ export function AppSidebar({ ebookLive = false, ...props }: AppSidebarProps) {
             'User',
           email: data.user.email ?? '',
           avatar: data.user.user_metadata?.avatar_url ?? '',
+          isAdmin: data.user.user_metadata?.role === 'admin',
         });
       }
     });
   }, []);
 
-  const navMain = buildNavMain(ebookLive);
+  const isAdmin = user?.isAdmin ?? false;
+  const navMain = buildNavMain(ebookLive, isAdmin);
 
   return (
     <Sidebar collapsible="icon" {...props} className="mobile:w-64">
@@ -99,7 +127,10 @@ export function AppSidebar({ ebookLive = false, ...props }: AppSidebarProps) {
       <SidebarContent>
         <NavMain items={navMain} />
       </SidebarContent>
-      <SidebarFooter>{user && <NavUser user={user} />}</SidebarFooter>
+      <SidebarFooter>
+        {user && <NavUser user={user} />}
+        {isAdmin && <EbookLiveToggle initialLive={ebookLive} />}
+      </SidebarFooter>
       <SidebarRail />
     </Sidebar>
   );

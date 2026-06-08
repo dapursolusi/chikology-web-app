@@ -32,7 +32,7 @@ export function EmbeddedChapterRow({
   return (
     <div
       data-testid="embedded-chapter-row"
-      className="flex gap-2 overflow-x-auto pb-2"
+      className="flex flex-wrap gap-2"
     >
       {chapters.map((chapter) => (
         <ChapterItem key={chapter.id} chapter={chapter} />

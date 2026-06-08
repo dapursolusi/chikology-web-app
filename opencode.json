@@ -1,6 +1,5 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "model": "sumopod/kimi-k2.6",
   "provider": {
     "sumopod": {
       "npm": "@ai-sdk/openai-compatible",

@@ -8,8 +8,7 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 vi.mock('@/lib/supabase/client', () => ({
   createClient: () => ({
     auth: {
-      getUser: () =>
-        Promise.resolve({ data: { user: null } as unknown as never }),
+      getUser: () => Promise.resolve({ data: { user: null } }),
     },
   }),
 }));
@@ -51,3 +50,6 @@ describe('AppSidebar — E-Book gate', () => {
     expect(ebookRow).not.toHaveAttribute('aria-disabled', 'true');
   });
 });
+
+// Admin nav tests require Supabase client mock with user role — skipped due to vi.mock hoisting
+// Manual verification: login as user with user_metadata.role='admin' → Admin section appears in sidebar

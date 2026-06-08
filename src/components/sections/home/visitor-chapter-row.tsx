@@ -30,7 +30,7 @@ export function VisitorChapterRow({
   return (
     <div
       data-testid="visitor-chapter-row"
-      className="flex gap-2 overflow-x-auto pb-2"
+      className="flex flex-wrap gap-2"
     >
       {chapters.map((chapter) => (
         <button
