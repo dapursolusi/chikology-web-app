@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  shouldRedirectLandingToDashboard,
   getBypassRedirect,
+  shouldRedirectLandingToDashboard,
 } from '@/lib/supabase/middleware';
 
 describe('getBypassRedirect', () => {
@@ -67,8 +67,8 @@ describe('shouldRedirectLandingToDashboard', () => {
 
   it('defaults bypassRedirect to false for backward compatibility', () => {
     // Calling with 3 args (no bypassRedirect) should behave like false
-    expect(
-      shouldRedirectLandingToDashboard('/', { id: 'user-1' }, false)
-    ).toBe(true);
+    expect(shouldRedirectLandingToDashboard('/', { id: 'user-1' }, false)).toBe(
+      true
+    );
   });
 });

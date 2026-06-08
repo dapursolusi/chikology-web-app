@@ -28,10 +28,7 @@ export function VisitorChapterRow({
   }
 
   return (
-    <div
-      data-testid="visitor-chapter-row"
-      className="flex flex-wrap gap-2"
-    >
+    <div data-testid="visitor-chapter-row" className="flex flex-wrap gap-2">
       {chapters.map((chapter) => (
         <button
           key={chapter.id}

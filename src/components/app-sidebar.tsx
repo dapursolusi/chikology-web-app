@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 
 import { BookOpenIcon, BotIcon, NotebookPen, Settings } from 'lucide-react';
 
+import { EbookLiveToggle } from '@/components/dashboard/admin/EbookLiveToggle';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
 import {
@@ -15,7 +16,6 @@ import {
 } from '@/components/ui/sidebar';
 
 import { createClient } from '@/lib/supabase/client';
-import { EbookLiveToggle } from '@/components/dashboard/admin/EbookLiveToggle';
 
 import Logo from './logo';
 
