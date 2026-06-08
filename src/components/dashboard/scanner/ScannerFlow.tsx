@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import { saveQuestionnaireResponse } from '@/actions/questionnaire';
 import type { StressLevel } from '@/data/stressLevels';
 
-import FaceScanner from '@/components/FaceScanner';
+import FaceScanner from '@/components/dashboard/scanner/FaceScanner';
 import { StressResultCard } from '@/components/dashboard/scanner/StressResultCard';
 
 import { PreScanQuestionnaire } from './PreScanQuestionnaire';

@@ -71,6 +71,9 @@ export async function analyzeFace(
     | 4
     | 5;
   const level = stressLevels[tier];
+  const randomizedMessages = level.messages
+    .sort(() => 0.5 - Math.random())
+    .slice(0, 3);
 
   return {
     tier,
@@ -78,7 +81,7 @@ export async function analyzeFace(
     label: level.label,
     color: level.color,
     desc: level.desc,
-    messages: level.messages,
+    messages: randomizedMessages,
     interventions: level.interventions,
     signs: level.signs,
     risks: level.risks,
