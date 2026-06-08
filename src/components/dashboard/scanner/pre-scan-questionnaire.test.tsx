@@ -31,8 +31,15 @@ describe('PreScanQuestionnaire', () => {
   it('renders questionnaire with placeholder questions', () => {
     render(<PreScanQuestionnaire onSubmit={mockOnSubmit} />);
 
-    expect(screen.getByText(/Bagaimana perasaanmu/i)).toBeInTheDocument();
-    expect(screen.getByText(/Apa yang membuatmu stres/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Apa yang membuat pikiranmu terasa berat hari ini/i)
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/Apa yang kamu rasakan saat ini/i)
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/Apa yang paling mengganggumu saat ini/i)
+    ).toBeInTheDocument();
   });
 
   it('renders skip button', () => {
