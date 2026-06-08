@@ -2,6 +2,7 @@
 
 import { db } from '@/db';
 import { users } from '@/db/schema';
+import { eq } from 'drizzle-orm';
 
 export async function ensureUserRecord(
   userId: string,
@@ -26,4 +27,14 @@ export async function ensureUserRecord(
         updatedAt: new Date(),
       },
     });
+}
+
+export async function getUserRole(userId: string): Promise<string | null> {
+  const result = await db
+    .select({ role: users.role })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+
+  return result[0]?.role ?? null;
 }

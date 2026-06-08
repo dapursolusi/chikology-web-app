@@ -1,19 +1,36 @@
 'use client';
 
-import { useTransition } from 'react';
+import { useState, useTransition } from 'react';
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 import { purchaseChapter } from '@/actions/chapters';
+import { Loader2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 import type { NextChapterAction } from '@/lib/chapters';
 
 export function NextChapterButton({ action }: { action: NextChapterAction }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+
+  // Auto-claim confirmation modal state
+  const [claimOpen, setClaimOpen] = useState(false);
+  const [claimChapter, setClaimChapter] = useState<{
+    id: string;
+    chapterNumber: number;
+    title: string;
+  } | null>(null);
 
   switch (action.kind) {
     case 'navigate':
@@ -56,17 +73,54 @@ export function NextChapterButton({ action }: { action: NextChapterAction }) {
     case 'auto-claim': {
       const next = action.nextChapter;
       function handleClaim() {
+        setClaimChapter(next);
+        setClaimOpen(true);
+      }
+      function handleConfirmClaim() {
+        if (!claimChapter) return;
         startTransition(async () => {
-          const result = await purchaseChapter(next.id);
+          const result = await purchaseChapter(claimChapter.id);
           if ('chapter' in result) {
-            router.push(`/dashboard/book/${next.id}`);
+            setClaimOpen(false);
+            router.push(`/dashboard/book/${claimChapter.id}`);
           }
+          // Error handling: could add toast here, but modal will show error from purchaseChapter
         });
       }
       return (
-        <Button onClick={handleClaim} disabled={isPending}>
-          Klaim &amp; buka Bab {next.chapterNumber} — {next.title}
-        </Button>
+        <>
+          <Button onClick={handleClaim} disabled={isPending}>
+            Klaim &amp; buka Bab {next.chapterNumber} — {next.title}
+          </Button>
+          <Dialog open={claimOpen} onOpenChange={setClaimOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Klaim Bab Gratis</DialogTitle>
+                <DialogDescription>
+                  Bab {claimChapter?.chapterNumber} — {claimChapter?.title}
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setClaimOpen(false)}
+                  disabled={isPending}
+                >
+                  Batal
+                </Button>
+                <Button
+                  type="button"
+                  onClick={handleConfirmClaim}
+                  disabled={isPending}
+                >
+                  {isPending && <Loader2 className="animate-spin" />}
+                  Ya, Klaim Gratis
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </>
       );
     }
   }

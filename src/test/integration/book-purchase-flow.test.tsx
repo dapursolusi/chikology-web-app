@@ -175,6 +175,9 @@ describe('book purchase → reader → next-chapter flow (E2E integration)', () 
     });
     await user.click(nextButton);
 
+    // Click "Ya, Klaim Gratis" in the confirmation modal
+    await user.click(screen.getByRole('button', { name: /ya, klaim gratis/i }));
+
     await waitFor(() => {
       expect(mockPurchaseChapter).toHaveBeenCalledWith('ch-2');
     });

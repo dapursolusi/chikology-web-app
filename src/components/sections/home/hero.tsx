@@ -14,9 +14,10 @@ import { Button } from '@/components/ui/button';
 
 type Props = {
   ebookLive: boolean;
+  isLoggedIn: boolean;
 };
 
-export function Hero({ ebookLive }: Props) {
+export function Hero({ ebookLive, isLoggedIn }: Props) {
   const [activeAuth, setActiveAuth] = useState<'login' | 'signup' | null>(null);
   const handleOpenLogin = () => setActiveAuth('login');
   const handleOpenSignup = () => setActiveAuth('signup');
@@ -60,8 +61,8 @@ export function Hero({ ebookLive }: Props) {
           </p>
         </div>
 
-        {/* Pre-launch countdown (only when ebook is not yet live) */}
-        {!ebookLive && (
+        {/* Pre-launch countdown (only when ebook is not yet live AND user not logged in) */}
+        {!ebookLive && !isLoggedIn && (
           <div
             data-testid="hero-countdown-zone"
             className="mx-auto mb-6 flex w-fit justify-center"

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-import { ensureUserRecord } from '@/actions/auth';
+import { ensureUserRecord, getUserRole } from '@/actions/auth';
 
 import { createClient } from '@/lib/supabase/server';
 
@@ -34,6 +34,14 @@ export async function GET(request: Request) {
             user.user_metadata?.full_name ?? user.user_metadata?.name,
             user.user_metadata?.avatar_url ?? user.user_metadata?.picture
           );
+
+          // Sync role from database to user_metadata for admin nav visibility
+          const role = await getUserRole(user.id);
+          if (role && role !== user.user_metadata?.role) {
+            await supabase.auth.updateUser({
+              data: { role },
+            });
+          }
         }
 
         return NextResponse.redirect(`${origin}/dashboard`);

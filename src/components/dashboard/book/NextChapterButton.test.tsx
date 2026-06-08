@@ -93,9 +93,13 @@ describe('NextChapterButton', () => {
     const user = userEvent.setup();
     render(<NextChapterButton action={action} />);
 
+    // Click the initial claim button to open modal
     await user.click(
-      screen.getByRole('button', { name: /buka gratis|bab 2|klaim/i })
+      screen.getByRole('button', { name: /klaim & buka bab 2/i })
     );
+
+    // Click "Ya, Klaim Gratis" in the confirmation modal
+    await user.click(screen.getByRole('button', { name: /ya, klaim gratis/i }));
 
     expect(purchaseChapter).toHaveBeenCalledWith('ch-2');
   });
