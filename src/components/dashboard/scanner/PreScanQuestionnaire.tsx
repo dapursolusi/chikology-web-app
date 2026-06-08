@@ -21,18 +21,38 @@ type Question = {
 const PLACEHOLDER_QUESTIONS: Question[] = [
   {
     id: 'q1',
-    text: 'Bagaimana perasaanmu hari ini?',
-    options: ['Baik', 'Cukup', 'Lelah', 'Buruk'],
+    text: 'Apa yang membuat pikiranmu terasa berat hari ini? (bisa pilih lebih dari satu untuk menentukan tingkat stres)',
+    options: [
+      'Pekerjaan',
+      'Keluarga (Pasangan, Anak, Orang Tua)',
+      'Diri Sendiri',
+      'Lingkungan (Tempat Kerja, Sosial, Berita, Pemerintah, dll',
+      'Lainnya...',
+    ],
   },
   {
     id: 'q2',
-    text: 'Apa yang membuatmu stres?',
-    options: ['Pekerjaan', 'Keluarga', 'Kesehatan', 'Lainnya'],
+    text: 'Apa yang kamu rasakan saat ini?',
+    options: [
+      'Senang',
+      'Sedih',
+      'Cemas',
+      'Campur Aduk',
+      'Tidak bisa merasakan apapun ',
+      'Lainnya...',
+    ],
   },
   {
     id: 'q3',
-    text: 'Seberapa sering kamu merasa cemas?',
-    options: ['Tidak pernah', 'Kadang-kadang', 'Sering', 'Selalu'],
+    text: 'Apa yang paling mengganggumu saat ini?',
+    options: [
+      'Ingatan masa lalu',
+      'Ketakutan masa depan',
+      'Tekanan dan ancaman dari seseorang',
+      'Penilaian dari sosial',
+      'Kesepian karena tidak ada support system',
+      'Lainnya...',
+    ],
   },
 ];
 
@@ -48,7 +68,7 @@ export function PreScanQuestionnaire({ onSubmit }: PreScanQuestionnaireProps) {
   const handleOptionChange = (questionId: string, option: string) => {
     setAnswers((prev) => ({
       ...prev,
-      [questionId]: option === 'Lainnya' ? 'other:' : option,
+      [questionId]: option.includes('Lainnya') ? 'other:' : option,
     }));
   };
 
@@ -85,7 +105,7 @@ export function PreScanQuestionnaire({ onSubmit }: PreScanQuestionnaireProps) {
             <p className="font-medium text-foreground">{question.text}</p>
             <div className="space-y-2">
               {question.options.map((option) => {
-                const isOther = option === 'Lainnya';
+                const isOther = option.includes('Lainnya');
                 const currentAnswer = answers[question.id] || '';
                 const isSelected = isOther
                   ? currentAnswer.startsWith('other:')
@@ -106,12 +126,12 @@ export function PreScanQuestionnaire({ onSubmit }: PreScanQuestionnaireProps) {
                     </label>
                     {isOther && isSelected && (
                       <textarea
-                        placeholder="Jelaskan..."
+                        placeholder="Lainnya..."
                         value={otherTexts[question.id] || ''}
                         onChange={(e) =>
                           handleOtherTextChange(question.id, e.target.value)
                         }
-                        className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        className="mt-1 w-full rounded-md border border-input bg-white px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         rows={2}
                       />
                     )}
