@@ -1,4 +1,5 @@
 import { purchaseChapter } from '@/actions/chapters';
+import { submitPaymentProof } from '@/actions/payment';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
@@ -9,6 +10,10 @@ import { PurchaseModal } from './PurchaseModal';
 
 vi.mock('@/actions/chapters', () => ({
   purchaseChapter: vi.fn(),
+}));
+
+vi.mock('@/actions/payment', () => ({
+  submitPaymentProof: vi.fn(),
 }));
 
 const paidChapter: ChapterWithState = {
@@ -96,26 +101,7 @@ describe('PurchaseModal', () => {
     expect(purchaseChapter).not.toHaveBeenCalled();
   });
 
-  it('calls purchaseChapter with the chapter ID when "Ya, Beli" is clicked', async () => {
-    vi.mocked(purchaseChapter).mockResolvedValueOnce({
-      success: true,
-      chapter: { id: 'ch-paid', title: 'Bab 1 — Awal', chapterNumber: 1 },
-    });
-    const user = userEvent.setup();
-    render(
-      <PurchaseModal
-        open={true}
-        onOpenChange={() => {}}
-        chapter={paidChapter}
-      />
-    );
-
-    await user.click(screen.getByRole('button', { name: /ya, beli/i }));
-
-    expect(purchaseChapter).toHaveBeenCalledWith('ch-paid');
-  });
-
-  it('calls purchaseChapter for free chapters too (v1 unifies both paths)', async () => {
+  it('calls purchaseChapter for free chapters (skipping file upload)', async () => {
     vi.mocked(purchaseChapter).mockResolvedValueOnce({
       success: true,
       chapter: { id: 'ch-free', title: 'Bab 2 — Gratis', chapterNumber: 2 },
@@ -134,10 +120,10 @@ describe('PurchaseModal', () => {
     expect(purchaseChapter).toHaveBeenCalledWith('ch-free');
   });
 
-  it('closes the modal and calls onSuccess when purchaseChapter succeeds', async () => {
+  it('closes the modal and calls onSuccess when purchaseChapter succeeds (free chapter)', async () => {
     vi.mocked(purchaseChapter).mockResolvedValueOnce({
       success: true,
-      chapter: { id: 'ch-paid', title: 'Bab 1 — Awal', chapterNumber: 1 },
+      chapter: { id: 'ch-free', title: 'Bab 2 — Gratis', chapterNumber: 2 },
     });
     const onOpenChange = vi.fn();
     const onSuccess = vi.fn();
@@ -146,20 +132,20 @@ describe('PurchaseModal', () => {
       <PurchaseModal
         open={true}
         onOpenChange={onOpenChange}
-        chapter={paidChapter}
+        chapter={freeChapter}
         onSuccess={onSuccess}
       />
     );
 
-    await user.click(screen.getByRole('button', { name: /ya, beli/i }));
+    await user.click(screen.getByRole('button', { name: /ya, klaim gratis/i }));
 
     await waitFor(() => {
       expect(onOpenChange).toHaveBeenCalledWith(false);
     });
-    expect(onSuccess).toHaveBeenCalledWith(paidChapter);
+    expect(onSuccess).toHaveBeenCalledWith(freeChapter);
   });
 
-  it('displays the error message when purchaseChapter returns an error and keeps the modal open', async () => {
+  it('displays the error message when purchaseChapter returns an error and keeps the modal open (free chapter)', async () => {
     vi.mocked(purchaseChapter).mockResolvedValueOnce({
       error: 'Bab sudah dimiliki',
     });
@@ -170,15 +156,45 @@ describe('PurchaseModal', () => {
       <PurchaseModal
         open={true}
         onOpenChange={onOpenChange}
+        chapter={freeChapter}
+        onSuccess={onSuccess}
+      />
+    );
+
+    await user.click(screen.getByRole('button', { name: /ya, klaim gratis/i }));
+
+    expect(await screen.findByText(/sudah dimiliki/i)).toBeInTheDocument();
+    expect(onOpenChange).not.toHaveBeenCalled();
+    expect(onSuccess).not.toHaveBeenCalled();
+  });
+
+  it('shows file input for paid chapters and calls submitPaymentProof on confirm', async () => {
+    vi.mocked(submitPaymentProof).mockResolvedValueOnce({ success: true });
+    const onOpenChange = vi.fn();
+    const onSuccess = vi.fn();
+    const user = userEvent.setup();
+
+    render(
+      <PurchaseModal
+        open={true}
+        onOpenChange={onOpenChange}
         chapter={paidChapter}
         onSuccess={onSuccess}
       />
     );
 
-    await user.click(screen.getByRole('button', { name: /ya, beli/i }));
+    const fileInput = screen.getByTestId('payment-proof-input');
+    expect(fileInput).toBeInTheDocument();
 
-    expect(await screen.findByText(/sudah dimiliki/i)).toBeInTheDocument();
-    expect(onOpenChange).not.toHaveBeenCalled();
-    expect(onSuccess).not.toHaveBeenCalled();
+    const file = new File(['fake-proof'], 'proof.png', { type: 'image/png' });
+    await user.upload(fileInput, file);
+
+    await user.click(screen.getByRole('button', { name: /kirim|upload/i }));
+
+    await waitFor(() => {
+      expect(onOpenChange).toHaveBeenCalledWith(false);
+    });
+    expect(onSuccess).toHaveBeenCalledWith(paidChapter);
+    expect(submitPaymentProof).toHaveBeenCalledTimes(1);
   });
 });

@@ -69,8 +69,8 @@
 | 1   | 🆕 Hero: change "Mulai Gratis" → "Daftar" (remove "Masuk gratis" copy)                          | 5 min  | ✓     |
 | 2   | 🆕 Add privacy section to footer: **"Datamu aman, privasi terjamin"** + brief privacy statement | 20 min | ✓     |
 | 3   | 🆕 Hero: update sub-copy to remove "Masuk gratis" references                                    | 5 min  | ✓     |
-| 4   | Mobile responsive check on updated landing page                                                 | 15 min | ☐     |
-| 5   | Deploy + verify                                                                                 | 10 min | ☐     |
+| 4   | Mobile responsive check on updated landing page                                                 | 15 min | ✓     |
+| 5   | Deploy + verify                                                                                 | 10 min | ✓     |
 
 **End-of-day checkpoint:** Landing page shows "Daftar", privacy banner in footer. Mobile OK.
 **Total: ~1 hour**
@@ -85,11 +85,11 @@
 | --- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ----- |
 | 1   | 🆕 Create `PreScanQuestionnaire.tsx` — form component, displayed before camera. Questions placeholder (user will fill in Mas Chiko's questions later) | 60 min | ✓     |
 | 2   | 🆕 Update schema: add `questionnaire_responses` table (user_id, answers JSONB, created_at)                                                            | 15 min | ✓     |
-| 3   | `bunx --bun drizzle-kit push`                                                                                                                         | 5 min  | ☐     |
+| 3   | `bunx --bun drizzle-kit push`                                                                                                                         | 5 min  | ✓     |
 | 4   | 🆕 Wire questionnaire into scanner flow: form → submit → show camera                                                                                  | 30 min | ✓     |
 | 5   | 🆕 Pass questionnaire answers as context into Groq STRESS_PROMPT                                                                                      | 20 min | ✓     |
-| 6   | 🆕 Mobile responsive check: questionnaire form on small screens                                                                                       | 15 min | ☐     |
-| 7   | Deploy + test: questionnaire → scan → result                                                                                                          | 15 min | ☐     |
+| 6   | 🆕 Mobile responsive check: questionnaire form on small screens                                                                                       | 15 min | ✓     |
+| 7   | Deploy + test: questionnaire → scan → result                                                                                                          | 15 min | ✓     |
 
 **End-of-day checkpoint:** Questionnaire appears before camera. Answers influence Groq result. Mobile OK.
 **Total: ~2.5 hours**
@@ -106,9 +106,9 @@
 | 2   | 🆕 Add consultation CTA to result card: **"Butuh rekomendasi lebih dalam? Jadwalkan konsultasi dengan Mas Chiko"** → link (wa.me/6287853186759)                                                                | 20 min | ✓     |
 | 3   | 🆕 Add privacy tagline to result card: **"Datamu aman, privasi terjamin"**                                                                                                                                     | 10 min | ✓     |
 | 4   | 🆕 Restructure stress comments per tier in `stressAnalyzer.ts` — organize into: pesan (message), ciri (indicators), risiko (risk), intervensi (intervention). Use content from `docs/STRESS_RECOMMENDATION.md` | 60 min | ✓     |
-| 5   | 🆕 Add variation to stress comments: multiple message variants per tier (rotate or randomize)                                                                                                                  | 30 min | ☐     |
-| 6   | 🆕 Mobile responsive check: refined result card on small screens                                                                                                                                               | 15 min | ☐     |
-| 7   | Deploy + full test: questionnaire → scan → refined result → CTA visible                                                                                                                                        | 15 min | ☐     |
+| 5   | 🆕 Add variation to stress comments: multiple message variants per tier (rotate or randomize)                                                                                                                  | 30 min | ✓     |
+| 6   | 🆕 Mobile responsive check: refined result card on small screens                                                                                                                                               | 15 min | ✓     |
+| 7   | Deploy + full test: questionnaire → scan → refined result → CTA visible                                                                                                                                        | 15 min | ✓     |
 
 **End-of-day checkpoint:** Result card has CTA, privacy note, structured comments with variations. Mobile OK.
 **Total: ~3 hours**
@@ -129,7 +129,7 @@
 | 2   | Journal server actions: saveJournalEntry, getJournalEntries | 30 min | ✓     |
 | 3   | Journal page layout + MoodSelector                          | 45 min | ✓     |
 | 4   | Bug: navbar1.tsx hydration mismatch + modal.tsx aria        | 20 min | ✓     |
-| 5   | Mobile responsive check                                     | 20 min | ☐     |
+| 5   | Mobile responsive check                                     | 20 min | ✓     |
 
 **End-of-day checkpoint:** Journal page renders. Can type and save. Content in DB.
 
@@ -164,43 +164,42 @@
 | 3   | Bug: infinite toast loop (startTransition + router.refresh race)                              | 20 min | ✓     |
 | 4   | CSS: .journal-content list styles (bullets/numbers invisible without @tailwindcss/typography) | 15 min | ✓     |
 | 5   | Deploy to dev + E2E verify                                                                    | 15 min | ✓     |
-| 6   | Mobile responsive check                                                                       | 20 min | ☐     |
+| 6   | Mobile responsive check                                                                       | 20 min | ✓     |
 
 **End-of-day checkpoint:** Journal feature complete. Connected to scanner. All major bugs fixed. Phase 2 DONE.
 **Total: ~3 hours**
 
-## PHASE 3: E-Book (Jun 7–8 soft launch scope, Jun 12–15 full launch scope)
+---
+
+## PHASE 3: E-Book System — ✅ Core Slices Shipped (Jun 4–9)
 
 > **Soft launch (Jun 12):** Landing page e-book section = countdown to June 16. Dashboard book nav = greyed. No chapter buttons visible.
 > **Full launch (Jun 16):** Countdown removed → chapter button group appears. E-book nav unlocks. Full read/buy flow.
 
-### Soft Launch Scope — Saturday, Jun 7: Schema + Countdown
+### Phase 3 Slices — All Merged to Main
 
-**Goal:** "Book chapters table exists. Landing page shows countdown. Nav is greyed."
+| Slice | Issue | Scope                                                                  | PR       | Status          |
+| ----- | ----- | ---------------------------------------------------------------------- | -------- | --------------- |
+| 1     | #14   | Soft launch: `app_settings` flag, BookCountdown, greyed nav            | #41      | ✅ Merged Jun 8 |
+| 2A    | #15   | Chapter schema (`book_chapters`, `chapter_purchases`), admin role gate | #37, #38 | ✅ Merged Jun 6 |
+| 2B    | #25   | Admin create chapter + PDF upload                                      | #27      | ✅ Merged Jun 5 |
+| 2C    | #26   | Admin edit + hide chapter                                              | #29      | ✅ Merged Jun 5 |
+| 3     | #17   | Chapter list + purchase flow + `/dashboard/book` page                  | #31      | ✅ Merged Jun 6 |
+| 4     | #18   | Chapter reader + signed URL + 5-scenario next-chapter button           | #32      | ✅ Merged Jun 6 |
+| 5     | #19   | Landing page full launch: embedded chapter row                         | #33      | ✅ Merged Jun 6 |
+| 6     | #16   | Full launch transition: pg_cron flip, admin toggle, RLS, E2E tests     | #34–#36  | ✅ Merged Jun 6 |
+| —     | #45   | BookCountdown: add seconds + center layout                             | #52      | ✅ Merged Jun 9 |
+| —     | #44   | Admin nav items visibility in sidebar                                  | #51      | ✅ Merged Jun 9 |
+| —     | #42   | PDF signed URL generation fix for chapter reader                       | #42      | ✅ Merged Jun 9 |
+| —     | #49   | PDF Protection: PDF.js viewer + watermarking + audit logs              | #50      | ✅ Merged Jun 9 |
 
-> **Update (Jun 4):** Slice 1 (issue #14) shipped early. Scope refined per PRD #13: the soft-launch slice only needs `app_settings` (the feature-flag table). `book_chapters` + `chapter_purchases` schema moved to the full-launch build slice (Jun 12–15) since they're not used by anything during soft launch. The `EBOOK_LIVE` flag is database-driven (row in `app_settings`), not an env var, so it can be flipped via pg_cron at midnight Jun 16 without a deploy.
-
-| #   | Task                                                                                                                                                                    | Est.   | Done?                                                                                                          |
-| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | -------------------------------------------------------------------------------------------------------------- |
-| 1   | ~~Add `book_chapters` table~~ — moved to full-launch build slice                                                                                                        | 20 min | ⏭ deferred                                                                                                    |
-| 2   | ~~Add `chapter_purchases` table~~ — moved to full-launch build slice                                                                                                    | 15 min | ⏭ deferred                                                                                                    |
-| 2a  | 🆕 Add `app_settings` table: `key TEXT PK`, `value TEXT NOT NULL`, `updated_at TIMESTAMPTZ` (backs the database-driven feature flag)                                    | 10 min | ✓ (Jun 4)                                                                                                      |
-| 3   | `bunx --bun drizzle-kit push` (applied `app_settings` only this slice)                                                                                                  | 5 min  | ✓ (Jun 4)                                                                                                      |
-| 3a  | 🆕 Seed row `('ebook_live', 'false')` into `app_settings` (manual `bun -e` script since `drizzle-kit push` ignores SQL INSERT statements)                               | 5 min  | ✓ (Jun 4)                                                                                                      |
-| 4   | 🆕 Create `BookCountdown.tsx` — countdown timer targeting June 16, 2026                                                                                                 | 30 min | ✓ (Jun 4) — TDD, 4 tests                                                                                       |
-| 5   | 🆕 Replace e-book section CTA with countdown component. Remove "Baca Preview" and "Akses Full E-Book" buttons. Show countdown + "Rilis 16 Juni — Ulang Tahun Mas Chiko" | 20 min | ✓ (Jun 4) — TDD, 2 tests                                                                                       |
-| 6   | 🆕 Add `EBOOK_LIVE` feature flag (DB row, not env var) — when false, sidebar "E-book" link renders as greyed/disabled with tooltip "Segera hadir 16 Juni"               | 20 min | ✓ (Jun 4) — TDD, 3 sidebar tests + getEbookLive helper                                                         |
-| 7   | 🆕 Set `EBOOK_LIVE=false` for soft launch (done via seeded `app_settings` row above)                                                                                    | 5 min  | ✓ (Jun 4)                                                                                                      |
-| 8   | Test: landing page shows countdown, dashboard book nav greyed                                                                                                           | 15 min | ◐ landing page smoke-tested in headless chrome; dashboard sidebar pending real-user verification post-PR-merge |
-
-**End-of-day checkpoint:** Countdown visible on landing page. Book nav greyed. Schema ready for full launch.
-**Total: ~2 hours** — Actual: ~2 hours from session start to all-green tests + build. PR open and squash-merge pending.
+**All core e-book infrastructure is complete and deployed.**
 
 ---
 
-### Soft Launch Scope — Sunday, Jun 8: Security + Final Prep
+### Soft Launch Checklist — Jun 9–11 (This Week)
 
-**Goal:** "Everything secure. Full E2E test passes. Ready for soft launch."
+**Goal:** "Everything tested on mobile. Soft launch ready for Jun 12."
 
 | #   | Task                                                                                                                  | Est.   | Done? |
 | --- | --------------------------------------------------------------------------------------------------------------------- | ------ | ----- |
@@ -211,73 +210,65 @@
 | 5   | SEO basics: title, description, og:image                                                                              | 20 min | ☐     |
 | 6   | Deploy soft launch build to Vercel                                                                                    | 15 min | ☐     |
 | 7   | Full E2E test: new user → daftar → questionnaire → scan → result (CTA + privacy) → journal → landing page (countdown) | 30 min | ☐     |
-
-**End-of-day checkpoint:** Soft launch ready. All features tested. Mobile OK.
-**Total: ~2.5 hours**
-
----
-
-### Buffer — Tuesday, Jun 9: Testing + Bug Fix
-
-| #   | Task                                                             | Est.   | Done? |
-| --- | ---------------------------------------------------------------- | ------ | ----- |
-| 1   | 🆕 Issue #45: Add seconds to BookCountdown + center layout (TDD) | 20 min | ✓     |
-| 2   | Bug fixes from E2E test                                          | 60 min | ☐     |
-| 3   | Mas Chiko UAT (share preview link)                               | 30 min | ☐     |
-| 4   | Final adjustments based on Mas Chiko feedback                    | 60 min | ☐     |
-| 5   | Deploy final soft launch build                                   | 15 min | ☐     |
+| 8   | Bug fixes from E2E test                                                                                               | 60 min | ☐     |
+| 9   | Mas Chiko UAT (share preview link)                                                                                    | 30 min | ☐     |
+| 10  | Final adjustments based on Mas Chiko feedback                                                                         | 60 min | ☐     |
+| 11  | Deploy final soft launch build                                                                                        | 15 min | ☐     |
 
 ---
 
-### Tuesday, Jun 10–11: Mas Chiko Final Approval
-
-| #   | Task                                                | Est.   | Done? |
-| --- | --------------------------------------------------- | ------ | ----- |
-| 1   | Mas Chiko reviews full app on phone                 | 30 min | ☐     |
-| 2   | Fix any issues found                                | 60 min | ☐     |
-| 3   | Connect domain (chikology.id) to Vercel if not done | 20 min | ☐     |
-| 4   | Final deploy                                        | 15 min | ☐     |
-
----
-
-### 🚀 Wednesday, Jun 12: SOFT LAUNCH
+### 🚀 Thursday, Jun 12: SOFT LAUNCH
 
 Scanner + Journal + Landing Page live. E-book = countdown to June 16.
 
 ---
 
-### Full Launch Build — Jun 12–15: Chapter UI + Payment + Viewer
+## PHASE 4: Payment System + Analytics — IN PROGRESS (Jun 9+)
 
-> These tasks happen AFTER soft launch. Build the full e-book experience for June 16.
+> Replacing mock payment with real gateway + building analytics dashboard for Mas Chiko.
 
-| #   | Task                                                                                                                                     | Est.   | Done?                                                            |
-| --- | ---------------------------------------------------------------------------------------------------------------------------------------- | ------ | ---------------------------------------------------------------- |
-| 1   | 🆕 Create `ChapterList.tsx` — horizontal button group [Bab 1] [Bab 2] [Bab 3] ...                                                        | 30 min | ☐                                                                |
-| 2   | Button state logic: unreleased → grey ("Segera hadir"), released + not purchased → price + "Beli", released + purchased → open reader    | 30 min | ☐                                                                |
-| 3   | Create `app/dashboard/book/page.tsx` — chapter list page                                                                                 | 20 min | ☐                                                                |
-| 4   | Create `app/dashboard/book/[chapterId]/page.tsx` — chapter reader                                                                        | 20 min | ☐                                                                |
-| 5   | Access check: not purchased → redirect / show "Beli" button                                                                              | 20 min | ☐                                                                |
-| 6   | Mock payment flow: button inserts into `chapter_purchases`                                                                               | 30 min | ☐                                                                |
-| 7   | PDF viewer: signed Supabase URL (5-min expiry) + render in `<iframe>`                                                                    | 45 min | ☐                                                                |
-| 8   | Sequential purchase: can only buy chapter N if N-1 is owned                                                                              | 30 min | ☐                                                                |
-| 9   | Disable PDF right-click + hide download in iframe                                                                                        | 20 min | ☐                                                                |
-| 10  | RLS policy: users access only owned chapter PDFs                                                                                         | 30 min | ☐                                                                |
-| 11  | Create admin page for chapter upload (title, number, price, release date, PDF) — split into 2A/2B/2C sub-slices; 2A + 2B shipped Jun 4   | 60 min | ✓ (2A + 2B + 2C shipped Jun 5)                                   |
-| 12  | 🆕 Replace landing page countdown with chapter button group                                                                              | 20 min | ✓ (Jun 6) — TDD, 25 new tests, branch `feat/landing/full-launch` |
-| 13  | 🆕 Set `EBOOK_LIVE=true` + deploy                                                                                                        | 5 min  | ☐                                                                |
-| 14  | 🆕 Mobile responsive: chapter button group on phone                                                                                      | 20 min | ☐                                                                |
-| 15  | Full E2E: scan → journal → browse chapters → buy → read ✓                                                                                | 30 min | ☐                                                                |
-| 16  | 🆕 Admin edit chapter (title, number, price, release date, is_free, replace PDF) — sub-slice 2C of issue #15                             | 30 min | ✓ (Jun 5)                                                        |
-| 17  | 🆕 Admin hide / unhide chapter (is_published=false) — sub-slice 2C of issue #15                                                          | 15 min | ✓ (Jun 5)                                                        |
-| 18  | 🆕 Chapter Reader page at `/dashboard/book/[chapterId]`: signed-URL iframe, 5-scenario next-chapter button, consultation CTA (issue #18) | 90 min | ✓ (Jun 6) — TDD, 21 tests, branch `feat/reader/chapter-reader`   |
+### Open Issues (Current Sprint)
 
-**Total: ~6.5 hours (spread across Jun 12–15)**
+| Issue | Title                                                                                     | Scope                                            | Status         |
+| ----- | ----------------------------------------------------------------------------------------- | ------------------------------------------------ | -------------- |
+| #43   | Payment proof upload for chapter purchases (mock flow)                                    | Mock payment confirmation modal → pending status | ✅ DONE        |
+| #53   | [AFK] Payment proof upload + pending status (Slice 1)                                     | User uploads payment proof, admin verifies       | ✅ DONE        |
+| #54   | [AFK] Admin proof verification (Slice 2)                                                  | Admin dashboard: approve/reject payment proofs   | 🔄 IN PROGRESS |
+| #55   | [AFK] Re-upload flow + two-step wizard + integration (Slice 3)                            | User re-uploads rejected proof, wizard UX        | 🔄 IN PROGRESS |
+| #46   | [PRD] Core SaaS: user profile, purchase history, email notifications, analytics dashboard | Post-purchase analytics for author               | 🔄 IN PROGRESS |
+
+### Phase 4 Tasks
+
+#### Payment System (Issues #43, #53–#55)
+
+| #   | Task                                                                                                    | Est.   | Done?       |
+| --- | ------------------------------------------------------------------------------------------------------- | ------ | ----------- |
+| 1   | Mock payment modal → server action inserts `chapter_purchases` with `status: 'pending'`                 | 30 min | ✓           |
+| 2   | Payment proof upload: file input (image/PDF → JPEG/PNG/WebP) → Supabase Storage `payment-proofs` bucket | 45 min | ✓           |
+| 3   | `payment_proofs` table: id, user_id, chapter_id, file_path, status (pending/approved/rejected)          | 20 min | ✓           |
+| 4   | Admin page: list pending proofs, view image, approve/reject → updates `chapter_purchases` status        | 60 min | ☐           |
+| 5   | Re-upload flow: rejected → user sees wizard → re-upload → back to pending                               | 45 min | ☐           |
+| 6   | Real payment gateway integration (Midtrans/Xendit) — replace mock when ready                            | —      | ⏳ DEFERRED |
+
+#### Analytics Dashboard (Issue #46)
+
+| #   | Task                                                                                 | Est.   | Done?       |
+| --- | ------------------------------------------------------------------------------------ | ------ | ----------- |
+| 1   | `/dashboard/admin/analytics` page (role: admin)                                      | 30 min | ☐           |
+| 2   | KPI cards: total users, scans completed, journal entries, chapter purchases, revenue | 30 min | ☐           |
+| 3   | Chart: daily/weekly signups (Recharts or Tremor)                                     | 45 min | ☐           |
+| 4   | Chart: scanner completion funnel (started → questionnaire → scan → result)           | 45 min | ☐           |
+| 5   | Chart: chapter purchase funnel (view → buy → pending → approved)                     | 45 min | ☐           |
+| 6   | Table: recent purchases with user, chapter, amount, status, payment proof link       | 30 min | ☐           |
+| 7   | Export CSV button for purchases                                                      | 15 min | ☐           |
+| 8   | Email notifications (Resend/SendGrid) — new user, purchase confirmed, proof rejected | —      | ⏳ DEFERRED |
 
 ---
 
-### 🚀 Tuesday, Jun 16: FULL LAUNCH
+### 🚀 Monday, Jun 16: FULL LAUNCH
 
-E-book unlocks. Chapter buttons live. Countdown removed. `EBOOK_LIVE=true`.
+E-book unlocks. Chapter buttons live. Countdown removed. `EBOOK_LIVE=true` (auto-flip via pg_cron).
+Payment system + analytics dashboard in parallel.
 
 ---
 

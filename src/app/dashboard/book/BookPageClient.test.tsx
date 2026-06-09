@@ -103,24 +103,29 @@ describe('BookPageClient', () => {
     expect(dialog.textContent).toContain('Bab Gratis');
   });
 
-  it('calls router.refresh and closes the modal on a successful purchase', async () => {
+  it('calls router.refresh and closes the modal on a successful purchase (free chapter)', async () => {
     const user = userEvent.setup();
     mockPurchaseChapter.mockResolvedValueOnce({
       success: true,
-      chapter: { id: 'ch-1', title: 'Bab 1 — Awal', chapterNumber: 1 },
+      chapter: { id: 'ch-free', title: 'Bab Gratis', chapterNumber: 2 },
     });
-    const chapter = makeChapter({ id: 'ch-1', title: 'Bab 1 — Awal' });
+    const chapter = makeChapter({
+      id: 'ch-free',
+      title: 'Bab Gratis',
+      priceIdr: 0,
+      isFree: true,
+    });
 
     render(<BookPageClient chapters={[chapter]} />);
 
-    await user.click(screen.getByRole('button', { name: /beli/i }));
+    await user.click(screen.getByRole('button', { name: /buka gratis/i }));
     await screen.findByRole('dialog');
-    await user.click(screen.getByRole('button', { name: /ya, beli/i }));
+    await user.click(screen.getByRole('button', { name: /ya, klaim gratis/i }));
 
     await waitFor(() => {
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     });
-    expect(mockPurchaseChapter).toHaveBeenCalledWith('ch-1');
+    expect(mockPurchaseChapter).toHaveBeenCalledWith('ch-free');
     expect(mockRefresh).toHaveBeenCalledTimes(1);
   });
 

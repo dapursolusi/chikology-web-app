@@ -13,6 +13,12 @@ import {
   uuid,
 } from 'drizzle-orm/pg-core';
 
+export const proofStatusEnum = pgEnum('proof_status', [
+  'pending',
+  'approved',
+  'rejected',
+]);
+
 export const moodEnum = pgEnum('mood', [
   'very_calm',
   'calm',
@@ -60,6 +66,27 @@ export const chapterPurchases = pgTable(
   },
   (table) => [unique().on(table.userId, table.chapterId)]
 );
+
+export const paymentProofs = pgTable('payment_proofs', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id')
+    .notNull()
+    .references(() => users.id),
+  chapterId: uuid('chapter_id')
+    .notNull()
+    .references(() => bookChapters.id),
+  proofPath: text('proof_path').notNull(),
+  status: proofStatusEnum('status').default('pending').notNull(),
+  rejectionReason: text('rejection_reason'),
+  reviewedBy: uuid('reviewed_by').references(() => users.id),
+  reviewedAt: timestamp('reviewed_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
 
 export const journalEntries = pgTable('journal_entries', {
   id: uuid('id').primaryKey().defaultRandom(),
