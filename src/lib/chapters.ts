@@ -19,7 +19,7 @@ export type ChapterWithState = {
   releaseDate: string | null;
   pdfPath: string | null;
   state: ChapterState;
-  proofStatus: ProofStatus;
+  proofStatus?: ProofStatus;
 };
 
 export type NextChapterAction =

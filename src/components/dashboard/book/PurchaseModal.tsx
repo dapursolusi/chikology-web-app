@@ -91,11 +91,11 @@ export function PurchaseModal({
         formData.append('chapterId', chapter.id);
         formData.append('file', selectedFile);
         const result = await submitPaymentProof(formData);
-        if ('success' in result && result.success) {
+        if ('error' in result) {
+          setError(result.error);
+        } else {
           onOpenChange(false);
           onSuccess?.(chapter);
-        } else {
-          setError(result.error);
         }
       }
     });
