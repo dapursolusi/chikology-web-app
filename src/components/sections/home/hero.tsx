@@ -4,20 +4,14 @@ import { useState } from 'react';
 
 import Link from 'next/link';
 
-import { ArrowRight, MessageCircle, Sparkles } from 'lucide-react';
+import { ArrowRight, BookOpen, MessageCircle, Sparkles } from 'lucide-react';
 
 import { LoginForm } from '@/components/login-form';
 import Modal from '@/components/modal';
-import { BookCountdown } from '@/components/sections/home/BookCountdown';
 import { SignupForm } from '@/components/signup-form';
 import { Button } from '@/components/ui/button';
 
-type Props = {
-  ebookLive: boolean;
-  isLoggedIn: boolean;
-};
-
-export function Hero({ ebookLive, isLoggedIn }: Props) {
+export function Hero() {
   const [activeAuth, setActiveAuth] = useState<'login' | 'signup' | null>(null);
   const handleOpenLogin = () => setActiveAuth('login');
   const handleOpenSignup = () => setActiveAuth('signup');
@@ -60,16 +54,6 @@ export function Hero({ ebookLive, isLoggedIn }: Props) {
             eksklusif dengan Chiko.
           </p>
         </div>
-
-        {/* Pre-launch countdown (only when ebook is not yet live AND user not logged in) */}
-        {!ebookLive && !isLoggedIn && (
-          <div
-            data-testid="hero-countdown-zone"
-            className="mx-auto mb-6 flex w-fit justify-center"
-          >
-            <BookCountdown />
-          </div>
-        )}
 
         {/* CTA Buttons */}
         <div className="mb-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
@@ -161,7 +145,7 @@ export function Hero({ ebookLive, isLoggedIn }: Props) {
               <MessageCircle className="size-6" />
             </div>
             <span className="text-sm font-medium text-muted-foreground">
-              Konseling
+              Jurnal Pribadi
             </span>
           </div>
           <div className="flex flex-col items-center gap-2 rounded-lg p-4 transition-colors hover:bg-muted/50">
@@ -169,12 +153,12 @@ export function Hero({ ebookLive, isLoggedIn }: Props) {
               <Sparkles className="size-6" />
             </div>
             <span className="text-sm font-medium text-muted-foreground">
-              Mood AI
+              Deteksi Stress + AI
             </span>
           </div>
           <div className="flex flex-col items-center gap-2 rounded-lg p-4 transition-colors hover:bg-muted/50">
             <div className="rounded-full bg-primary/10 p-3 text-primary">
-              <ArrowRight className="size-6" />
+              <BookOpen className="size-6" />
             </div>
             <span className="text-sm font-medium text-muted-foreground">
               E-Book
