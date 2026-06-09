@@ -16,6 +16,9 @@ Apply review feedback from PR #50: update watermark format, simplify PDF.js tool
 - `public/pdfjs/web/viewer.html` — Added inline script that resets stored `spreadMode` to 0 (single page) and clears `pdfjs.preferences` before viewer initializes, fixing stuck 2-page view.
 - `.prettierignore` — Added `public/pdfjs` to prevent prettier from checking vendored PDF.js files on CI.
 - `eslint.config.mjs` — Formatted by prettier (was flagged by CI).
+- `src/app/api/chapters/[id]/download/route.ts` — Fixed 3 TS errors: unused `_request` param, optional `user.email`, `Uint8Array` type mismatch.
+- `src/app/api/chapters/[id]/download/route.test.ts` — Fixed 16 TS errors: `NextRequest` instead of `Request`, `as any` on mock return values.
+- `src/app/api/chapters/[id]/view/route.test.ts` — Fixed 15 TS errors: same pattern as download test.
 
 ### Verification
 
