@@ -1,3 +1,4 @@
+import { relations } from 'drizzle-orm';
 import {
   boolean,
   date,
@@ -90,3 +91,57 @@ export const appSettings = pgTable('app_settings', {
     .defaultNow()
     .notNull(),
 });
+
+export const accessEventTypeEnum = pgEnum('access_event_type', [
+  'view_started',
+  'download_requested',
+  'access_denied',
+]);
+
+export const chapterAccessLogs = pgTable(
+  'chapter_access_logs',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id),
+    chapterId: uuid('chapter_id')
+      .notNull()
+      .references(() => bookChapters.id),
+    eventType: accessEventTypeEnum('event_type').notNull(),
+    metadata: jsonb('metadata'),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    unique().on(
+      table.userId,
+      table.chapterId,
+      table.eventType,
+      table.createdAt
+    ),
+  ]
+);
+
+export const usersRelations = relations(users, ({ many }) => ({
+  chapterAccessLogs: many(chapterAccessLogs),
+}));
+
+export const bookChaptersRelations = relations(bookChapters, ({ many }) => ({
+  chapterAccessLogs: many(chapterAccessLogs),
+}));
+
+export const chapterAccessLogsRelations = relations(
+  chapterAccessLogs,
+  ({ one }) => ({
+    user: one(users, {
+      fields: [chapterAccessLogs.userId],
+      references: [users.id],
+    }),
+    chapter: one(bookChapters, {
+      fields: [chapterAccessLogs.chapterId],
+      references: [bookChapters.id],
+    }),
+  })
+);

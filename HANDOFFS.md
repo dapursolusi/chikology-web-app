@@ -1,42 +1,44 @@
-# HANDOFFS
-
-## [Tuesday, 09-06-2026 13:25] — Fix scanner analyze-face API: SumoPod MiniMax-M3 integration
+## [Tuesday, 09-06-2026 13:30] — Review fixes: watermark format, toolbar cleanup, viewer reset
 
 ### Session Target
 
-Fix the `/api/analyze-face` route — SumoPod MiniMax-M3 was returning 502. Root cause: no timeout on SumoPod client (hung ~10s), Groq fallback was dead code (fetched but never used), and JSON parsing required exact match instead of regex extraction.
+Apply review feedback from PR #50: update watermark format, simplify PDF.js toolbar, reset 2-page view to single-page, hide print/save buttons.
 
 ### Current State
 
 - Status: shipped
-- Scope: `src/app/api/analyze-face/route.ts` + `src/lib/scanner/pipeline.ts` + `src/components/dashboard/scanner/StressResultCard.tsx`
+- Scope: `src/app/api/chapters/[id]/download/route.ts`, `public/pdfjs/web/chikology-config.css`, `public/pdfjs/web/viewer.html`
 
 ### What Changed
 
-- `src/app/api/analyze-face/route.ts` — Major rework: (1) Removed dead Groq backup code that was fetched but never used. (2) Added `timeout: 20000` and `maxRetries: 0` to SumoPod OpenAI client to prevent hangs. (3) Switched from `JSON.parse()` (requires exact JSON) to regex extraction of `{"tier": N}` — accepts surrounding text from model. (4) Returns `raw` field in error response for debugging. (5) Bumped `max_tokens` to 300. (6) Logs full response JSON when content is empty.
-- `src/components/dashboard/scanner/StressResultCard.tsx` — Fixed message display: `result.messages` → `result.messages[0]` (was trying to render array).
-- `src/lib/scanner/pipeline.ts` — Removed stray `console.log(randomizedMessages)` debug statement.
+- `src/app/api/chapters/[id]/download/route.ts` — Watermark text changed from `[CHIKOLOGY]` to `[Didownload dari CHIKOLOGY]`; email format changed from `***domain` to `****{last4}@domain` (e.g. `****tira@gmail.com`).
+- `public/pdfjs/web/chikology-config.css` — Fixed broken CSS selectors: `#print`/`#download` became `#printButton`/`#downloadButton` (wrong IDs, never actually hid anything). Hid sidebar toggle, find bar, editor/annotation tools, open file button. Overrode PDF.js stock hiding of `#scaleSelectContainer` at <=560px so zoom dropdown stays visible on mobile. Kept secondary toolbar for scroll/spread mode/rotation/presentation controls.
+- `public/pdfjs/web/viewer.html` — Added inline script that resets stored `spreadMode` to 0 (single page) and clears `pdfjs.preferences` before viewer initializes, fixing stuck 2-page view.
+- `.prettierignore` — Added `public/pdfjs` to prevent prettier from checking vendored PDF.js files on CI.
+- `eslint.config.mjs` — Formatted by prettier (was flagged by CI).
+- `src/app/api/chapters/[id]/download/route.ts` — Fixed 3 TS errors: unused `_request` param, optional `user.email`, `Uint8Array` type mismatch.
+- `src/app/api/chapters/[id]/download/route.test.ts` — Fixed 16 TS errors: `NextRequest` instead of `Request`, `as any` on mock return values.
+- `src/app/api/chapters/[id]/view/route.test.ts` — Fixed 15 TS errors: same pattern as download test.
 
 ### Verification
 
-- Curl test: MiniMax-M3 with image input returns valid response
-- App route: 9.9s → now times out at 20s with proper error handling
-- TypeScript: no new type errors (pre-existing webgl-ext conflicts only)
+- Download endpoint tests: 7/7 pass (watermark format change doesn't break assertions)
+- View endpoint tests: 6/6 pass
+- Full test suite: 246 passed, 11 skipped, 0 failed
 
 ### Decisions
 
-- D-001: Regex over JSON.parse — Models (especially vision models) often wrap JSON in explanations. Regex extraction of `"tier": N` is more robust than requiring exact JSON, even with "JSON only" prompt instructions.
-- D-002: No Groq fallback for now — Removed to isolate MiniMax-M3 behavior. Will restore with proper error handling once MiniMax-M3 is confirmed working.
-- D-003: 20s timeout — MiniMax-M3 processes vision inputs slowly. 5s was too aggressive.
+- D-005: Keep secondary toolbar visible — contains essential scroll/spread mode/rotation controls; only hide annotation/editor tools, find bar, open file, print/save buttons.
+- D-006: Reset viewer state via localStorage manipulation — inline script runs before `viewer.mjs` loads, forces `spreadMode=0` and clears `pdfjs.preferences` to undo any previous 2-page view selection.
 
 ### Known Issues / Risks
 
-- MiniMax-M3 may still fail on very large images (LiteLLM upstream limit). Not hit yet.
+- Browser may cache `viewer.html` — hard refresh (Ctrl+Shift+R) needed to pick up patch.
 
 ### Next Steps (ordered)
 
-1. Restore Groq fallback once MiniMax-M3 behavior is stable
-2. Consider image compression before sending to API to reduce latency
+1. QA on production-like environment: verify PDF.js loads, zoom works on mobile, download triggers watermarked PDF, print/save/open-file buttons absent, 2-page view not persisting.
+2. Consider adding RLS policy for `chapter_access_logs`.
 
 ### Blockers (if any)
 

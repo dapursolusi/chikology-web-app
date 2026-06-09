@@ -1,0 +1,39 @@
+/* Hide sidebar toggle (thumbnails, outlines) */
+#viewsManagerToggleButton {
+  display: none !important;
+}
+
+/* Hide find/search button and bar */
+#viewFindButton {
+  display: none !important;
+}
+#findbar {
+  display: none !important;
+}
+
+/* Hide annotation/editor tools (comment, highlight, signature, text, ink, stamp) */
+#editorModeButtons {
+  display: none !important;
+}
+
+/* Keep secondary toolbar for scroll/spread mode, rotation, presentation */
+
+/* Hide download/save and print from both main and secondary toolbar */
+#printButton,
+#downloadButton,
+#secondaryPrint,
+#secondaryDownload {
+  display: none !important;
+}
+
+/* Hide "Open File" from secondary toolbar (lets user open local PDFs) */
+#secondaryOpenFile {
+  display: none !important;
+}
+
+/* Keep zoom dropdown visible on mobile (PDF.js hides it at <=560px) */
+@media all and (max-width: 560px) {
+  #scaleSelectContainer {
+    display: inline-block !important;
+  }
+}

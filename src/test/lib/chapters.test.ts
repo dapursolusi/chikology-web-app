@@ -25,6 +25,7 @@ vi.mock('@/db', () => ({
 vi.mock('drizzle-orm', () => ({
   asc: vi.fn(() => 'ASC'),
   eq: vi.fn(() => 'EQ'),
+  relations: vi.fn(() => ({})),
 }));
 
 // ─── computeChapterState — pure function tests ───────────────────────

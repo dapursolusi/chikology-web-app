@@ -44,6 +44,23 @@ const mockStorageFrom = vi.hoisted(() =>
   vi.fn(() => ({ createSignedUrl: mockCreateSignedUrl }))
 );
 
+const mockServiceCreateSignedUrl = vi.hoisted(() =>
+  vi.fn<
+    () => Promise<{
+      data: { signedUrl: string } | null;
+      error: { message: string } | null;
+    }>
+  >(async () => ({
+    data: {
+      signedUrl: 'https://example.supabase.co/storage/v1/object/signed/service',
+    },
+    error: null,
+  }))
+);
+const mockServiceStorageFrom = vi.hoisted(() =>
+  vi.fn(() => ({ createSignedUrl: mockServiceCreateSignedUrl }))
+);
+
 vi.mock('next/cache', () => ({
   revalidatePath: vi.fn(),
 }));
@@ -55,12 +72,16 @@ vi.mock('@/db', () => ({
 vi.mock('drizzle-orm', () => ({
   asc: vi.fn(() => 'ASC'),
   eq: vi.fn(() => 'EQ'),
+  relations: vi.fn(() => ({})),
 }));
 
 vi.mock('@/lib/supabase/server', () => ({
   createClient: vi.fn(() => ({
     auth: { getUser: mockGetUser },
     storage: { from: mockStorageFrom },
+  })),
+  createServiceClient: vi.fn(() => ({
+    storage: { from: mockServiceStorageFrom },
   })),
 }));
 
@@ -307,8 +328,8 @@ describe('getChapterSignedUrl', () => {
         updatedAt: new Date('2025-01-01'),
       },
     ]);
-    // storage fails
-    mockCreateSignedUrl.mockResolvedValueOnce({
+    // storage fails (service client)
+    mockServiceCreateSignedUrl.mockResolvedValueOnce({
       data: null,
       error: { message: 'bucket offline' },
     });
@@ -319,6 +340,13 @@ describe('getChapterSignedUrl', () => {
     expect(result).toMatchObject({
       error: expect.stringMatching(/gagal|url|pdf/i),
     });
+    expect(mockServiceStorageFrom).toHaveBeenCalledWith('book-chapters');
+    expect(mockServiceCreateSignedUrl).toHaveBeenCalledWith(
+      'chapters/1.pdf',
+      14400
+    );
+    expect(mockStorageFrom).not.toHaveBeenCalled();
+    expect(mockCreateSignedUrl).not.toHaveBeenCalled();
   });
 
   it('returns error when chapter has no PDF path', async () => {
@@ -484,7 +512,7 @@ describe('getChapterSignedUrl', () => {
     expect(mockCreateSignedUrl).not.toHaveBeenCalled();
   });
 
-  it('returns a signed URL with 300s expiry when user owns the chapter', async () => {
+  it('returns a signed URL with 14400s expiry when user owns the chapter using service client', async () => {
     // canUserReadChapter call 1: chapter lookup via where → released chapter with pdf
     mockWhere.mockResolvedValueOnce([
       {
@@ -534,10 +562,15 @@ describe('getChapterSignedUrl', () => {
     const result = await getChapterSignedUrl('ch-1');
 
     expect(result).toEqual({
-      url: 'https://example.supabase.co/storage/v1/object/signed/x',
-      expiresIn: 300,
+      url: 'https://example.supabase.co/storage/v1/object/signed/service',
+      expiresIn: 14400,
     });
-    expect(mockStorageFrom).toHaveBeenCalledWith('book-chapters');
-    expect(mockCreateSignedUrl).toHaveBeenCalledWith('chapters/1.pdf', 300);
+    expect(mockServiceStorageFrom).toHaveBeenCalledWith('book-chapters');
+    expect(mockServiceCreateSignedUrl).toHaveBeenCalledWith(
+      'chapters/1.pdf',
+      14400
+    );
+    expect(mockStorageFrom).not.toHaveBeenCalled();
+    expect(mockCreateSignedUrl).not.toHaveBeenCalled();
   });
 });

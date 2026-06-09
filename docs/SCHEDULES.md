@@ -26,6 +26,8 @@
 | Auth            | Supabase Auth (Google OAuth only)     |
 | Face Detection  | Groq (Llama 4 Scout) server-side      |
 | Storage         | Supabase Storage (book PDFs, Phase 3) |
+| PDF Rendering   | PDF.js v6.0.227 (self-hosted viewer)  |
+| PDF Watermark   | pdf-lib v1.17.1 (server-side only)    |
 | Deploy          | Vercel                                |
 | Payment         | Mock (real gateway deferred)          |
 | Book Pricing    | Waiting on Mas Chiko                  |
@@ -299,6 +301,7 @@ Jun  6 (Sat)  ████ Phase 3 Slice 5 — Landing Page Full Launch (issue #
 Jun  7 (Sat)  ░░░░ Phase 3 (soft launch) — Countdown + Nav Gating
 Jun  8 (Sun)  ░░░░ Phase 3 (soft launch) — Security + E2E Test
 
+Jun  9 (Mon)  ████ PDF Protection — viewer migration, watermarking & audit logs (issue #49) ← DONE
 Jun  9 (Mon)  ░░░░ Buffer — bug fixes + Mas Chiko UAT
 Jun 10 (Tue)  ░░░░ Mas Chiko final approval + domain connect
 Jun 11 (Wed)  ░░░░ Final prep

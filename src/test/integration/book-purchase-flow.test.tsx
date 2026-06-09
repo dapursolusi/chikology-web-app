@@ -161,13 +161,12 @@ describe('book purchase → reader → next-chapter flow (E2E integration)', () 
       />
     );
 
-    // 6. Reader fetches signed URL and renders the PDF iframe.
+    // 6. Reader renders the PDF.js viewer iframe.
     const iframe = await screen.findByTitle(/pdf|bab 1/i);
     expect(iframe).toHaveAttribute(
       'src',
-      'https://example.supabase.co/storage/v1/object/signed/ch-1'
+      '/pdfjs/web/viewer.html?file=%2Fapi%2Fchapters%2Fch-1%2Fview'
     );
-    expect(mockGetChapterSignedUrl).toHaveBeenCalledWith('ch-1');
 
     // 7. Next-chapter button auto-claims free ch-2 → navigates to ch-2 reader.
     const nextButton = screen.getByRole('button', {
