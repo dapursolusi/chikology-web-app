@@ -1,23 +1,35 @@
-#download {
+/* Hide sidebar toggle (thumbnails, outlines) */
+#viewsManagerToggleButton {
   display: none !important;
 }
 
-#print {
+/* Hide find/search button and bar */
+#viewFindButton {
+  display: none !important;
+}
+#findbar {
   display: none !important;
 }
 
-#secondaryDownload {
+/* Hide annotation/editor tools (comment, highlight, signature, text, ink, stamp) */
+#editorModeButtons {
   display: none !important;
 }
 
-#secondaryPrint {
+/* Hide secondary/overflow toolbar */
+#secondaryToolbarToggle {
   display: none !important;
 }
 
+/* Already hidden: download, print, open file */
+#download,
+#print,
 #openFile {
   display: none !important;
 }
 
+#secondaryDownload,
+#secondaryPrint,
 #secondaryOpenFile {
   display: none !important;
 }

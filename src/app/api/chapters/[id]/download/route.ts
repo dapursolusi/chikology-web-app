@@ -10,8 +10,9 @@ import { createClient, createServiceClient } from '@/lib/supabase/server';
 
 function maskEmail(email: string): string {
   const [localPart, domain] = email.split('@');
-  if (!domain) return '***';
-  return `***${domain}`;
+  if (!domain) return '****';
+  const last4 = localPart.slice(-4);
+  return `****${last4}@${domain}`;
 }
 
 function formatWIB(date: Date): string {
@@ -84,7 +85,7 @@ export async function GET(
     const x = 50;
     const y = 50;
 
-    page.drawText('[CHIKOLOGY]', {
+    page.drawText('[Didownload dari CHIKOLOGY]', {
       x,
       y,
       size: fontSize,
