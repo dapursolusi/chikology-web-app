@@ -28,3 +28,20 @@ export async function createClient() {
     }
   );
 }
+
+export function createServiceClient() {
+  return createServerClient(
+    getBaseUrl(),
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return [];
+        },
+        setAll() {
+          // no-op — service role doesn't need cookies
+        },
+      },
+    }
+  );
+}

@@ -11,7 +11,7 @@ import {
   computeChapterState,
   isReleased,
 } from '@/lib/chapters';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createServiceClient } from '@/lib/supabase/server';
 
 export async function purchaseChapter(chapterId: string): Promise<
   | {
@@ -122,7 +122,7 @@ export async function claimFreeChapter(_chapterId: string): Promise<
 
 export async function getChapterSignedUrl(
   chapterId: string
-): Promise<{ url: string; expiresIn: 300 } | { error: string }> {
+): Promise<{ url: string; expiresIn: 3600 } | { error: string }> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -157,13 +157,14 @@ export async function getChapterSignedUrl(
     return { error: 'PDF belum tersedia untuk bab ini' };
   }
 
-  const { data, error } = await supabase.storage
+  const serviceClient = createServiceClient();
+  const { data, error } = await serviceClient.storage
     .from('book-chapters')
-    .createSignedUrl(pdfPath, 300);
+    .createSignedUrl(pdfPath, 3600);
 
   if (error || !data) {
     return { error: 'Gagal membuat URL PDF' };
   }
 
-  return { url: data.signedUrl, expiresIn: 300 };
+  return { url: data.signedUrl, expiresIn: 3600 };
 }
