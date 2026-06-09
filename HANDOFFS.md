@@ -14,6 +14,8 @@ Apply review feedback from PR #50: update watermark format, simplify PDF.js tool
 - `src/app/api/chapters/[id]/download/route.ts` — Watermark text changed from `[CHIKOLOGY]` to `[Didownload dari CHIKOLOGY]`; email format changed from `***domain` to `****{last4}@domain` (e.g. `****tira@gmail.com`).
 - `public/pdfjs/web/chikology-config.css` — Fixed broken CSS selectors: `#print`/`#download` became `#printButton`/`#downloadButton` (wrong IDs, never actually hid anything). Hid sidebar toggle, find bar, editor/annotation tools, open file button. Overrode PDF.js stock hiding of `#scaleSelectContainer` at <=560px so zoom dropdown stays visible on mobile. Kept secondary toolbar for scroll/spread mode/rotation/presentation controls.
 - `public/pdfjs/web/viewer.html` — Added inline script that resets stored `spreadMode` to 0 (single page) and clears `pdfjs.preferences` before viewer initializes, fixing stuck 2-page view.
+- `.prettierignore` — Added `public/pdfjs` to prevent prettier from checking vendored PDF.js files on CI.
+- `eslint.config.mjs` — Formatted by prettier (was flagged by CI).
 
 ### Verification
 
