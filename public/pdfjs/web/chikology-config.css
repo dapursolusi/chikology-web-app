@@ -18,15 +18,10 @@
 
 /* Keep secondary toolbar for scroll/spread mode, rotation, presentation */
 
-/* Already hidden: download, print, open file */
-#download,
-#print,
-#openFile {
-  display: none !important;
-}
-
-#secondaryDownload,
+/* Hide download/save and print from both main and secondary toolbar */
+#printButton,
+#downloadButton,
 #secondaryPrint,
-#secondaryOpenFile {
+#secondaryDownload {
   display: none !important;
 }
