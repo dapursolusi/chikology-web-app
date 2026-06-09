@@ -25,3 +25,15 @@
 #secondaryDownload {
   display: none !important;
 }
+
+/* Hide "Open File" from secondary toolbar (lets user open local PDFs) */
+#secondaryOpenFile {
+  display: none !important;
+}
+
+/* Keep zoom dropdown visible on mobile (PDF.js hides it at <=560px) */
+@media all and (max-width: 560px) {
+  #scaleSelectContainer {
+    display: inline-block !important;
+  }
+}
