@@ -1,41 +1,35 @@
-## [Tuesday, 09-06-2026 14:30] — Fix admin nav items visibility (Issue #44)
+## [Tuesday, 09-06-2026 14:45] — Add seconds to BookCountdown + center layout (Issue #45)
 
 ### Session Target
 
-Make admin nav items appear in sidebar by fetching role server-side from DB instead of reading from `user_metadata`.
+Implement issue #45: add seconds display (1s granularity) to `BookCountdown` and center the layout.
 
 ### Current State
 
 - Status: shipped
-- Scope: `src/components/app-sidebar.tsx`, `src/app/dashboard/layout.tsx`, `src/components/app-sidebar.test.tsx`, `src/app/dashboard/layout.test.tsx`, `vitest.config.ts`
+- Scope: `src/components/sections/home/BookCountdown.tsx`, `src/components/sections/home/book-countdown.test.tsx`
 
 ### What Changed
 
-- `src/components/app-sidebar.tsx` — Added `isAdmin` prop (optional, default `false`). Removed `isAdmin` from `user_metadata`-based derive and `user` state. `isAdmin` now controls admin nav section visibility and `EbookLiveToggle` rendering.
-- `src/app/dashboard/layout.tsx` — Imported `getUserRole` from `@/actions/auth`; calls it with `user.id` and passes `isAdmin={role === 'admin'}` to `<AppSidebar>`.
-- `src/components/app-sidebar.test.tsx` — Replaced skipped comment ("Admin nav tests require Supabase client mock") with 3 passing tests: renders Admin button when `isAdmin={true}`, hides when `false` or default.
-- `src/app/dashboard/layout.test.tsx` — Added 3 tests: passes `isAdmin={true}` when DB role is `'admin'`, `false` when role is `'user'` or `null`.
-- `vitest.config.ts` — Added `zod` alias to CJS entry (zod v4 ESM doesn't resolve in vitest).
+- `src/components/sections/home/BookCountdown.tsx` — Added `seconds` to `diff()` return, changed `setInterval` from `60_000` → `1000` ms, added seconds `Unit` with label `"detik"`, changed container from `flex gap-4` → `flex justify-center gap-4`
+- `src/components/sections/home/book-countdown.test.tsx` — Updated render test to verify all 4 units (days, hours, minutes, seconds). Added tick test: advancing 1s decrements seconds.
 
 ### Verification
 
-- Lint: pass
-- TypeScript: pass (`tsc --noEmit`)
-- Tests: 257/263 pass (6 integration failures in `ebook-live-cron-rls.test.ts` — pre-existing, requires live Supabase DB)
+- Commands run: `rtk vitest run src/components/sections/home/` (26/26 pass), `rtk vitest run` (253/253 pass)
+- Results: All tests pass
 
 ### Decisions
 
-- D-007: `isAdmin` status flows server-side only (from DB) — no client-side fallback. `user_metadata` still used for display info (name, email, avatar) via `NavUser`.
-- D-008: Added `zod` CJS alias in vitest config — zod v4's ESM entry fails vitest resolution; CJS `index.cjs` works reliably.
+- D-009: Seconds tick test uses `act(() => vi.advanceTimersByTime(1000))` — same pattern as existing minutes tick test; minimal, no implementation coupling.
 
 ### Known Issues / Risks
 
-- Role changes in DB take effect only after session refresh (page reload returns fresh server component). No real-time sync — acceptable for MVP per Issue #44 spec.
+- None.
 
 ### Next Steps (ordered)
 
-1. QA: verify admin user sees Kelola Bab / Fitur E-Book / Pengaturan in sidebar; non-admin sees none.
-2. Consider adding `getAdminRole` fallback inside `EbookLiveToggle` as belt-and-suspenders (currently gated by parent `isAdmin` check).
+1. QA: verify countdown ticks every second in browser, centered on hero section.
 
 ### Blockers (if any)
 

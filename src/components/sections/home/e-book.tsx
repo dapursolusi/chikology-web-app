@@ -1,5 +1,6 @@
 import { BookOpen } from 'lucide-react';
 
+import { BookCountdown } from '@/components/sections/home/BookCountdown';
 import { EmbeddedChapterRow } from '@/components/sections/home/embedded-chapter-row';
 import { VisitorChapterRow } from '@/components/sections/home/visitor-chapter-row';
 
@@ -44,14 +45,17 @@ export default function EBook({ ebookLive, userId, chapters }: Props) {
                 hubungan yang healthier dengan diri kamu.
               </p>
 
-              {/* CTA zone: chapter row after launch, empty before (countdown lives in the hero) */}
+              {/* CTA zone: countdown before launch, chapter rows after */}
               <div className="mt-6" data-testid="ebook-cta-zone">
-                {ebookLive &&
-                  (userId ? (
+                {ebookLive ? (
+                  userId ? (
                     <EmbeddedChapterRow chapters={chapters} />
                   ) : (
                     <VisitorChapterRow chapters={chapters} />
-                  ))}
+                  )
+                ) : (
+                  <BookCountdown />
+                )}
               </div>
 
               {/* Trust indicators */}

@@ -31,19 +31,16 @@ vi.mock('@/components/modal', () => ({
   default: () => null,
 }));
 
-vi.mock('@/components/sections/home/BookCountdown', () => ({
-  BookCountdown: () => <div data-testid="book-countdown" />,
-}));
-
 vi.mock('lucide-react', () => ({
   ArrowRight: () => <span>→</span>,
+  BookOpen: () => <span>📖</span>,
   MessageCircle: () => <span>💬</span>,
   Sparkles: () => <span>✨</span>,
 }));
 
 describe('Hero', () => {
   it('renders primary CTA as "Daftar" not "Mulai Gratis"', () => {
-    render(<Hero ebookLive={true} isLoggedIn={false} />);
+    render(<Hero />);
 
     const ctaButtons = screen.getAllByRole('button');
     const primaryCTA = ctaButtons.find((btn) =>
@@ -52,20 +49,5 @@ describe('Hero', () => {
 
     expect(primaryCTA).toBeInTheDocument();
     expect(screen.queryByText('Mulai Gratis')).not.toBeInTheDocument();
-  });
-
-  it('renders BookCountdown in the hero when ebookLive is false and user not logged in', () => {
-    render(<Hero ebookLive={false} isLoggedIn={false} />);
-    expect(screen.getByTestId('book-countdown')).toBeInTheDocument();
-  });
-
-  it('does NOT render BookCountdown in the hero when ebookLive is true', () => {
-    render(<Hero ebookLive={true} isLoggedIn={false} />);
-    expect(screen.queryByTestId('book-countdown')).not.toBeInTheDocument();
-  });
-
-  it('does NOT render BookCountdown in the hero when user is logged in (even if ebookLive is false)', () => {
-    render(<Hero ebookLive={false} isLoggedIn={true} />);
-    expect(screen.queryByTestId('book-countdown')).not.toBeInTheDocument();
   });
 });

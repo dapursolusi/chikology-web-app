@@ -217,14 +217,15 @@
 
 ---
 
-### Buffer — Monday, Jun 9: Testing + Bug Fix
+### Buffer — Tuesday, Jun 9: Testing + Bug Fix
 
-| #   | Task                                          | Est.   | Done? |
-| --- | --------------------------------------------- | ------ | ----- |
-| 1   | Bug fixes from E2E test                       | 60 min | ☐     |
-| 2   | Mas Chiko UAT (share preview link)            | 30 min | ☐     |
-| 3   | Final adjustments based on Mas Chiko feedback | 60 min | ☐     |
-| 4   | Deploy final soft launch build                | 15 min | ☐     |
+| #   | Task                                                             | Est.   | Done? |
+| --- | ---------------------------------------------------------------- | ------ | ----- |
+| 1   | 🆕 Issue #45: Add seconds to BookCountdown + center layout (TDD) | 20 min | ✓     |
+| 2   | Bug fixes from E2E test                                          | 60 min | ☐     |
+| 3   | Mas Chiko UAT (share preview link)                               | 30 min | ☐     |
+| 4   | Final adjustments based on Mas Chiko feedback                    | 60 min | ☐     |
+| 5   | Deploy final soft launch build                                   | 15 min | ☐     |
 
 ---
 

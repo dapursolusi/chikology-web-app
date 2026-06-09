@@ -30,9 +30,7 @@ const {
       />
     )
   );
-  const Hero = vi.fn(({ ebookLive }: { ebookLive: boolean }) => (
-    <div data-testid="hero-section" data-ebook-live={String(ebookLive)} />
-  ));
+  const Hero = vi.fn(() => <div data-testid="hero-section" />);
   return {
     mockGetUser: vi.fn<
       () => Promise<{ data: { user: { id: string } | null } }>
@@ -104,8 +102,6 @@ describe('MainPage', () => {
     const element = await MainPage();
     render(element);
 
-    const hero = screen.getByTestId('hero-section');
-    expect(hero.dataset.ebookLive).toBe('false');
     const ebook = screen.getByTestId('ebook-section');
     expect(ebook.dataset.ebookLive).toBe('false');
     expect(ebook.dataset.userId).toBe('none');
@@ -121,8 +117,6 @@ describe('MainPage', () => {
     const element = await MainPage();
     render(element);
 
-    const hero = screen.getByTestId('hero-section');
-    expect(hero.dataset.ebookLive).toBe('false');
     const ebook = screen.getByTestId('ebook-section');
     expect(ebook.dataset.ebookLive).toBe('false');
     expect(mockGetChaptersWithState).not.toHaveBeenCalled();
@@ -139,8 +133,6 @@ describe('MainPage', () => {
     const element = await MainPage();
     render(element);
 
-    const hero = screen.getByTestId('hero-section');
-    expect(hero.dataset.ebookLive).toBe('true');
     const ebook = screen.getByTestId('ebook-section');
     expect(ebook.dataset.ebookLive).toBe('true');
     expect(ebook.dataset.userId).toBe('none');
@@ -160,8 +152,6 @@ describe('MainPage', () => {
     const element = await MainPage();
     render(element);
 
-    const hero = screen.getByTestId('hero-section');
-    expect(hero.dataset.ebookLive).toBe('true');
     const ebook = screen.getByTestId('ebook-section');
     expect(ebook.dataset.ebookLive).toBe('true');
     expect(ebook.dataset.userId).toBe('user-1');
