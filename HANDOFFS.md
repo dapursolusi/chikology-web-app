@@ -1,60 +1,45 @@
-## [Tuesday, 09-06-2026 21:04] — Implemented Issue #53: Payment proof upload + pending state (Slice 1)
+## [Tuesday, 09-06-2026 21:44] — Implemented Issue #54: Admin proof verification (Slice 2)
 
 ### Session Target
 
-- Implement payment proof upload flow for paid e-book chapters
+- Implement admin payment proof review dashboard: approve/reject payment proofs
 
 ### Current State
 
-- Status: shipped (Slice 1 of Issue #53)
-- Scope: `src/db/schema.ts`, `src/actions/payment.ts`, `src/lib/chapters.ts`, `src/components/dashboard/book/`, `src/app/dashboard/book/`, `src/test/`
+- Status: shipped (Slice 2 of Issue #54)
+- Scope: `src/actions/payment.ts`, `src/test/actions/payment.test.ts`, `src/components/dashboard/admin/AdminVerificationPanel.tsx`, `src/app/dashboard/admin/book/page.tsx`
 
 ### What Changed
 
-- `src/db/schema.ts` — Added `proofStatusEnum` and `paymentProofs` table with FKs to users/book_chapters
-- `src/actions/payment.ts` — New `submitPaymentProof` server action: auth guard, file validation (type/size), duplicate check, storage upload to `payment-proofs` bucket, DB insert
-- `src/lib/chapters.ts` — Added `ProofStatus` type, `proofStatus` field to `ChapterWithState`, updated `getChaptersWithState` to LEFT JOIN payment_proofs, updated `getPublicChapters` to include proofStatus
-- `src/components/dashboard/book/PurchaseModal.tsx` — File input (drag/click), image preview, client-side validation (type/size), calls `submitPaymentProof` for paid chapters, `purchaseChapter` for free chapters
-- `src/components/dashboard/book/ChapterList.tsx` — "Menunggu Verifikasi" badge for buyable chapters with pending proof (uses Clock icon)
-- `src/test/actions/payment.test.ts` — 6 RED→GREEN tests for all server action paths
-- `src/test/lib/chapters.test.ts` — 2 new tests for proofStatus in `getChaptersWithState`
-- `src/components/dashboard/book/PurchaseModal.test.tsx` — 4 tests for file input + paid chapter flow, 3 existing tests converted to freeChapter
-- `src/components/dashboard/book/ChapterList.test.tsx` — 1 new test for pending proof badge
-- `src/app/dashboard/book/BookPageClient.test.tsx` — Fixed paid-chapter test to use freeChapter (paid now requires file upload)
-- `src/test/integration/book-purchase-flow.test.tsx` — Fixed to use free chapter for ch-1 + added `proofStatus` to `makeChapter`
-- `drizzle/0004_concerned_speed.sql` — Migration: `proof_status` enum + `payment_proofs` table
-
-### External changes detected:
-
-- `opencode.json` — Added 2 new model configs (deepseek-v4-pro, MiniMax-M3) — not part of this session
+- `src/actions/payment.ts` — Added `getProofVerifications()` server action (admin-gated, joins payment_proofs→users→book_chapters, includes signed URL for proof image) and `verifyPaymentProof()` server action (admin-gated, handles approve→inserts chapter_purchases+updates proof, handles reject→sets rejection_reason+updates proof, revalidates paths)
+- `src/test/actions/payment.test.ts` — 9 new TDD tests (tracer bullet followed by incremental loop): getProofVerifications returns [], error on unauthenticated, error on non-admin, joined rows with user/chapter context; verifyPaymentProof error on unauthenticated, error on non-admin, approve inserts+updates, reject sets reason, revalidatePath on success. Added chainable mocks for innerJoin/update/set/getAdminRole/createServiceClient.
+- `src/components/dashboard/admin/AdminVerificationPanel.tsx` — New client component: table of pending proofs with user email, chapter title, upload date, image thumbnail (clickable signed URL), Approve button, Reject button with inline reason input. Uses shadcn/ui Table, Button, toast with sonner.
+- `src/app/dashboard/admin/book/page.tsx` — Fetches proofs via getProofVerifications, renders AdminVerificationPanel below EbookLiveToggle and ChapterForm
 
 ### Verification
 
-- Command: `bun vitest run`
-- Result: **260 passed, 11 skipped** (0 failures)
-- Migration: `drizzle/0004_concerned_speed.sql` generated; push skipped (local Supabase not running)
+- Command: `bun vitest run` → 268 passed, 11 skipped (0 failures)
+- TypeScript: `bunx --bun tsc --noEmit` → 0 errors
+- Lint: `bun run lint` → 0 errors (9 pre-existing warnings)
 
 ### Decisions
 
-- D-003: No unique constraint on `(user_id, chapter_id)` in payment_proofs — Enforced at app level; allows re-upload per issue #55
-- D-004: `submitPaymentProof` uses FormData for natural file upload integration with server actions
-- D-005: Integration test uses free chapter for purchase flow — File upload is unit-tested in PurchaseModal tests; integration test validates the end-to-end purchase→read→claim loop
+- D-006: Admin payment actions added to `src/actions/payment.ts` (same file as `submitPaymentProof`) — keeps all payment-related server actions in one module
+- D-007: `getProofVerifications` returns signed URLs for proof images — generated server-side via `createServiceClient`, avoids client-side Supabase dependency
+- D-008: `getProofVerifications` only returns pending proofs — approved/rejected proofs are hidden from the review panel
+- D-009: Reject reason input is inline (not a modal) — matches the issue spec, avoids dialog state complexity
 
 ### Known Issues / Risks
 
-- `bun drizzle-kit push` fails (no local Supabase connection) — migration SQL is correct, apply manually or when local DB is running
-- Storage bucket `payment-proofs` and RLS policy not yet created — needs Supabase dashboard or SQL. Required SQL:
-  ```sql
-  INSERT INTO storage.buckets (id, name, public) VALUES ('payment-proofs', 'payment-proofs', false);
-  -- RLS: authenticated users can insert/select own files; admins can select all
-  ```
-- Admin review UI (Slice 2, Issue #54) not implemented — proofs visible only via DB
+- Admin must refresh the page after approve/reject to see updated list (no optimistic UI for the table)
+- Image thumbnails use `<img>` instead of `next/image` — consistent with existing pattern in PurchaseModal.tsx
+- Re-upload flow for rejected proofs (Issue #55) not yet implemented — user sees rejection reason in a future slice
 
 ### Next Steps (ordered)
 
-1. Apply migration + create storage bucket (manual or when local Supabase is running)
-2. Implement Issue #54: Admin proof review dashboard
-3. Implement Issue #55: Re-upload / rejection flow
+1. Implement Issue #55: Re-upload flow + two-step wizard + integration (Slice 3)
+2. Implement Issue #46: Core SaaS (analytics dashboard, purchase history)
+3. Soft launch checklist (Jun 9–11)
 
 ### Blockers
 

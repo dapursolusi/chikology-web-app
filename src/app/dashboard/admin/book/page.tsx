@@ -1,7 +1,9 @@
 import { notFound } from 'next/navigation';
 
 import { getAdminRole, getBookChapters } from '@/actions/book';
+import { getProofVerifications } from '@/actions/payment';
 
+import { AdminVerificationPanel } from '@/components/dashboard/admin/AdminVerificationPanel';
 import { ChapterForm } from '@/components/dashboard/admin/ChapterForm';
 import { EbookLiveToggle } from '@/components/dashboard/admin/EbookLiveToggle';
 
@@ -17,10 +19,13 @@ export default async function AdminBookPage() {
     notFound();
   }
 
-  const [chapters, ebookLive] = await Promise.all([
+  const [chapters, ebookLive, proofs] = await Promise.all([
     getBookChapters(),
     getEbookLive(),
+    getProofVerifications(),
   ]);
+
+  const flatProofs = 'error' in proofs ? [] : proofs;
 
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 pt-0 md:p-6">
@@ -34,6 +39,7 @@ export default async function AdminBookPage() {
       </div>
       <EbookLiveToggle initialLive={ebookLive} />
       <ChapterForm chapters={chapters} />
+      <AdminVerificationPanel proofs={flatProofs} />
     </div>
   );
 }
