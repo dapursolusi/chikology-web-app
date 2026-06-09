@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 
 import DashboardLayout from '@/app/dashboard/layout';
 import { render } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('next/link', () => ({
   default: ({
@@ -24,18 +24,27 @@ vi.mock('next/navigation', () => ({
   redirect: vi.fn(),
 }));
 
+const mockGetUser = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/supabase/server', () => ({
   createClient: vi.fn(() => ({
     auth: {
-      getUser: vi.fn(() => ({
-        data: { user: { id: 'test-user', email: 'test@test.com' } },
-      })),
+      getUser: mockGetUser,
     },
   })),
 }));
 
+const mockGetUserRole = vi.hoisted(() => vi.fn());
+vi.mock('@/actions/auth', () => ({
+  getUserRole: mockGetUserRole,
+}));
+
+const MockAppSidebar = vi.hoisted(() => vi.fn(() => null));
 vi.mock('@/components/app-sidebar', () => ({
-  AppSidebar: () => <div data-testid="sidebar" />,
+  AppSidebar: MockAppSidebar,
+}));
+
+vi.mock('@/lib/feature-flags', () => ({
+  getEbookLive: vi.fn(() => Promise.resolve(false)),
 }));
 
 vi.mock('@/components/ui/sidebar', () => ({
@@ -77,6 +86,13 @@ vi.mock('./DashboardHeader', () => ({
   ),
 }));
 
+beforeEach(() => {
+  vi.clearAllMocks();
+  mockGetUser.mockResolvedValue({
+    data: { user: { id: 'test-user', email: 'test@test.com' } },
+  });
+});
+
 describe('Dashboard layout', () => {
   it('renders the privacy tagline in the header', async () => {
     const { container } = render(
@@ -84,5 +100,41 @@ describe('Dashboard layout', () => {
     );
 
     expect(container.textContent).toContain('Datamu aman, privasi terjamin');
+  });
+
+  it('passes isAdmin={true} to AppSidebar when DB role is admin', async () => {
+    mockGetUserRole.mockResolvedValue('admin');
+
+    render(await DashboardLayout({ children: <div>content</div> }));
+
+    expect(MockAppSidebar).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({ isAdmin: true }),
+      undefined
+    );
+  });
+
+  it('passes isAdmin={false} to AppSidebar when DB role is user', async () => {
+    mockGetUserRole.mockResolvedValue('user');
+
+    render(await DashboardLayout({ children: <div>content</div> }));
+
+    expect(MockAppSidebar).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({ isAdmin: false }),
+      undefined
+    );
+  });
+
+  it('passes isAdmin={false} when DB has no role (null)', async () => {
+    mockGetUserRole.mockResolvedValue(null);
+
+    render(await DashboardLayout({ children: <div>content</div> }));
+
+    expect(MockAppSidebar).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({ isAdmin: false }),
+      undefined
+    );
   });
 });

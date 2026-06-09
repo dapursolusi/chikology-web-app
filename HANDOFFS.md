@@ -1,45 +1,44 @@
-## [Tuesday, 09-06-2026 13:30] — Review fixes: watermark format, toolbar cleanup, viewer reset
+## [Tuesday, 09-06-2026 14:30] — Fix admin nav items visibility (Issue #44)
 
 ### Session Target
 
-Apply review feedback from PR #50: update watermark format, simplify PDF.js toolbar, reset 2-page view to single-page, hide print/save buttons.
+Make admin nav items appear in sidebar by fetching role server-side from DB instead of reading from `user_metadata`.
 
 ### Current State
 
 - Status: shipped
-- Scope: `src/app/api/chapters/[id]/download/route.ts`, `public/pdfjs/web/chikology-config.css`, `public/pdfjs/web/viewer.html`
+- Scope: `src/components/app-sidebar.tsx`, `src/app/dashboard/layout.tsx`, `src/components/app-sidebar.test.tsx`, `src/app/dashboard/layout.test.tsx`, `vitest.config.ts`
 
 ### What Changed
 
-- `src/app/api/chapters/[id]/download/route.ts` — Watermark text changed from `[CHIKOLOGY]` to `[Didownload dari CHIKOLOGY]`; email format changed from `***domain` to `****{last4}@domain` (e.g. `****tira@gmail.com`).
-- `public/pdfjs/web/chikology-config.css` — Fixed broken CSS selectors: `#print`/`#download` became `#printButton`/`#downloadButton` (wrong IDs, never actually hid anything). Hid sidebar toggle, find bar, editor/annotation tools, open file button. Overrode PDF.js stock hiding of `#scaleSelectContainer` at <=560px so zoom dropdown stays visible on mobile. Kept secondary toolbar for scroll/spread mode/rotation/presentation controls.
-- `public/pdfjs/web/viewer.html` — Added inline script that resets stored `spreadMode` to 0 (single page) and clears `pdfjs.preferences` before viewer initializes, fixing stuck 2-page view.
-- `.prettierignore` — Added `public/pdfjs` to prevent prettier from checking vendored PDF.js files on CI.
-- `eslint.config.mjs` — Formatted by prettier (was flagged by CI).
-- `src/app/api/chapters/[id]/download/route.ts` — Fixed 3 TS errors: unused `_request` param, optional `user.email`, `Uint8Array` type mismatch.
-- `src/app/api/chapters/[id]/download/route.test.ts` — Fixed 16 TS errors: `NextRequest` instead of `Request`, `as any` on mock return values.
-- `src/app/api/chapters/[id]/view/route.test.ts` — Fixed 15 TS errors: same pattern as download test.
+- `src/components/app-sidebar.tsx` — Added `isAdmin` prop (optional, default `false`). Removed `isAdmin` from `user_metadata`-based derive and `user` state. `isAdmin` now controls admin nav section visibility and `EbookLiveToggle` rendering.
+- `src/app/dashboard/layout.tsx` — Imported `getUserRole` from `@/actions/auth`; calls it with `user.id` and passes `isAdmin={role === 'admin'}` to `<AppSidebar>`.
+- `src/components/app-sidebar.test.tsx` — Replaced skipped comment ("Admin nav tests require Supabase client mock") with 3 passing tests: renders Admin button when `isAdmin={true}`, hides when `false` or default.
+- `src/app/dashboard/layout.test.tsx` — Added 3 tests: passes `isAdmin={true}` when DB role is `'admin'`, `false` when role is `'user'` or `null`.
+- `vitest.config.ts` — Added `zod` alias to CJS entry (zod v4 ESM doesn't resolve in vitest).
 
 ### Verification
 
-- Download endpoint tests: 7/7 pass (watermark format change doesn't break assertions)
-- View endpoint tests: 6/6 pass
-- Full test suite: 246 passed, 11 skipped, 0 failed
+- Lint: pass
+- TypeScript: pass (`tsc --noEmit`)
+- Tests: 257/263 pass (6 integration failures in `ebook-live-cron-rls.test.ts` — pre-existing, requires live Supabase DB)
 
 ### Decisions
 
-- D-005: Keep secondary toolbar visible — contains essential scroll/spread mode/rotation controls; only hide annotation/editor tools, find bar, open file, print/save buttons.
-- D-006: Reset viewer state via localStorage manipulation — inline script runs before `viewer.mjs` loads, forces `spreadMode=0` and clears `pdfjs.preferences` to undo any previous 2-page view selection.
+- D-007: `isAdmin` status flows server-side only (from DB) — no client-side fallback. `user_metadata` still used for display info (name, email, avatar) via `NavUser`.
+- D-008: Added `zod` CJS alias in vitest config — zod v4's ESM entry fails vitest resolution; CJS `index.cjs` works reliably.
 
 ### Known Issues / Risks
 
-- Browser may cache `viewer.html` — hard refresh (Ctrl+Shift+R) needed to pick up patch.
+- Role changes in DB take effect only after session refresh (page reload returns fresh server component). No real-time sync — acceptable for MVP per Issue #44 spec.
 
 ### Next Steps (ordered)
 
-1. QA on production-like environment: verify PDF.js loads, zoom works on mobile, download triggers watermarked PDF, print/save/open-file buttons absent, 2-page view not persisting.
-2. Consider adding RLS policy for `chapter_access_logs`.
+1. QA: verify admin user sees Kelola Bab / Fitur E-Book / Pengaturan in sidebar; non-admin sees none.
+2. Consider adding `getAdminRole` fallback inside `EbookLiveToggle` as belt-and-suspenders (currently gated by parent `isAdmin` check).
 
 ### Blockers (if any)
 
 - None.
+
+---

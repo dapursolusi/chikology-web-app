@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 
 import { BookOpenIcon, BotIcon, NotebookPen, Settings } from 'lucide-react';
 
-import { EbookLiveToggle } from '@/components/dashboard/admin/EbookLiveToggle';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
 import {
@@ -89,14 +88,18 @@ function buildNavMain(ebookLive: boolean, isAdmin: boolean) {
 
 type AppSidebarProps = React.ComponentProps<typeof Sidebar> & {
   ebookLive?: boolean;
+  isAdmin?: boolean;
 };
 
-export function AppSidebar({ ebookLive = false, ...props }: AppSidebarProps) {
+export function AppSidebar({
+  ebookLive = false,
+  isAdmin = false,
+  ...props
+}: AppSidebarProps) {
   const [user, setUser] = useState<{
     name: string;
     email: string;
     avatar: string;
-    isAdmin: boolean;
   } | null>(null);
 
   useEffect(() => {
@@ -110,13 +113,11 @@ export function AppSidebar({ ebookLive = false, ...props }: AppSidebarProps) {
             'User',
           email: data.user.email ?? '',
           avatar: data.user.user_metadata?.avatar_url ?? '',
-          isAdmin: data.user.user_metadata?.role === 'admin',
         });
       }
     });
   }, []);
 
-  const isAdmin = user?.isAdmin ?? false;
   const navMain = buildNavMain(ebookLive, isAdmin);
 
   return (
@@ -127,10 +128,7 @@ export function AppSidebar({ ebookLive = false, ...props }: AppSidebarProps) {
       <SidebarContent>
         <NavMain items={navMain} />
       </SidebarContent>
-      <SidebarFooter>
-        {user && <NavUser user={user} />}
-        {isAdmin && <EbookLiveToggle initialLive={ebookLive} />}
-      </SidebarFooter>
+      <SidebarFooter>{user && <NavUser user={user} />}</SidebarFooter>
       <SidebarRail />
     </Sidebar>
   );

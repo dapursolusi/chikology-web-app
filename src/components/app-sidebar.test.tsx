@@ -51,5 +51,31 @@ describe('AppSidebar — E-Book gate', () => {
   });
 });
 
-// Admin nav tests require Supabase client mock with user role — skipped due to vi.mock hoisting
-// Manual verification: login as user with user_metadata.role='admin' → Admin section appears in sidebar
+describe('AppSidebar — Admin section', () => {
+  it('renders "Admin" button when isAdmin is true', () => {
+    render(
+      <TooltipProvider>
+        <SidebarProvider>
+          <AppSidebar isAdmin={true} />
+        </SidebarProvider>
+      </TooltipProvider>
+    );
+    expect(screen.getByText('Admin')).toBeInTheDocument();
+  });
+
+  it('does not render "Admin" button when isAdmin is false', () => {
+    render(
+      <TooltipProvider>
+        <SidebarProvider>
+          <AppSidebar isAdmin={false} />
+        </SidebarProvider>
+      </TooltipProvider>
+    );
+    expect(screen.queryByText('Admin')).not.toBeInTheDocument();
+  });
+
+  it('does not render "Admin" button by default (isAdmin not passed)', () => {
+    renderSidebar(true);
+    expect(screen.queryByText('Admin')).not.toBeInTheDocument();
+  });
+});
