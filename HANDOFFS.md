@@ -1,42 +1,52 @@
-# HANDOFFS
-
-## [Tuesday, 09-06-2026 13:25] — Fix scanner analyze-face API: SumoPod MiniMax-M3 integration
+## [Tuesday, 09-06-2026 14:30] — Implement PDF Protection: Viewer Migration, Watermarking & Audit Logs
 
 ### Session Target
 
-Fix the `/api/analyze-face` route — SumoPod MiniMax-M3 was returning 502. Root cause: no timeout on SumoPod client (hung ~10s), Groq fallback was dead code (fetched but never used), and JSON parsing required exact match instead of regex extraction.
+Implement PDF Protection feature per Issue #49: migrate from native iframe to PDF.js viewer, add watermarked download endpoint, create audit logs table, and extend signed URL expiry to 4 hours.
 
 ### Current State
 
 - Status: shipped
-- Scope: `src/app/api/analyze-face/route.ts` + `src/lib/scanner/pipeline.ts` + `src/components/dashboard/scanner/StressResultCard.tsx`
+- Scope: `src/db/schema.ts`, `src/app/api/chapters/[id]/view/`, `src/app/api/chapters/[id]/download/`, `src/app/dashboard/book/[chapterId]/ReaderClient.tsx`, `src/actions/chapters.ts`, `public/pdfjs/`, `package.json`
 
 ### What Changed
 
-- `src/app/api/analyze-face/route.ts` — Major rework: (1) Removed dead Groq backup code that was fetched but never used. (2) Added `timeout: 20000` and `maxRetries: 0` to SumoPod OpenAI client to prevent hangs. (3) Switched from `JSON.parse()` (requires exact JSON) to regex extraction of `{"tier": N}` — accepts surrounding text from model. (4) Returns `raw` field in error response for debugging. (5) Bumped `max_tokens` to 300. (6) Logs full response JSON when content is empty.
-- `src/components/dashboard/scanner/StressResultCard.tsx` — Fixed message display: `result.messages` → `result.messages[0]` (was trying to render array).
-- `src/lib/scanner/pipeline.ts` — Removed stray `console.log(randomizedMessages)` debug statement.
+- `src/db/schema.ts` — Added `access_event_type` enum, `chapter_access_logs` table, and `usersRelations`/`bookChaptersRelations`/`chapterAccessLogsRelations` for audit logging.
+- `src/app/api/chapters/[id]/view/route.ts` — New viewer endpoint: auth via `canUserReadChapter`, streams clean PDF from Supabase storage with `Range` header support (206 partial content), logs `view_started` and `access_denied` events.
+- `src/app/api/chapters/[id]/download/route.ts` — New download endpoint: auth via `canUserReadChapter`, fetches PDF, applies visible watermark per-page via `pdf-lib` (CHIKOLOGY branding, masked email, WIB timestamp), streams watermarked PDF as attachment, logs `download_requested`.
+- `src/app/dashboard/book/[chapterId]/ReaderClient.tsx` — Replaced signed-URL iframe with PDF.js viewer (`/pdfjs/web/viewer.html?file=/api/chapters/:id/view`). Added download button calling `/api/chapters/:id/download` in new tab. Removed `getChapterSignedUrl` call.
+- `src/app/dashboard/book/[chapterId]/ReaderClient.test.tsx` — Updated tests to match new viewer URL and download button.
+- `src/actions/chapters.ts` — Changed signed URL expiry from 3600s to 14400s (4 hours).
+- `public/pdfjs/` — Added PDF.js v6.0.227 viewer distribution (viewer.html, viewer.mjs, cmaps, locale, etc.) and custom `chikology-config.css` hiding download/print buttons.
+- `package.json` — Added `pdf-lib` and `pdfjs-dist` dependencies.
+- `src/test/actions/chapters.test.ts`, `src/test/actions/book.test.ts`, `src/test/actions/settings.test.ts`, `src/test/actions/journal.test.ts`, `src/test/lib/chapters.test.ts` — Added `relations` export to drizzle-orm mocks (schema change broke existing mocks).
+- `src/test/integration/book-purchase-flow.test.tsx` — Updated iframe src assertion to match PDF.js viewer URL.
 
 ### Verification
 
-- Curl test: MiniMax-M3 with image input returns valid response
-- App route: 9.9s → now times out at 20s with proper error handling
-- TypeScript: no new type errors (pre-existing webgl-ext conflicts only)
+- Viewer endpoint tests: 6/6 pass (401, 403, 404, 200 + Range, 206 Range, audit log)
+- Download endpoint tests: 7/7 pass (401, 403, 404, 200, valid PDF, larger output, audit log)
+- ReaderClient tests: 6/6 pass (back link, title, iframe URL, download button, CTA, next chapter)
+- Full test suite: 246 passed, 11 skipped, 0 failed
 
 ### Decisions
 
-- D-001: Regex over JSON.parse — Models (especially vision models) often wrap JSON in explanations. Regex extraction of `"tier": N` is more robust than requiring exact JSON, even with "JSON only" prompt instructions.
-- D-002: No Groq fallback for now — Removed to isolate MiniMax-M3 behavior. Will restore with proper error handling once MiniMax-M3 is confirmed working.
-- D-003: 20s timeout — MiniMax-M3 processes vision inputs slowly. 5s was too aggressive.
+- D-001: PDF.js v6.0.227 served statically from `/public/pdfjs/` — Downloaded full release distribution for maximum compatibility; custom CSS hides download/print buttons.
+- D-002: pdf-lib for watermarking — Lightweight, no native dependencies, works server-side only. Watermark text compressed in PDF output (FlateDecode), verified via page count and file size increase rather than raw text search.
+- D-003: `createServiceClient` is sync, not async — Mocked with `mockReturnValue` (not `mockResolvedValue`) in tests.
+- D-004: `relations` export added to schema — Broke existing drizzle-orm mocks. Updated all 5 affected test files to include `relations: vi.fn(() => ({}))`.
 
 ### Known Issues / Risks
 
-- MiniMax-M3 may still fail on very large images (LiteLLM upstream limit). Not hit yet.
+- PDF.js viewer shows "file origin does not match viewer's" if the viewer endpoint URL isn't absolute on the same origin. Verified that relative URLs work.
+- 4-hour signed URL may still expire for extremely long sessions; re-opening the chapter is the fallback.
+- Watermark is visible (not steganographic) — sufficient for MVP traceability per PRD.
 
 ### Next Steps (ordered)
 
-1. Restore Groq fallback once MiniMax-M3 behavior is stable
-2. Consider image compression before sending to API to reduce latency
+1. Verify the viewer works end-to-end with a real browser test (PDF.js loading, zoom, hidden download/print)
+2. Consider adding a loading state fallback if PDF.js viewer fails to load
+3. Add RLS policy for `chapter_access_logs` (user reads own rows only)
 
 ### Blockers (if any)
 

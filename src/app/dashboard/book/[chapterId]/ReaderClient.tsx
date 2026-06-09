@@ -1,11 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-
 import Link from 'next/link';
 
-import { getChapterSignedUrl } from '@/actions/chapters';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { ArrowLeft, Download } from 'lucide-react';
 
 import { NextChapterButton } from '@/components/dashboard/book/NextChapterButton';
 import { Button } from '@/components/ui/button';
@@ -13,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import type { NextChapterAction } from '@/lib/chapters';
 
 const WA_LINK = 'https://wa.me/6287853186759';
+const PDFJS_VIEWER = '/pdfjs/web/viewer.html';
 
 export function ReaderClient({
   chapter,
@@ -21,60 +19,40 @@ export function ReaderClient({
   chapter: { id: string; title: string; chapterNumber: number };
   nextAction: NextChapterAction;
 }) {
-  const [signedUrl, setSignedUrl] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      const result = await getChapterSignedUrl(chapter.id);
-      if (cancelled) return;
-      if ('url' in result) {
-        setSignedUrl(result.url);
-      } else {
-        setError(result.error);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [chapter.id]);
+  const viewerUrl = `${PDFJS_VIEWER}?file=${encodeURIComponent(`/api/chapters/${chapter.id}/view`)}`;
+  const downloadUrl = `/api/chapters/${chapter.id}/download`;
 
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 pt-0 md:p-6">
       <header className="flex items-center gap-2">
         <Button asChild variant="ghost" size="icon" aria-label="Kembali">
           <Link href="/dashboard/book">
-            <ArrowLeft />
+            <ArrowLeft className="size-4" />
           </Link>
         </Button>
         <h1 className="text-xl font-semibold text-foreground">
           {chapter.title}
         </h1>
+        <div className="ml-auto">
+          <a
+            href={downloadUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            download
+          >
+            <Button variant="outline" size="sm">
+              <Download className="mr-2 size-4" />
+              Download PDF
+            </Button>
+          </a>
+        </div>
       </header>
 
-      {error ? (
-        <div
-          data-testid="reader-error"
-          role="alert"
-          className="rounded-md border border-destructive bg-destructive/10 p-4 text-sm text-destructive"
-        >
-          {error}
-        </div>
-      ) : signedUrl ? (
-        <iframe
-          title={`PDF ${chapter.title}`}
-          src={signedUrl}
-          className="h-[calc(100vh-12rem)] w-full rounded-md border bg-white"
-        />
-      ) : (
-        <div
-          data-testid="reader-skeleton"
-          className="flex h-[calc(100vh-12rem)] w-full items-center justify-center rounded-md border bg-muted"
-        >
-          <Loader2 className="size-8 animate-spin text-muted-foreground" />
-        </div>
-      )}
+      <iframe
+        title={`PDF ${chapter.title}`}
+        src={viewerUrl}
+        className="h-[calc(100vh-12rem)] w-full rounded-md border bg-white"
+      />
 
       <a
         href={WA_LINK}

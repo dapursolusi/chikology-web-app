@@ -48,6 +48,7 @@ vi.mock('drizzle-orm', () => ({
   eq: vi.fn(() => 'EQ'),
   and: vi.fn(() => 'AND'),
   desc: vi.fn(() => 'DESC'),
+  relations: vi.fn(() => ({})),
 }));
 
 describe('saveJournalEntry', () => {

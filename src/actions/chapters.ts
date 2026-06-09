@@ -122,7 +122,7 @@ export async function claimFreeChapter(_chapterId: string): Promise<
 
 export async function getChapterSignedUrl(
   chapterId: string
-): Promise<{ url: string; expiresIn: 3600 } | { error: string }> {
+): Promise<{ url: string; expiresIn: 14400 } | { error: string }> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -160,11 +160,11 @@ export async function getChapterSignedUrl(
   const serviceClient = createServiceClient();
   const { data, error } = await serviceClient.storage
     .from('book-chapters')
-    .createSignedUrl(pdfPath, 3600);
+    .createSignedUrl(pdfPath, 14400);
 
   if (error || !data) {
     return { error: 'Gagal membuat URL PDF' };
   }
 
-  return { url: data.signedUrl, expiresIn: 3600 };
+  return { url: data.signedUrl, expiresIn: 14400 };
 }

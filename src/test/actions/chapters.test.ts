@@ -72,6 +72,7 @@ vi.mock('@/db', () => ({
 vi.mock('drizzle-orm', () => ({
   asc: vi.fn(() => 'ASC'),
   eq: vi.fn(() => 'EQ'),
+  relations: vi.fn(() => ({})),
 }));
 
 vi.mock('@/lib/supabase/server', () => ({
@@ -342,7 +343,7 @@ describe('getChapterSignedUrl', () => {
     expect(mockServiceStorageFrom).toHaveBeenCalledWith('book-chapters');
     expect(mockServiceCreateSignedUrl).toHaveBeenCalledWith(
       'chapters/1.pdf',
-      3600
+      14400
     );
     expect(mockStorageFrom).not.toHaveBeenCalled();
     expect(mockCreateSignedUrl).not.toHaveBeenCalled();
@@ -511,7 +512,7 @@ describe('getChapterSignedUrl', () => {
     expect(mockCreateSignedUrl).not.toHaveBeenCalled();
   });
 
-  it('returns a signed URL with 3600s expiry when user owns the chapter using service client', async () => {
+  it('returns a signed URL with 14400s expiry when user owns the chapter using service client', async () => {
     // canUserReadChapter call 1: chapter lookup via where → released chapter with pdf
     mockWhere.mockResolvedValueOnce([
       {
@@ -562,12 +563,12 @@ describe('getChapterSignedUrl', () => {
 
     expect(result).toEqual({
       url: 'https://example.supabase.co/storage/v1/object/signed/service',
-      expiresIn: 3600,
+      expiresIn: 14400,
     });
     expect(mockServiceStorageFrom).toHaveBeenCalledWith('book-chapters');
     expect(mockServiceCreateSignedUrl).toHaveBeenCalledWith(
       'chapters/1.pdf',
-      3600
+      14400
     );
     expect(mockStorageFrom).not.toHaveBeenCalled();
     expect(mockCreateSignedUrl).not.toHaveBeenCalled();
