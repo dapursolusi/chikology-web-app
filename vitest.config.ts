@@ -12,6 +12,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
+      zod: path.resolve(__dirname, 'node_modules/zod/index.cjs'),
     },
   },
 });

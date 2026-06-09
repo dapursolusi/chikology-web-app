@@ -1,5 +1,7 @@
 import { redirect } from 'next/navigation';
 
+import { getUserRole } from '@/actions/auth';
+
 import { AppSidebar } from '@/components/app-sidebar';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 
@@ -22,11 +24,12 @@ export default async function DashboardLayout({
     redirect('/?auth=login');
   }
 
+  const role = await getUserRole(user.id);
   const ebookLive = await getEbookLive();
 
   return (
     <SidebarProvider>
-      <AppSidebar ebookLive={ebookLive} />
+      <AppSidebar ebookLive={ebookLive} isAdmin={role === 'admin'} />
       <SidebarInset className="h-screen flex-col">
         <DashboardHeader />
         <div className="w-full flex-1 bg-muted/30 p-4">{children}</div>
