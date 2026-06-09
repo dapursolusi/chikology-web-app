@@ -26,7 +26,7 @@ function formatWIB(date: Date): string {
 }
 
 export async function GET(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id: chapterId } = await params;
@@ -76,11 +76,10 @@ export async function GET(
   const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
   const pages = pdfDoc.getPages();
 
-  const maskedEmail = maskEmail(user.email);
+  const maskedEmail = maskEmail(user.email ?? '');
   const timestamp = formatWIB(new Date());
 
   for (const page of pages) {
-    const { width, height } = page.getSize();
     const fontSize = 10;
     const x = 50;
     const y = 50;
@@ -129,5 +128,8 @@ export async function GET(
   headers.set('Content-Length', watermarkedPdfBytes.length.toString());
   headers.set('Cache-Control', 'private, max-age=3600');
 
-  return new NextResponse(watermarkedPdfBytes, { status: 200, headers });
+  return new NextResponse(Uint8Array.from(watermarkedPdfBytes), {
+    status: 200,
+    headers,
+  });
 }

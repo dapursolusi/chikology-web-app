@@ -1,3 +1,5 @@
+import { NextRequest } from 'next/server';
+
 import { db } from '@/db';
 import { eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -23,7 +25,7 @@ describe('Viewer Endpoint /api/chapters/[id]/view', () => {
     vi.clearAllMocks();
     vi.resetModules();
 
-    vi.mocked(eq).mockImplementation((col, val) => ({ col, val }));
+    vi.mocked(eq).mockImplementation((col, val) => ({ col, val }) as never);
 
     vi.mocked(createClient).mockResolvedValue({
       auth: {
@@ -31,7 +33,7 @@ describe('Viewer Endpoint /api/chapters/[id]/view', () => {
           .fn()
           .mockResolvedValue({ data: { user: { id: 'user-1' } } }),
       },
-    });
+    } as never);
     vi.mocked(canUserReadChapter).mockResolvedValue({
       canRead: true,
       reason: 'owned',
@@ -42,7 +44,7 @@ describe('Viewer Endpoint /api/chapters/[id]/view', () => {
           Promise.resolve([{ pdfPath: 'chapters/chapter-1.pdf' }])
         ),
       })),
-    });
+    } as never);
     const mockStorage = {
       from: vi.fn(() => ({
         download: vi.fn().mockResolvedValue({
@@ -51,18 +53,20 @@ describe('Viewer Endpoint /api/chapters/[id]/view', () => {
         }),
       })),
     };
-    vi.mocked(createServiceClient).mockReturnValue({ storage: mockStorage });
+    vi.mocked(createServiceClient).mockReturnValue({
+      storage: mockStorage,
+    } as never);
     const insertValuesMock = vi.fn().mockResolvedValue([]);
-    vi.mocked(db.insert).mockReturnValue({ values: insertValuesMock });
+    vi.mocked(db.insert).mockReturnValue({ values: insertValuesMock } as never);
   });
 
   it('returns 401 when user is not authenticated', async () => {
     const { GET } = await import('./route');
     vi.mocked(createClient).mockResolvedValue({
       auth: { getUser: vi.fn().mockResolvedValue({ data: { user: null } }) },
-    });
+    } as never);
 
-    const request = new Request('http://localhost/api/chapters/ch-1/view');
+    const request = new NextRequest('http://localhost/api/chapters/ch-1/view');
     const response = await GET(request, {
       params: Promise.resolve({ id: 'ch-1' }),
     });
@@ -77,7 +81,7 @@ describe('Viewer Endpoint /api/chapters/[id]/view', () => {
       reason: 'paid',
     });
 
-    const request = new Request('http://localhost/api/chapters/ch-1/view');
+    const request = new NextRequest('http://localhost/api/chapters/ch-1/view');
     const response = await GET(request, {
       params: Promise.resolve({ id: 'ch-1' }),
     });
@@ -91,9 +95,9 @@ describe('Viewer Endpoint /api/chapters/[id]/view', () => {
       from: vi.fn(() => ({
         where: vi.fn(() => Promise.resolve([{ pdfPath: null }])),
       })),
-    });
+    } as never);
 
-    const request = new Request('http://localhost/api/chapters/ch-1/view');
+    const request = new NextRequest('http://localhost/api/chapters/ch-1/view');
     const response = await GET(request, {
       params: Promise.resolve({ id: 'ch-1' }),
     });
@@ -104,7 +108,7 @@ describe('Viewer Endpoint /api/chapters/[id]/view', () => {
   it('returns 200 with PDF content and correct headers', async () => {
     const { GET } = await import('./route');
 
-    const request = new Request('http://localhost/api/chapters/ch-1/view');
+    const request = new NextRequest('http://localhost/api/chapters/ch-1/view');
     const response = await GET(request, {
       params: Promise.resolve({ id: 'ch-1' }),
     });
@@ -127,9 +131,11 @@ describe('Viewer Endpoint /api/chapters/[id]/view', () => {
         }),
       })),
     };
-    vi.mocked(createServiceClient).mockReturnValue({ storage: mockStorage });
+    vi.mocked(createServiceClient).mockReturnValue({
+      storage: mockStorage,
+    } as never);
 
-    const request = new Request('http://localhost/api/chapters/ch-1/view', {
+    const request = new NextRequest('http://localhost/api/chapters/ch-1/view', {
       headers: { Range: 'bytes=0-499' },
     });
     const response = await GET(request, {
@@ -145,9 +151,9 @@ describe('Viewer Endpoint /api/chapters/[id]/view', () => {
     const { GET } = await import('./route');
 
     const insertValuesMock = vi.fn().mockResolvedValue([]);
-    vi.mocked(db.insert).mockReturnValue({ values: insertValuesMock });
+    vi.mocked(db.insert).mockReturnValue({ values: insertValuesMock } as never);
 
-    const request = new Request('http://localhost/api/chapters/ch-1/view');
+    const request = new NextRequest('http://localhost/api/chapters/ch-1/view');
     await GET(request, { params: Promise.resolve({ id: 'ch-1' }) });
 
     expect(insertValuesMock).toHaveBeenCalled();
