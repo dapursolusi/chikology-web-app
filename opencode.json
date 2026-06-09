@@ -10,6 +10,8 @@
         "apiKey": "{env:SUMOPOD_API_KEY}"
       },
       "models": {
+        "deepseek-v4-pro": { "name": "DeepSeek V4 Pro" },
+        "MiniMax-M3": { "name": "MiniMax M3" },
         "MiniMax-M2.7-highspeed": { "name": "MiniMax M2.7 Highspeed" },
         "kimi-k2.6": { "name": "Kimi K2.6" },
         "glm-5.1": { "name": "GLM 5.1" }
