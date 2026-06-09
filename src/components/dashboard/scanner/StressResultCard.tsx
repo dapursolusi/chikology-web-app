@@ -115,7 +115,7 @@ export function StressResultCard({
               Pesan dari Chikology
             </h4>
             <p className="text-sm leading-relaxed text-foreground/80">
-              {result.messages}
+              {result.messages[0]}
             </p>
           </div>
 

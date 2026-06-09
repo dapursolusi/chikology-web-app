@@ -43,8 +43,9 @@ const mockResult = {
       description: 'Mengubah pikiran irasional jadi lebih rasional.',
     },
   ],
-  messages:
+  messages: [
     'Haloo.. berhenti sejenak dari aktivitasmu dan baca tulisan ini sebentar karena ini sangat penting buat kamu.',
+  ],
 };
 
 describe('StressResultCard', () => {
