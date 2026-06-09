@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useRef, useState, useTransition } from 'react';
 
 import { purchaseChapter } from '@/actions/chapters';
-import { Loader2 } from 'lucide-react';
+import { submitPaymentProof } from '@/actions/payment';
+import { ImageUp, Loader2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -30,6 +31,9 @@ const idrFormatter = new Intl.NumberFormat('id-ID', {
   maximumFractionDigits: 0,
 });
 
+const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+const MAX_FILE_SIZE = 5 * 1024 * 1024;
+
 export function PurchaseModal({
   open,
   onOpenChange,
@@ -38,23 +42,61 @@ export function PurchaseModal({
 }: Props) {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [preview, setPreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (!chapter) return null;
 
   const isFree = chapter.isFree;
   const priceLabel = isFree ? 'Gratis' : idrFormatter.format(chapter.priceIdr);
-  const confirmLabel = isFree ? 'Ya, Klaim Gratis' : 'Ya, Beli';
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      setError('Format file harus JPEG, PNG, atau WebP');
+      return;
+    }
+    if (file.size > MAX_FILE_SIZE) {
+      setError('Ukuran file maksimal 5MB');
+      return;
+    }
+
+    setError(null);
+    setSelectedFile(file);
+    setPreview(URL.createObjectURL(file));
+  }
 
   function handleConfirm() {
     if (!chapter) return;
     setError(null);
+
     startTransition(async () => {
-      const result = await purchaseChapter(chapter.id);
-      if ('chapter' in result) {
-        onOpenChange(false);
-        onSuccess?.(chapter);
+      if (isFree) {
+        const result = await purchaseChapter(chapter.id);
+        if ('chapter' in result) {
+          onOpenChange(false);
+          onSuccess?.(chapter);
+        } else {
+          setError(result.error);
+        }
       } else {
-        setError(result.error);
+        if (!selectedFile) {
+          setError('Pilih file bukti pembayaran terlebih dahulu');
+          return;
+        }
+        const formData = new FormData();
+        formData.append('chapterId', chapter.id);
+        formData.append('file', selectedFile);
+        const result = await submitPaymentProof(formData);
+        if ('success' in result && result.success) {
+          onOpenChange(false);
+          onSuccess?.(chapter);
+        } else {
+          setError(result.error);
+        }
       }
     });
   }
@@ -68,6 +110,42 @@ export function PurchaseModal({
             Bab {chapter.chapterNumber} · {priceLabel}
           </DialogDescription>
         </DialogHeader>
+
+        {!isFree && (
+          <div className="space-y-3">
+            <label
+              htmlFor="payment-proof"
+              className="flex cursor-pointer flex-col items-center gap-2 rounded-xl border-2 border-dashed border-border p-6 text-center text-sm text-muted-foreground hover:border-primary/50 hover:text-foreground transition-colors"
+            >
+              {preview ? (
+                <img
+                  src={preview}
+                  alt="Preview bukti pembayaran"
+                  className="max-h-40 rounded-lg object-contain"
+                />
+              ) : (
+                <>
+                  <ImageUp className="size-8" />
+                  <span>
+                    Klik untuk upload bukti transfer
+                    <br />
+                    <span className="text-xs">JPEG, PNG, WebP · maks 5MB</span>
+                  </span>
+                </>
+              )}
+              <input
+                ref={fileInputRef}
+                id="payment-proof"
+                data-testid="payment-proof-input"
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="hidden"
+                onChange={handleFileChange}
+              />
+            </label>
+          </div>
+        )}
+
         {error && (
           <p
             data-testid="purchase-error"
@@ -77,6 +155,7 @@ export function PurchaseModal({
             {error}
           </p>
         )}
+
         <DialogFooter>
           <Button
             type="button"
@@ -88,7 +167,11 @@ export function PurchaseModal({
           </Button>
           <Button type="button" onClick={handleConfirm} disabled={isPending}>
             {isPending && <Loader2 className="animate-spin" />}
-            {confirmLabel}
+            {isFree
+              ? 'Ya, Klaim Gratis'
+              : selectedFile
+                ? 'Kirim Bukti'
+                : 'Ya, Beli'}
           </Button>
         </DialogFooter>
       </DialogContent>

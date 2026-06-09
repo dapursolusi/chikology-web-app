@@ -198,6 +198,8 @@ describe('getChaptersWithState', () => {
     mockOrderBy.mockResolvedValueOnce([chapter1, chapter2]);
     // User owns chapter 1
     mockWhere.mockResolvedValueOnce([{ chapterId: 'ch1' }]);
+    // No payment proofs
+    mockWhere.mockResolvedValueOnce([]);
 
     const { getChaptersWithState } = await import('@/lib/chapters');
     const result = await getChaptersWithState('user-id');
@@ -207,11 +209,71 @@ describe('getChaptersWithState', () => {
       id: 'ch1',
       chapterNumber: 1,
       state: 'owned',
+      proofStatus: 'none',
     });
     expect(result[1]).toMatchObject({
       id: 'ch2',
       chapterNumber: 2,
       state: 'buyable',
+      proofStatus: 'none',
+    });
+  });
+
+  it('returns buyable chapters with proofStatus "pending" when a payment proof exists', async () => {
+    const chapter1 = {
+      id: 'ch1',
+      title: 'Bab 1',
+      chapterNumber: 1,
+      priceIdr: 49000,
+      isFree: false,
+      releaseDate: '2025-01-01',
+      pdfPath: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    mockOrderBy.mockResolvedValueOnce([chapter1]);
+    // User owns nothing
+    mockWhere.mockResolvedValueOnce([]);
+    // Payment proof exists with status pending
+    mockWhere.mockResolvedValueOnce([{ chapterId: 'ch1', status: 'pending' }]);
+
+    const { getChaptersWithState } = await import('@/lib/chapters');
+    const result = await getChaptersWithState('user-id');
+
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchObject({
+      id: 'ch1',
+      state: 'buyable',
+      proofStatus: 'pending',
+    });
+  });
+
+  it('returns proofStatus "approved" when payment proof was approved', async () => {
+    const chapter1 = {
+      id: 'ch1',
+      title: 'Bab 1',
+      chapterNumber: 1,
+      priceIdr: 49000,
+      isFree: false,
+      releaseDate: '2025-01-01',
+      pdfPath: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    mockOrderBy.mockResolvedValueOnce([chapter1]);
+    mockWhere.mockResolvedValueOnce([]);
+    mockWhere.mockResolvedValueOnce([{ chapterId: 'ch1', status: 'approved' }]);
+
+    const { getChaptersWithState } = await import('@/lib/chapters');
+    const result = await getChaptersWithState('user-id');
+
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchObject({
+      id: 'ch1',
+      state: 'buyable',
+      proofStatus: 'approved',
     });
   });
 });

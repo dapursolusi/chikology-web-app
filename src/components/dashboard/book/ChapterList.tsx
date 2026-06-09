@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 
-import { BookOpen, Lock, ShoppingCart, Sparkles } from 'lucide-react';
+import { BookOpen, Clock, Lock, ShoppingCart, Sparkles } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 
@@ -121,6 +121,17 @@ function ChapterAction({
         </Button>
       );
     case 'buyable':
+      if (chapter.proofStatus === 'pending') {
+        return (
+          <div
+            data-testid="chapter-state-pending-proof"
+            className="flex items-center gap-2 text-sm text-amber-600"
+          >
+            <Clock className="size-4" />
+            <span>Menunggu Verifikasi</span>
+          </div>
+        );
+      }
       if (chapter.isFree) {
         return (
           <Button onClick={() => onPurchase(chapter)}>

@@ -46,6 +46,14 @@ const lockedChapter: ChapterWithState = {
 const buyablePaidChapter: ChapterWithState = {
   ...baseChapter,
   state: 'buyable',
+  proofStatus: 'none',
+};
+
+const buyablePendingProofChapter: ChapterWithState = {
+  ...baseChapter,
+  id: 'ch-pending',
+  state: 'buyable',
+  proofStatus: 'pending',
 };
 
 const buyableFreeChapter: ChapterWithState = {
@@ -54,6 +62,7 @@ const buyableFreeChapter: ChapterWithState = {
   priceIdr: 0,
   isFree: true,
   state: 'buyable',
+  proofStatus: 'none',
 };
 
 const ownedChapter: ChapterWithState = {
@@ -106,6 +115,19 @@ describe('ChapterList', () => {
     expect(
       screen.getByRole('button', { name: /beli.*49\.000/i })
     ).toBeInTheDocument();
+  });
+
+  it('shows "Menunggu Verifikasi" badge for buyable chapters with pending payment proof', () => {
+    render(
+      <ChapterList
+        chapters={[buyablePendingProofChapter]}
+        onPurchase={() => {}}
+      />
+    );
+    expect(screen.getByText(/menunggu verifikasi/i)).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /beli|buka/i })
+    ).not.toBeInTheDocument();
   });
 
   it('shows "Buka Gratis" for buyable free chapters', () => {

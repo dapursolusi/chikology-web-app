@@ -58,6 +58,7 @@ function makeChapter(
     releaseDate: '2025-01-01',
     pdfPath: 'chapters/1.pdf',
     state: 'buyable',
+    proofStatus: 'none' as const,
     ...overrides,
   };
 }
@@ -83,8 +84,8 @@ describe('book purchase → reader → next-chapter flow (E2E integration)', () 
       makeChapter({
         id: 'ch-1',
         title: 'Bab 1 — Awal',
-        priceIdr: 49000,
-        isFree: false,
+        priceIdr: 0,
+        isFree: true,
         state: 'buyable',
       }),
       makeChapter({
@@ -104,14 +105,14 @@ describe('book purchase → reader → next-chapter flow (E2E integration)', () 
     expect(screen.getByTestId('chapter-state-locked')).toBeInTheDocument();
     expect(mockPurchaseChapter).not.toHaveBeenCalled();
 
-    // 2. User clicks "Beli" on ch-1 → PurchaseModal opens with chapter title.
-    await user.click(screen.getByRole('button', { name: /beli/i }));
+    // 2. User clicks "Buka Gratis" on ch-1 → PurchaseModal opens.
+    await user.click(screen.getByRole('button', { name: /buka gratis/i }));
     const dialog = await screen.findByRole('dialog');
     expect(dialog).toHaveTextContent('Bab 1 — Awal');
     expect(mockPurchaseChapter).not.toHaveBeenCalled();
 
     // 3. User confirms → purchaseChapter called, modal closes, router.refresh fires.
-    await user.click(screen.getByRole('button', { name: /ya, beli/i }));
+    await user.click(screen.getByRole('button', { name: /ya, klaim gratis/i }));
 
     await waitFor(() => {
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();

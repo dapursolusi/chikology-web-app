@@ -1,8 +1,10 @@
 import { db } from '@/db';
-import { bookChapters, chapterPurchases } from '@/db/schema';
+import { bookChapters, chapterPurchases, paymentProofs } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 
 export type ChapterState = 'unreleased' | 'locked' | 'buyable' | 'owned';
+
+export type ProofStatus = 'none' | 'pending' | 'approved' | 'rejected';
 
 export type ChapterAccess =
   | { canRead: true; reason: 'owned' | 'free-claimable' }
@@ -17,6 +19,7 @@ export type ChapterWithState = {
   releaseDate: string | null;
   pdfPath: string | null;
   state: ChapterState;
+  proofStatus: ProofStatus;
 };
 
 export type NextChapterAction =
@@ -62,6 +65,7 @@ export async function getPublicChapters(): Promise<ChapterWithState[]> {
       releaseDate: c.releaseDate,
       pdfPath: c.pdfPath,
       state: 'buyable' as const,
+      proofStatus: 'none' as const,
     }));
 }
 
@@ -75,10 +79,19 @@ export async function getChaptersWithState(
 
   if (chapters.length === 0) return [];
 
-  const purchases = await db
-    .select({ chapterId: chapterPurchases.chapterId })
-    .from(chapterPurchases)
-    .where(eq(chapterPurchases.userId, userId));
+  const [purchases, proofs] = await Promise.all([
+    db
+      .select({ chapterId: chapterPurchases.chapterId })
+      .from(chapterPurchases)
+      .where(eq(chapterPurchases.userId, userId)),
+    db
+      .select({
+        chapterId: paymentProofs.chapterId,
+        status: paymentProofs.status,
+      })
+      .from(paymentProofs)
+      .where(eq(paymentProofs.userId, userId)),
+  ]);
 
   const ownedChapterIds = new Set(purchases.map((p) => p.chapterId));
   const ownedChapterNumbers = new Set(
@@ -86,6 +99,8 @@ export async function getChaptersWithState(
       .filter((c) => ownedChapterIds.has(c.id))
       .map((c) => c.chapterNumber)
   );
+
+  const proofByChapter = new Map(proofs.map((p) => [p.chapterId, p.status]));
 
   const releaseInfo = chapters.map((c) => ({
     chapterNumber: c.chapterNumber,
@@ -108,6 +123,7 @@ export async function getChaptersWithState(
       ownedChapterNumbers,
       releaseInfo
     ),
+    proofStatus: proofByChapter.get(chapter.id) ?? 'none',
   }));
 }
 
