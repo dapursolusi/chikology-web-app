@@ -2,7 +2,14 @@
 
 import Link from 'next/link';
 
-import { BookOpen, Clock, Lock, ShoppingCart, Sparkles } from 'lucide-react';
+import {
+  BookOpen,
+  Clock,
+  Lock,
+  RefreshCw,
+  ShoppingCart,
+  Sparkles,
+} from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 
@@ -121,6 +128,24 @@ function ChapterAction({
         </Button>
       );
     case 'buyable':
+      if (chapter.proofStatus === 'rejected') {
+        return (
+          <div className="space-y-2">
+            <Button onClick={() => onPurchase(chapter)}>
+              <RefreshCw />
+              Beli Ulang
+            </Button>
+            {chapter.rejectionReason && (
+              <p
+                data-testid="rejection-reason"
+                className="text-xs text-destructive"
+              >
+                {chapter.rejectionReason}
+              </p>
+            )}
+          </div>
+        );
+      }
       if (chapter.proofStatus === 'pending') {
         return (
           <div

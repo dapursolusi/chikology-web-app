@@ -12,11 +12,15 @@ import type { ChapterWithState } from '@/lib/chapters';
 const {
   mockPurchaseChapter,
   mockGetChapterSignedUrl,
+  mockSubmitPaymentProof,
+  mockGetRejectedProofUrl,
   mockRouterPush,
   mockRouterRefresh,
 } = vi.hoisted(() => ({
   mockPurchaseChapter: vi.fn(),
   mockGetChapterSignedUrl: vi.fn(),
+  mockSubmitPaymentProof: vi.fn(),
+  mockGetRejectedProofUrl: vi.fn(),
   mockRouterPush: vi.fn(),
   mockRouterRefresh: vi.fn(),
 }));
@@ -25,6 +29,14 @@ vi.mock('@/actions/chapters', () => ({
   purchaseChapter: mockPurchaseChapter,
   getChapterSignedUrl: mockGetChapterSignedUrl,
   claimFreeChapter: vi.fn(),
+}));
+
+vi.mock('@/actions/payment', () => ({
+  submitPaymentProof: mockSubmitPaymentProof,
+}));
+
+vi.mock('@/actions/proof', () => ({
+  getRejectedProofUrl: mockGetRejectedProofUrl,
 }));
 
 vi.mock('next/navigation', () => ({
@@ -182,5 +194,67 @@ describe('book purchase → reader → next-chapter flow (E2E integration)', () 
       expect(mockPurchaseChapter).toHaveBeenCalledWith('ch-2');
     });
     expect(mockRouterPush).toHaveBeenCalledWith('/dashboard/book/ch-2');
+  });
+
+  it('user sees rejection reason + Beli Ulang, re-uploads proof, and succeeds', async () => {
+    const user = userEvent.setup();
+
+    mockGetRejectedProofUrl.mockResolvedValue({
+      url: 'https://example.supabase.co/rejected-proof.png',
+    });
+    mockSubmitPaymentProof.mockResolvedValue({ success: true });
+
+    // 1. /dashboard/book shows ch-1 with rejected proof status.
+    const chapters: ChapterWithState[] = [
+      makeChapter({
+        id: 'ch-1',
+        title: 'Bab 1 — Awal',
+        priceIdr: 49000,
+        isFree: false,
+        state: 'buyable',
+        proofStatus: 'rejected',
+        rejectionReason: 'Screenshoot tidak valid, harap upload ulang',
+      }),
+      makeChapter({
+        id: 'ch-2',
+        title: 'Bab 2 — Lanjut',
+        chapterNumber: 2,
+        state: 'locked',
+      }),
+    ];
+
+    render(<BookPageClient chapters={chapters} />);
+
+    // 2. User sees rejection reason and "Beli Ulang" button.
+    expect(screen.getByText(/screenshoot tidak valid/i)).toBeInTheDocument();
+    const beliUlang = screen.getByRole('button', { name: /beli ulang/i });
+    expect(beliUlang).toBeInTheDocument();
+
+    // 3. User clicks "Beli Ulang" → modal opens at step 2 with old proof image.
+    await user.click(beliUlang);
+    expect(
+      await screen.findByTestId('rejected-proof-image')
+    ).toBeInTheDocument();
+    expect(screen.getByTestId('payment-proof-input')).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /kirim ulang/i })
+    ).toBeInTheDocument();
+
+    // 4. User uploads a new proof file and submits.
+    const fileInput = screen.getByTestId('payment-proof-input');
+    const file = new File(['new-proof'], 'new.png', { type: 'image/png' });
+    await user.upload(fileInput, file);
+
+    await user.click(screen.getByRole('button', { name: /kirim ulang/i }));
+
+    await waitFor(() => {
+      expect(mockSubmitPaymentProof).toHaveBeenCalledTimes(1);
+    });
+
+    // 5. Modal closes on success.
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
+    expect(mockRouterRefresh).toHaveBeenCalledTimes(1);
   });
 });

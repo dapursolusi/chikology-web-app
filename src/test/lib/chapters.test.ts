@@ -276,6 +276,41 @@ describe('getChaptersWithState', () => {
       proofStatus: 'approved',
     });
   });
+
+  it('returns rejectionReason when proof status is rejected', async () => {
+    const chapter1 = {
+      id: 'ch1',
+      title: 'Bab 1',
+      chapterNumber: 1,
+      priceIdr: 49000,
+      isFree: false,
+      releaseDate: '2025-01-01',
+      pdfPath: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    mockOrderBy.mockResolvedValueOnce([chapter1]);
+    mockWhere.mockResolvedValueOnce([]);
+    mockWhere.mockResolvedValueOnce([
+      {
+        chapterId: 'ch1',
+        status: 'rejected',
+        rejectionReason: 'Bukti tidak jelas',
+      },
+    ]);
+
+    const { getChaptersWithState } = await import('@/lib/chapters');
+    const result = await getChaptersWithState('user-id');
+
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchObject({
+      id: 'ch1',
+      state: 'buyable',
+      proofStatus: 'rejected',
+      rejectionReason: 'Bukti tidak jelas',
+    });
+  });
 });
 
 // ─── canUserReadChapter — async integration tests ────────────────────

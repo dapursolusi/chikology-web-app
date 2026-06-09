@@ -56,6 +56,14 @@ const buyablePendingProofChapter: ChapterWithState = {
   proofStatus: 'pending',
 };
 
+const rejectedChapter: ChapterWithState = {
+  ...baseChapter,
+  id: 'ch-rejected',
+  state: 'buyable',
+  proofStatus: 'rejected',
+  rejectionReason: 'Screenshoot tidak valid, harap upload ulang',
+};
+
 const buyableFreeChapter: ChapterWithState = {
   ...baseChapter,
   id: 'ch-3',
@@ -106,6 +114,26 @@ describe('ChapterList', () => {
     expect(
       screen.queryByRole('button', { name: /beli|buka|baca/i })
     ).not.toBeInTheDocument();
+  });
+
+  it('shows "Beli Ulang" button and rejection reason for rejected chapters', () => {
+    render(<ChapterList chapters={[rejectedChapter]} onPurchase={() => {}} />);
+    expect(
+      screen.getByRole('button', { name: /beli ulang/i })
+    ).toBeInTheDocument();
+    expect(screen.getByText(/screenshoot tidak valid/i)).toBeInTheDocument();
+  });
+
+  it('calls onPurchase with the chapter when "Beli Ulang" is clicked', async () => {
+    const onPurchase = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <ChapterList chapters={[rejectedChapter]} onPurchase={onPurchase} />
+    );
+
+    await user.click(screen.getByRole('button', { name: /beli ulang/i }));
+
+    expect(onPurchase).toHaveBeenCalledWith(rejectedChapter);
   });
 
   it('shows "Beli Rp 49.000" for buyable paid chapters', () => {

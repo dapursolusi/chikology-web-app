@@ -46,7 +46,12 @@ const mockUpload = vi.hoisted(() =>
     error: null,
   }))
 );
-const mockStorageFrom = vi.hoisted(() => vi.fn(() => ({ upload: mockUpload })));
+const mockRemove = vi.hoisted(() =>
+  vi.fn(async () => ({ data: null, error: null }))
+);
+const mockStorageFrom = vi.hoisted(() =>
+  vi.fn(() => ({ upload: mockUpload, remove: mockRemove }))
+);
 
 const mockCreateSignedUrl = vi.hoisted(() =>
   vi.fn<
@@ -201,6 +206,43 @@ describe('submitPaymentProof', () => {
       })
     );
     expect(mockReturning).toHaveBeenCalledOnce();
+  });
+
+  it('allows re-upload when previous proof was rejected — deletes old file and inserts new proof', async () => {
+    // Previous proof was rejected
+    mockWhere.mockResolvedValueOnce([
+      {
+        id: 'old-rejected-proof',
+        status: 'rejected',
+        proofPath: 'test-user-id/ch-1-old.png',
+      },
+    ]);
+
+    const fd = makeFormData();
+    const { submitPaymentProof } = await import('@/actions/payment');
+    const result = await submitPaymentProof(fd);
+
+    expect(result).toEqual({ success: true });
+
+    // Should remove old file
+    expect(mockRemove).toHaveBeenCalledWith(['test-user-id/ch-1-old.png']);
+
+    // Should upload new file
+    expect(mockUpload).toHaveBeenCalledWith(
+      expect.stringMatching(/test-user-id\/ch-1-\d+\.png/),
+      expect.any(File),
+      { contentType: 'image/png' }
+    );
+
+    // Should insert new proof record
+    expect(mockInsert).toHaveBeenCalledOnce();
+    expect(mockValues).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: 'test-user-id',
+        chapterId: 'ch-1',
+        status: 'pending',
+      })
+    );
   });
 });
 

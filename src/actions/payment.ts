@@ -10,7 +10,7 @@ import {
   paymentProofs,
   users,
 } from '@/db/schema';
-import { and, eq, inArray } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 
 import { createClient, createServiceClient } from '@/lib/supabase/server';
 
@@ -48,18 +48,31 @@ export async function submitPaymentProof(
   }
 
   const existing = await db
-    .select({ id: paymentProofs.id, status: paymentProofs.status })
+    .select({
+      id: paymentProofs.id,
+      status: paymentProofs.status,
+      proofPath: paymentProofs.proofPath,
+    })
     .from(paymentProofs)
     .where(
       and(
         eq(paymentProofs.userId, user.id),
-        eq(paymentProofs.chapterId, chapterId),
-        inArray(paymentProofs.status, ['pending', 'approved'])
+        eq(paymentProofs.chapterId, chapterId)
       )
     );
 
-  if (existing.length > 0) {
+  const activeProof = existing.find(
+    (p) => p.status === 'pending' || p.status === 'approved'
+  );
+  if (activeProof) {
     return { error: 'Bukti pembayaran sudah dikirim dan menunggu verifikasi' };
+  }
+
+  const rejectedProof = existing.find((p) => p.status === 'rejected');
+  if (rejectedProof?.proofPath) {
+    await supabase.storage
+      .from('payment-proofs')
+      .remove([rejectedProof.proofPath]);
   }
 
   const ext = file.name.split('.').pop() ?? 'png';

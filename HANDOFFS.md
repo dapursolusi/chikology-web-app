@@ -1,48 +1,47 @@
-## [Tuesday, 09-06-2026 21:44] — Implemented Issue #54: Admin proof verification (Slice 2)
+## [Tuesday, 09-06-2026 14:23] — Implemented re-upload flow + two-step purchase wizard (issue #55)
 
 ### Session Target
 
-- Implement admin payment proof review dashboard: approve/reject payment proofs
+Implement issue #55 using TDD with 5 vertical tracer bullets.
 
 ### Current State
 
-- Status: shipped (Slice 2 of Issue #54)
-- Scope: `src/actions/payment.ts`, `src/test/actions/payment.test.ts`, `src/components/dashboard/admin/AdminVerificationPanel.tsx`, `src/app/dashboard/admin/book/page.tsx`
+- Status: shipped
+- Scope: payment/purchase domain (data layer, ChapterList, PurchaseModal, payment action, integration)
 
 ### What Changed
 
-- `src/actions/payment.ts` — Added `getProofVerifications()` server action (admin-gated, joins payment_proofs→users→book_chapters, includes signed URL for proof image) and `verifyPaymentProof()` server action (admin-gated, handles approve→inserts chapter_purchases+updates proof, handles reject→sets rejection_reason+updates proof, revalidates paths)
-- `src/test/actions/payment.test.ts` — 9 new TDD tests (tracer bullet followed by incremental loop): getProofVerifications returns [], error on unauthenticated, error on non-admin, joined rows with user/chapter context; verifyPaymentProof error on unauthenticated, error on non-admin, approve inserts+updates, reject sets reason, revalidatePath on success. Added chainable mocks for innerJoin/update/set/getAdminRole/createServiceClient.
-- `src/components/dashboard/admin/AdminVerificationPanel.tsx` — New client component: table of pending proofs with user email, chapter title, upload date, image thumbnail (clickable signed URL), Approve button, Reject button with inline reason input. Uses shadcn/ui Table, Button, toast with sonner.
-- `src/app/dashboard/admin/book/page.tsx` — Fetches proofs via getProofVerifications, renders AdminVerificationPanel below EbookLiveToggle and ChapterForm
+- `src/lib/chapters.ts` — Added `rejectionReason` to `ChapterWithState` type; updated `getChaptersWithState` to query and pass rejectionReason from rejected payment proofs
+- `src/components/dashboard/book/ChapterList.tsx` — Added "Beli Ulang" button + rejection reason display for chapters with `proofStatus === 'rejected'`
+- `src/components/dashboard/book/PurchaseModal.tsx` — Two-step wizard: step 1 (confirm + "Lanjutkan"), step 2 (file upload / "Kirim"). Re-upload flow starts at step 2 showing old rejected proof image via `getRejectedProofUrl` action
+- `src/actions/payment.ts` — `submitPaymentProof` now handles re-upload: queries all proofs (not just pending/approved), blocks active proofs, cleans up old rejected proof file from Storage before uploading new one
+- `src/actions/proof.ts` — **NEW** server action `getRejectedProofUrl` returns signed URL for the latest rejected proof image
+- `src/components/dashboard/book/ChapterList.test.tsx` — Tests for "Beli Ulang" button + rejection reason rendering + onPurchase callback
+- `src/components/dashboard/book/PurchaseModal.test.tsx` — Tests for two-step wizard, Lanjutkan→step 2 transition, rejected chapter flow with old proof image, re-upload submission
+- `src/test/actions/payment.test.ts` — Test for re-upload flow (deletes old file, uploads new, inserts new proof)
+- `src/test/lib/chapters.test.ts` — Test for rejectionReason in getChaptersWithState response
+- `src/test/integration/book-purchase-flow.test.tsx` — Integration test: user sees rejection + Beli Ulang → re-uploads proof → modal closes → router.refresh
 
 ### Verification
 
-- Command: `bun vitest run` → 268 passed, 11 skipped (0 failures)
-- TypeScript: `bunx --bun tsc --noEmit` → 0 errors
-- Lint: `bun run lint` → 0 errors (9 pre-existing warnings)
+- Commands run: `vitest run`, `tsc --noEmit`
+- Results: 276 tests pass, 0 TypeScript errors, 0 lint errors (skipped 11 unrelated)
 
 ### Decisions
 
-- D-006: Admin payment actions added to `src/actions/payment.ts` (same file as `submitPaymentProof`) — keeps all payment-related server actions in one module
-- D-007: `getProofVerifications` returns signed URLs for proof images — generated server-side via `createServiceClient`, avoids client-side Supabase dependency
-- D-008: `getProofVerifications` only returns pending proofs — approved/rejected proofs are hidden from the review panel
-- D-009: Reject reason input is inline (not a modal) — matches the issue spec, avoids dialog state complexity
+- D-055-01: `rejectedProofUrl` generated via dedicated server action (`getRejectedProofUrl`) rather than embedding in `getChaptersWithState` — keeps data layer free of Storage concerns; one extra fetch only when opening re-upload dialog
+- D-055-02: `submitPaymentProof` modified in-place to handle re-upload instead of creating separate action — identical validation/upload logic, just adds cleanup step for rejected proofs
 
 ### Known Issues / Risks
 
-- Admin must refresh the page after approve/reject to see updated list (no optimistic UI for the table)
-- Image thumbnails use `<img>` instead of `next/image` — consistent with existing pattern in PurchaseModal.tsx
-- Re-upload flow for rejected proofs (Issue #55) not yet implemented — user sees rejection reason in a future slice
+- `getRejectedProofUrl` calls Supabase storage service client to generate signed URL with 24h expiry — if the user keeps the modal open for >24h before re-uploading, the old proof image won't display (safe failure, just no preview)
 
 ### Next Steps (ordered)
 
-1. Implement Issue #55: Re-upload flow + two-step wizard + integration (Slice 3)
-2. Implement Issue #46: Core SaaS (analytics dashboard, purchase history)
-3. Soft launch checklist (Jun 9–11)
+1. [Pending] Admin rejection UI — add reason input field when admin rejects a proof (currently hardcoded in tests)
+2. Push/migrate DB schema if any new columns needed (none added in this slice)
+3. Deploy to preview for UAT
 
-### Blockers
+### Blockers (if any)
 
-- None
-
----
+None
