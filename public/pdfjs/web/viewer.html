@@ -46,6 +46,17 @@ See https://github.com/adobe-type-tools/cmap-resources
     <link rel="stylesheet" href="viewer.css" />
     <link rel="stylesheet" href="chikology-config.css" />
 
+  <script>
+    // Reset to single-page mode regardless of stored preference
+    try {
+      const history = JSON.parse(localStorage.getItem('pdfjs.history'));
+      if (history && history.spreadMode !== 0) {
+        history.spreadMode = 0;
+        localStorage.setItem('pdfjs.history', JSON.stringify(history));
+      }
+      localStorage.removeItem('pdfjs.preferences');
+    } catch {}
+  </script>
   <script src="viewer.mjs" type="module"></script>
   </head>
 
