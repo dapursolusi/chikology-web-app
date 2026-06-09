@@ -16,10 +16,7 @@
   display: none !important;
 }
 
-/* Hide secondary/overflow toolbar */
-#secondaryToolbarToggle {
-  display: none !important;
-}
+/* Keep secondary toolbar for scroll/spread mode, rotation, presentation */
 
 /* Already hidden: download, print, open file */
 #download,

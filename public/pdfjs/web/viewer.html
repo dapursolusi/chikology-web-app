@@ -49,13 +49,16 @@ See https://github.com/adobe-type-tools/cmap-resources
   <script>
     // Reset to single-page mode regardless of stored preference
     try {
-      const history = JSON.parse(localStorage.getItem('pdfjs.history'));
-      if (history && history.spreadMode !== 0) {
-        history.spreadMode = 0;
-        localStorage.setItem('pdfjs.history', JSON.stringify(history));
+      var h = JSON.parse(localStorage.getItem('pdfjs.history'));
+      if (h && Array.isArray(h.files)) {
+        for (var i = 0; i < h.files.length; i++) {
+          if (h.files[i].spreadMode !== void 0) h.files[i].spreadMode = 0;
+          if (h.files[i].scrollMode !== void 0) h.files[i].scrollMode = 0;
+        }
+        localStorage.setItem('pdfjs.history', JSON.stringify(h));
       }
-      localStorage.removeItem('pdfjs.preferences');
-    } catch {}
+    } catch (e) {}
+    try { localStorage.removeItem('pdfjs.preferences'); } catch (e) {}
   </script>
   <script src="viewer.mjs" type="module"></script>
   </head>
