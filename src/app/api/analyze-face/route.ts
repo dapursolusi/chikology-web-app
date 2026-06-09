@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import Groq from 'groq-sdk';
+import { OpenAI } from 'openai';
 
-const groq = new Groq();
-
-const STRESS_PROMPT = `Analyze facial expression for stress. Rate 1-5.
+const STRESS_PROMPT = `Analyze facial expression for stress in detail. Rate 1-5.
 
 RULES:
 - 1: Relaxed. Soft face, gentle eyes, zero muscle tension. Smile or calm-neutral.
@@ -30,10 +28,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No image provided' }, { status: 400 });
     }
 
-    const apiKey = process.env.GROQ_API_KEY;
+    const apiKey =
+      process.env.CHIKOLOGY_SUMOPOD_API_KEY || process.env.GROQ_API_KEY;
     if (!apiKey) {
       return NextResponse.json(
-        { error: 'GROQ_API_KEY not configured' },
+        { error: 'CHIKOLOGY_SUMOPOD_API_KEY or GROQ_API_KEY not configured' },
         { status: 500 }
       );
     }
@@ -42,51 +41,62 @@ export async function POST(request: NextRequest) {
       ? `${STRESS_PROMPT}\n\n[Questionnaire Answers]\n${JSON.stringify(questionnaire, null, 2)}`
       : STRESS_PROMPT;
 
-    const response = await groq.chat.completions.create({
-      model: 'meta-llama/llama-4-scout-17b-16e-instruct',
-      messages: [
-        {
-          role: 'user',
-          content: [
-            { type: 'text', text: promptWithContext },
-            {
-              type: 'image_url',
-              image_url: {
-                url: `data:image/jpeg;base64,${image}`,
-              },
-            },
-          ],
-        },
-      ],
-      temperature: 0.2,
-      max_tokens: 50,
+    const sumopod = new OpenAI({
+      apiKey: process.env.CHIKOLOGY_SUMOPOD_API_KEY,
+      baseURL: process.env.OPENAI_BASE_URL,
+      timeout: 20000,
+      maxRetries: 0,
     });
 
-    const content = response.choices?.[0]?.message?.content;
+    let content: string | null = null;
+
+    try {
+      const response = await sumopod.chat.completions.create({
+        model: 'MiniMax-M3',
+        messages: [
+          {
+            role: 'user',
+            content: [
+              { type: 'text', text: promptWithContext },
+              {
+                type: 'image_url',
+                image_url: {
+                  url: `data:image/jpeg;base64,${image}`,
+                },
+              },
+            ],
+          },
+        ],
+        temperature: 0.2,
+        max_tokens: 300,
+      });
+      content = response.choices?.[0]?.message?.content;
+      if (!content) {
+        console.error(
+          'MiniMax-M3 empty content, full response:',
+          JSON.stringify(response)
+        );
+      }
+    } catch (e) {
+      console.error('SumoPod call failed:', e);
+    }
+
     if (!content) {
       return NextResponse.json(
-        { error: 'Groq returned empty response' },
+        { error: 'SumoPod returned empty response' },
         { status: 502 }
       );
     }
 
-    const cleaned = content
-      .replace(/```json\s*/g, '')
-      .replace(/```\s*/g, '')
-      .trim();
-
-    let result: { tier: number };
-    try {
-      result = JSON.parse(cleaned);
-    } catch {
-      console.error('Groq raw output:', content);
+    const tierMatch = content.match(/\{[\s\S]*?"tier"\s*:\s*(\d+)[\s\S]*?\}/);
+    if (!tierMatch) {
       return NextResponse.json(
-        { error: 'Invalid JSON from Groq' },
+        { error: 'Invalid JSON from model', raw: content },
         { status: 502 }
       );
     }
 
-    const tier = Math.max(1, Math.min(5, Math.round(result.tier)));
+    const tier = Math.max(1, Math.min(5, Math.round(Number(tierMatch[1]))));
 
     return NextResponse.json({ tier });
   } catch (error) {

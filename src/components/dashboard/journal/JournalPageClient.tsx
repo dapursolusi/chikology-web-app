@@ -77,7 +77,7 @@ export function JournalPageClient({ entries }: JournalPageClientProps) {
         mood,
         content: editorContent || undefined,
         stressTier: tier ?? undefined,
-        recommendation: tier ? stressLevels[tier].messages : undefined,
+        recommendation: tier ? stressLevels[tier].messages[0] : undefined,
       });
     },
     null
@@ -117,7 +117,7 @@ export function JournalPageClient({ entries }: JournalPageClientProps) {
             mood: preselectedMood ?? null,
             content: editorContent || null,
             stressTier: tier ?? null,
-            recommendation: tier ? stressLevels[tier].messages : null,
+            recommendation: tier ? stressLevels[tier].messages[0] : null,
             createdAt: new Date(),
           };
           return [newEntry, ...prev];

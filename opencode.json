@@ -1,5 +1,6 @@
 {
   "$schema": "https://opencode.ai/config.json",
+  "model": "minimax-m3-free",
   "provider": {
     "sumopod": {
       "npm": "@ai-sdk/openai-compatible",

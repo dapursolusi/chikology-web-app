@@ -46,7 +46,7 @@ vi.mock('@/components/dashboard/scanner/PreScanQuestionnaire', () => ({
   ),
 }));
 
-vi.mock('@/components/FaceScanner', () => ({
+vi.mock('@/components/dashboard/scanner/FaceScanner', () => ({
   default: ({
     questionnaireAnswers,
   }: {
