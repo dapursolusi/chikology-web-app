@@ -9,7 +9,22 @@ const mockGetUser = vi.hoisted(() =>
 const mockWhere = vi.hoisted(() =>
   vi.fn<() => Promise<unknown[]>>(async () => [])
 );
-const mockFrom = vi.hoisted(() => vi.fn(() => ({ where: mockWhere })));
+
+const mockInnerJoin2 = vi.hoisted(() => vi.fn(() => ({ where: mockWhere })));
+const mockInnerJoin = vi.hoisted(() =>
+  vi.fn(() => ({ innerJoin: mockInnerJoin2, where: mockWhere }))
+);
+
+const mockSet = vi.hoisted(() => vi.fn(() => ({ where: mockWhere })));
+const mockUpdate = vi.hoisted(() => vi.fn(() => ({ set: mockSet })));
+
+const mockGetAdminRole = vi.hoisted(() =>
+  vi.fn<() => Promise<'user' | 'admin'>>(async () => 'admin')
+);
+
+const mockFrom = vi.hoisted(() =>
+  vi.fn(() => ({ innerJoin: mockInnerJoin, where: mockWhere }))
+);
 const mockSelect = vi.hoisted(() => vi.fn(() => ({ from: mockFrom })));
 
 const mockReturning = vi.hoisted(() =>
@@ -33,14 +48,40 @@ const mockUpload = vi.hoisted(() =>
 );
 const mockStorageFrom = vi.hoisted(() => vi.fn(() => ({ upload: mockUpload })));
 
+const mockCreateSignedUrl = vi.hoisted(() =>
+  vi.fn<
+    () => Promise<{
+      data: { signedUrl: string } | null;
+      error: { message: string } | null;
+    }>
+  >(async () => ({
+    data: { signedUrl: 'https://example.supabase.co/proof-image.png' },
+    error: null,
+  }))
+);
+const mockServiceStorageFrom = vi.hoisted(() =>
+  vi.fn(() => ({ createSignedUrl: mockCreateSignedUrl }))
+);
+
 vi.mock('@/db', () => ({
-  db: { select: mockSelect, insert: mockInsert },
+  db: { select: mockSelect, insert: mockInsert, update: mockUpdate },
+}));
+
+vi.mock('@/actions/book', () => ({
+  getAdminRole: mockGetAdminRole,
+}));
+
+vi.mock('next/cache', () => ({
+  revalidatePath: vi.fn(),
 }));
 
 vi.mock('@/lib/supabase/server', () => ({
   createClient: vi.fn(() => ({
     auth: { getUser: mockGetUser },
     storage: { from: mockStorageFrom },
+  })),
+  createServiceClient: vi.fn(() => ({
+    storage: { from: mockServiceStorageFrom },
   })),
 }));
 
@@ -160,5 +201,154 @@ describe('submitPaymentProof', () => {
       })
     );
     expect(mockReturning).toHaveBeenCalledOnce();
+  });
+});
+
+describe('getProofVerifications', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('returns empty array when no proofs exist', async () => {
+    const { getProofVerifications } = await import('@/actions/payment');
+    const result = await getProofVerifications();
+
+    expect(result).toEqual([]);
+  });
+
+  it('returns error when user is not authenticated', async () => {
+    mockGetAdminRole.mockResolvedValueOnce('user');
+
+    const { getProofVerifications } = await import('@/actions/payment');
+    const result = await getProofVerifications();
+
+    expect(result).toEqual({ error: expect.stringMatching(/admin/i) });
+  });
+
+  it('returns error when authenticated user is not admin', async () => {
+    mockGetAdminRole.mockResolvedValueOnce('user');
+
+    const { getProofVerifications } = await import('@/actions/payment');
+    const result = await getProofVerifications();
+
+    expect(result).toEqual({ error: expect.stringMatching(/admin/i) });
+  });
+
+  it('returns proof rows with user email and chapter details', async () => {
+    mockWhere.mockResolvedValueOnce([
+      {
+        id: 'proof-uuid',
+        userId: 'user-uuid',
+        chapterId: 'chapter-uuid',
+        proofPath: 'user-uuid/ch-uuid-123456.png',
+        status: 'pending',
+        rejectionReason: null,
+        createdAt: new Date('2026-06-09'),
+        userEmail: 'user@test.com',
+        chapterTitle: 'Bab 1 — Awal',
+        chapterNumber: 1,
+      },
+    ]);
+
+    const { getProofVerifications } = await import('@/actions/payment');
+    const result = await getProofVerifications();
+    const rows = result as Array<Record<string, unknown>>;
+
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({
+      userEmail: 'user@test.com',
+      chapterTitle: 'Bab 1 — Awal',
+      chapterNumber: 1,
+      status: 'pending',
+      proofImageUrl: expect.stringContaining('supabase.co'),
+    });
+    expect(mockServiceStorageFrom).toHaveBeenCalledWith('payment-proofs');
+    expect(mockCreateSignedUrl).toHaveBeenCalled();
+  });
+});
+
+describe('verifyPaymentProof', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('returns error when user is not authenticated', async () => {
+    mockGetAdminRole.mockResolvedValueOnce('user');
+
+    const { verifyPaymentProof } = await import('@/actions/payment');
+    const result = await verifyPaymentProof('proof-uuid', 'approve');
+
+    expect(result).toEqual({ error: expect.stringMatching(/admin/i) });
+  });
+
+  it('returns error when authenticated user is not admin', async () => {
+    mockGetAdminRole.mockResolvedValueOnce('user');
+
+    const { verifyPaymentProof } = await import('@/actions/payment');
+    const result = await verifyPaymentProof('proof-uuid', 'approve');
+
+    expect(result).toEqual({ error: expect.stringMatching(/admin/i) });
+  });
+
+  it('approves a proof — inserts chapter_purchases and updates proof status', async () => {
+    mockWhere
+      .mockResolvedValueOnce([
+        { userId: 'user-uuid', chapterId: 'chapter-uuid' },
+      ])
+      .mockResolvedValueOnce([]);
+
+    const { verifyPaymentProof } = await import('@/actions/payment');
+    const result = await verifyPaymentProof('proof-uuid', 'approve');
+
+    expect(result).toEqual({ success: true });
+    expect(mockInsert).toHaveBeenCalled();
+    expect(mockValues).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: 'user-uuid',
+        chapterId: 'chapter-uuid',
+      })
+    );
+    expect(mockUpdate).toHaveBeenCalled();
+    expect(mockSet).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: 'approved',
+        reviewedBy: 'test-user-id',
+      })
+    );
+    expect(mockWhere).toHaveBeenCalledTimes(2);
+  });
+
+  it('rejects a proof — sets rejection_reason, reviewed_by, and status to rejected', async () => {
+    const { verifyPaymentProof } = await import('@/actions/payment');
+    const result = await verifyPaymentProof(
+      'proof-uuid',
+      'reject',
+      'Bukti tidak jelas'
+    );
+
+    expect(result).toEqual({ success: true });
+    expect(mockUpdate).toHaveBeenCalled();
+    expect(mockSet).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: 'rejected',
+        rejectionReason: 'Bukti tidak jelas',
+        reviewedBy: 'test-user-id',
+      })
+    );
+    expect(mockWhere).toHaveBeenCalledOnce();
+    expect(mockInsert).not.toHaveBeenCalled();
+  });
+
+  it('revalidates /dashboard/book and /dashboard/admin/book on success', async () => {
+    const { revalidatePath } = await import('next/cache');
+    mockWhere.mockResolvedValueOnce([
+      { userId: 'user-uuid', chapterId: 'chapter-uuid' },
+    ]);
+
+    const { verifyPaymentProof } = await import('@/actions/payment');
+    await verifyPaymentProof('proof-uuid', 'approve');
+
+    expect(revalidatePath).toHaveBeenCalledWith('/dashboard/book');
+    expect(revalidatePath).toHaveBeenCalledWith('/dashboard/admin/book');
   });
 });

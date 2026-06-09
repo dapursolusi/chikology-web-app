@@ -233,7 +233,7 @@ Scanner + Journal + Landing Page live. E-book = countdown to June 16.
 | ----- | ----------------------------------------------------------------------------------------- | ------------------------------------------------ | -------------- |
 | #43   | Payment proof upload for chapter purchases (mock flow)                                    | Mock payment confirmation modal → pending status | ✅ DONE        |
 | #53   | [AFK] Payment proof upload + pending status (Slice 1)                                     | User uploads payment proof, admin verifies       | ✅ DONE        |
-| #54   | [AFK] Admin proof verification (Slice 2)                                                  | Admin dashboard: approve/reject payment proofs   | 🔄 IN PROGRESS |
+| #54   | [AFK] Admin proof verification (Slice 2)                                                  | Admin dashboard: approve/reject payment proofs   | ✅ DONE        |
 | #55   | [AFK] Re-upload flow + two-step wizard + integration (Slice 3)                            | User re-uploads rejected proof, wizard UX        | 🔄 IN PROGRESS |
 | #46   | [PRD] Core SaaS: user profile, purchase history, email notifications, analytics dashboard | Post-purchase analytics for author               | 🔄 IN PROGRESS |
 
@@ -246,7 +246,7 @@ Scanner + Journal + Landing Page live. E-book = countdown to June 16.
 | 1   | Mock payment modal → server action inserts `chapter_purchases` with `status: 'pending'`                 | 30 min | ✓           |
 | 2   | Payment proof upload: file input (image/PDF → JPEG/PNG/WebP) → Supabase Storage `payment-proofs` bucket | 45 min | ✓           |
 | 3   | `payment_proofs` table: id, user_id, chapter_id, file_path, status (pending/approved/rejected)          | 20 min | ✓           |
-| 4   | Admin page: list pending proofs, view image, approve/reject → updates `chapter_purchases` status        | 60 min | ☐           |
+| 4   | Admin page: list pending proofs, view image, approve/reject → updates `chapter_purchases` status        | 60 min | ✓           |
 | 5   | Re-upload flow: rejected → user sees wizard → re-upload → back to pending                               | 45 min | ☐           |
 | 6   | Real payment gateway integration (Midtrans/Xendit) — replace mock when ready                            | —      | ⏳ DEFERRED |
 
