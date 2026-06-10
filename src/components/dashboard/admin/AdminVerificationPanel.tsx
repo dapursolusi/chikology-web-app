@@ -5,6 +5,16 @@ import { useState, useTransition } from 'react';
 import { verifyPaymentProof } from '@/actions/payment';
 import { toast } from 'sonner';
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import {
   Table,
@@ -71,6 +81,7 @@ function ProofRow({ proof }: { proof: ProofVerification }) {
   const [isPending, startTransition] = useTransition();
   const [rejectOpen, setRejectOpen] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
+  const [confirmApproveOpen, setConfirmApproveOpen] = useState(false);
 
   function handleApprove() {
     startTransition(async () => {
@@ -136,16 +147,35 @@ function ProofRow({ proof }: { proof: ProofVerification }) {
             variant="default"
             size="sm"
             disabled={isPending}
-            onClick={handleApprove}
+            onClick={() => setConfirmApproveOpen(true)}
           >
             Setujui
           </Button>
+          <AlertDialog
+            open={confirmApproveOpen}
+            onOpenChange={setConfirmApproveOpen}
+          >
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Setujui Pembayaran?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Tindakan ini akan memberikan akses bab kepada pengguna dan
+                  tidak dapat dibatalkan.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Batal</AlertDialogCancel>
+                <AlertDialogAction disabled={isPending} onClick={handleApprove}>
+                  Ya, Setujui
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
           {rejectOpen ? (
-            <div className="flex items-center gap-1">
-              <input
-                type="text"
-                className="h-8 w-32 rounded border border-input bg-background px-2 text-xs"
-                placeholder="Alasan..."
+            <div className="flex flex-col gap-1">
+              <textarea
+                className="h-20 w-48 rounded border border-input bg-background p-2 text-xs resize-none"
+                placeholder="Alasan penolakan..."
                 value={rejectReason}
                 onChange={(e) => setRejectReason(e.target.value)}
                 autoFocus

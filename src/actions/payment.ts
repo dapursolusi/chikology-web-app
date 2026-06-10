@@ -10,7 +10,7 @@ import {
   paymentProofs,
   users,
 } from '@/db/schema';
-import { and, eq, inArray } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 
 import { createClient, createServiceClient } from '@/lib/supabase/server';
 
@@ -34,6 +34,38 @@ export async function submitPaymentProof(
     return { error: 'ID bab diperlukan' };
   }
 
+  const existing = await db
+    .select({
+      id: paymentProofs.id,
+      status: paymentProofs.status,
+      proofPath: paymentProofs.proofPath,
+    })
+    .from(paymentProofs)
+    .where(
+      and(
+        eq(paymentProofs.userId, user.id),
+        eq(paymentProofs.chapterId, chapterId)
+      )
+    );
+
+  const activeProof = existing.find(
+    (p) => p.status === 'pending' || p.status === 'approved'
+  );
+  if (activeProof) {
+    return { error: 'Bukti pembayaran sudah dikirim dan menunggu verifikasi' };
+  }
+
+  const rejectedProof = existing.find((p) => p.status === 'rejected');
+  if (rejectedProof?.proofPath) {
+    const serviceClient = createServiceClient();
+    const { error: removeError } = await serviceClient.storage
+      .from('payment-proofs')
+      .remove([rejectedProof.proofPath]);
+    if (removeError) {
+      console.error('Failed to remove old proof file:', removeError.message);
+    }
+  }
+
   const file = formData.get('file');
   if (!file || !(file instanceof File)) {
     return { error: 'File bukti pembayaran diperlukan' };
@@ -45,21 +77,6 @@ export async function submitPaymentProof(
 
   if (file.size > MAX_FILE_SIZE) {
     return { error: 'Ukuran file maksimal 5MB' };
-  }
-
-  const existing = await db
-    .select({ id: paymentProofs.id, status: paymentProofs.status })
-    .from(paymentProofs)
-    .where(
-      and(
-        eq(paymentProofs.userId, user.id),
-        eq(paymentProofs.chapterId, chapterId),
-        inArray(paymentProofs.status, ['pending', 'approved'])
-      )
-    );
-
-  if (existing.length > 0) {
-    return { error: 'Bukti pembayaran sudah dikirim dan menunggu verifikasi' };
   }
 
   const ext = file.name.split('.').pop() ?? 'png';

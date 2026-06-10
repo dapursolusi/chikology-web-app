@@ -1,9 +1,10 @@
 'use client';
 
-import { useRef, useState, useTransition } from 'react';
+import { useEffect, useRef, useState, useTransition } from 'react';
 
 import { purchaseChapter } from '@/actions/chapters';
 import { submitPaymentProof } from '@/actions/payment';
+import { getRejectedProofUrl } from '@/actions/proof';
 import { ImageUp, Loader2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -44,7 +45,44 @@ export function PurchaseModal({
   const [error, setError] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
+  const [step, setStep] = useState<1 | 2>(() =>
+    chapter?.proofStatus === 'rejected' ? 2 : 1
+  );
+  const [rejectedProofUrl, setRejectedProofUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const prevChapterId = useRef(chapter?.id);
+
+  const isRejected = chapter?.proofStatus === 'rejected';
+
+  if (prevChapterId.current !== chapter?.id) {
+    prevChapterId.current = chapter?.id;
+    if (chapter) {
+      setStep(chapter?.proofStatus === 'rejected' ? 2 : 1);
+      setError(null);
+      setSelectedFile(null);
+      setPreview(null);
+      setRejectedProofUrl(null);
+    }
+  }
+
+  useEffect(() => {
+    if (chapter?.proofStatus === 'rejected' && chapter?.id) {
+      getRejectedProofUrl(chapter.id).then((result) => {
+        if ('url' in result) setRejectedProofUrl(result.url);
+      });
+    }
+  }, [chapter?.id, chapter?.proofStatus, open]);
+
+  function handleOpenChange(newOpen: boolean) {
+    if (!newOpen) {
+      setStep(chapter?.proofStatus === 'rejected' ? 2 : 1);
+      setError(null);
+      setSelectedFile(null);
+      setPreview(null);
+      setRejectedProofUrl(null);
+    }
+    onOpenChange(newOpen);
+  }
 
   if (!chapter) return null;
 
@@ -69,12 +107,11 @@ export function PurchaseModal({
     setPreview(URL.createObjectURL(file));
   }
 
-  function handleConfirm() {
+  function handleStep1Confirm() {
     if (!chapter) return;
-    setError(null);
-
-    startTransition(async () => {
-      if (isFree) {
+    if (isFree) {
+      setError(null);
+      startTransition(async () => {
         const result = await purchaseChapter(chapter.id);
         if ('chapter' in result) {
           onOpenChange(false);
@@ -82,27 +119,36 @@ export function PurchaseModal({
         } else {
           setError(result.error);
         }
+      });
+    } else {
+      setStep(2);
+    }
+  }
+
+  function handleSubmitPaymentProof() {
+    if (!chapter) return;
+    setError(null);
+
+    startTransition(async () => {
+      if (!selectedFile) {
+        setError('Pilih file bukti pembayaran terlebih dahulu');
+        return;
+      }
+      const formData = new FormData();
+      formData.append('chapterId', chapter.id);
+      formData.append('file', selectedFile);
+      const result = await submitPaymentProof(formData);
+      if ('error' in result) {
+        setError(result.error);
       } else {
-        if (!selectedFile) {
-          setError('Pilih file bukti pembayaran terlebih dahulu');
-          return;
-        }
-        const formData = new FormData();
-        formData.append('chapterId', chapter.id);
-        formData.append('file', selectedFile);
-        const result = await submitPaymentProof(formData);
-        if ('error' in result) {
-          setError(result.error);
-        } else {
-          onOpenChange(false);
-          onSuccess?.(chapter);
-        }
+        onOpenChange(false);
+        onSuccess?.(chapter);
       }
     });
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{chapter.title}</DialogTitle>
@@ -111,8 +157,74 @@ export function PurchaseModal({
           </DialogDescription>
         </DialogHeader>
 
-        {!isFree && (
+        {step === 1 && (
+          <>
+            {isFree ? (
+              <p className="text-sm text-muted-foreground">
+                Bab ini gratis. Klik tombol di bawah untuk mulai membaca.
+              </p>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Klik Lanjutkan untuk mengupload bukti pembayaran.
+              </p>
+            )}
+
+            {error && (
+              <p
+                data-testid="purchase-error"
+                role="alert"
+                className="text-sm text-destructive"
+              >
+                {error}
+              </p>
+            )}
+
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+                disabled={isPending}
+              >
+                Batal
+              </Button>
+              <Button
+                type="button"
+                onClick={handleStep1Confirm}
+                disabled={isPending}
+              >
+                {isPending && <Loader2 className="animate-spin" />}
+                {isFree ? 'Ya, Klaim Gratis' : 'Lanjutkan'}
+              </Button>
+            </DialogFooter>
+          </>
+        )}
+
+        {step === 2 && (
           <div className="space-y-3">
+            {isRejected && rejectedProofUrl && (
+              <div className="space-y-1">
+                <p className="text-xs font-medium text-destructive">
+                  Bukti sebelumnya ditolak:
+                </p>
+                <img
+                  src={rejectedProofUrl}
+                  alt="Bukti pembayaran sebelumnya"
+                  data-testid="rejected-proof-image"
+                  className="max-h-32 rounded-lg object-contain border"
+                />
+              </div>
+            )}
+
+            {isRejected && chapter.rejectionReason && (
+              <p
+                className="text-xs text-destructive"
+                data-testid="rejection-reason"
+              >
+                Bukti Pembayaran Ditolak: {chapter.rejectionReason}
+              </p>
+            )}
+
             <label
               htmlFor="payment-proof"
               className="flex cursor-pointer flex-col items-center gap-2 rounded-xl border-2 border-dashed border-border p-6 text-center text-sm text-muted-foreground hover:border-primary/50 hover:text-foreground transition-colors"
@@ -127,7 +239,9 @@ export function PurchaseModal({
                 <>
                   <ImageUp className="size-8" />
                   <span>
-                    Klik untuk upload bukti transfer
+                    {isRejected
+                      ? 'Klik untuk upload bukti baru'
+                      : 'Klik untuk upload bukti transfer'}
                     <br />
                     <span className="text-xs">JPEG, PNG, WebP · maks 5MB</span>
                   </span>
@@ -143,37 +257,43 @@ export function PurchaseModal({
                 onChange={handleFileChange}
               />
             </label>
+
+            {error && (
+              <p
+                data-testid="purchase-error"
+                role="alert"
+                className="text-sm text-destructive"
+              >
+                {error}
+              </p>
+            )}
+
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  if (isRejected) {
+                    onOpenChange(false);
+                  } else {
+                    setStep(1);
+                  }
+                }}
+                disabled={isPending}
+              >
+                {isRejected ? 'Batal' : 'Kembali'}
+              </Button>
+              <Button
+                type="button"
+                onClick={handleSubmitPaymentProof}
+                disabled={isPending || !selectedFile}
+              >
+                {isPending && <Loader2 className="animate-spin" />}
+                {isRejected ? 'Kirim Ulang' : 'Kirim'}
+              </Button>
+            </DialogFooter>
           </div>
         )}
-
-        {error && (
-          <p
-            data-testid="purchase-error"
-            role="alert"
-            className="text-sm text-destructive"
-          >
-            {error}
-          </p>
-        )}
-
-        <DialogFooter>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={isPending}
-          >
-            Batal
-          </Button>
-          <Button type="button" onClick={handleConfirm} disabled={isPending}>
-            {isPending && <Loader2 className="animate-spin" />}
-            {isFree
-              ? 'Ya, Klaim Gratis'
-              : selectedFile
-                ? 'Kirim Bukti'
-                : 'Ya, Beli'}
-          </Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

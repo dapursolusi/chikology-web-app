@@ -20,6 +20,7 @@ export type ChapterWithState = {
   pdfPath: string | null;
   state: ChapterState;
   proofStatus?: ProofStatus;
+  rejectionReason?: string | null;
 };
 
 export type NextChapterAction =
@@ -88,6 +89,7 @@ export async function getChaptersWithState(
       .select({
         chapterId: paymentProofs.chapterId,
         status: paymentProofs.status,
+        rejectionReason: paymentProofs.rejectionReason,
       })
       .from(paymentProofs)
       .where(eq(paymentProofs.userId, userId)),
@@ -100,31 +102,35 @@ export async function getChaptersWithState(
       .map((c) => c.chapterNumber)
   );
 
-  const proofByChapter = new Map(proofs.map((p) => [p.chapterId, p.status]));
+  const proofByChapter = new Map(proofs.map((p) => [p.chapterId, p]));
 
   const releaseInfo = chapters.map((c) => ({
     chapterNumber: c.chapterNumber,
     releaseDate: c.releaseDate,
   }));
 
-  return chapters.map((chapter) => ({
-    id: chapter.id,
-    title: chapter.title,
-    chapterNumber: chapter.chapterNumber,
-    priceIdr: chapter.priceIdr,
-    isFree: chapter.isFree,
-    releaseDate: chapter.releaseDate,
-    pdfPath: chapter.pdfPath,
-    state: computeChapterState(
-      {
-        chapterNumber: chapter.chapterNumber,
-        releaseDate: chapter.releaseDate,
-      },
-      ownedChapterNumbers,
-      releaseInfo
-    ),
-    proofStatus: proofByChapter.get(chapter.id) ?? 'none',
-  }));
+  return chapters.map((chapter) => {
+    const proof = proofByChapter.get(chapter.id);
+    return {
+      id: chapter.id,
+      title: chapter.title,
+      chapterNumber: chapter.chapterNumber,
+      priceIdr: chapter.priceIdr,
+      isFree: chapter.isFree,
+      releaseDate: chapter.releaseDate,
+      pdfPath: chapter.pdfPath,
+      state: computeChapterState(
+        {
+          chapterNumber: chapter.chapterNumber,
+          releaseDate: chapter.releaseDate,
+        },
+        ownedChapterNumbers,
+        releaseInfo
+      ),
+      proofStatus: proof?.status ?? 'none',
+      rejectionReason: proof?.rejectionReason ?? null,
+    };
+  });
 }
 
 export function computeChapterState(
