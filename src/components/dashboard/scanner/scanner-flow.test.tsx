@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { act } from 'react';
 
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
 import { ScannerFlow } from './ScannerFlow';
@@ -69,7 +70,7 @@ describe('ScannerFlow', () => {
     expect(screen.getByTestId('questionnaire')).toBeInTheDocument();
   });
 
-  it('switches to camera after questionnaire submit', async () => {
+  it('shows consent gate after questionnaire submit, not camera', async () => {
     render(<ScannerFlow />);
 
     const submitBtn = screen.getByRole('button', {
@@ -79,6 +80,36 @@ describe('ScannerFlow', () => {
     await act(async () => {
       submitBtn.click();
     });
+
+    expect(screen.queryByTestId('facescanner')).not.toBeInTheDocument();
+
+    const checkbox = screen.getByRole('checkbox', {
+      name: /data wajah/i,
+    });
+    expect(checkbox).toBeInTheDocument();
+    expect(checkbox).not.toBeChecked();
+
+    const continueBtn = screen.getByRole('button', {
+      name: /lanjut/i,
+    });
+    expect(continueBtn).toBeInTheDocument();
+    expect(continueBtn).toBeDisabled();
+  });
+
+  it('shows camera after consent checked and confirmed', async () => {
+    const user = userEvent.setup();
+
+    render(<ScannerFlow />);
+
+    await user.click(
+      screen.getByRole('button', { name: /submit questionnaire/i })
+    );
+
+    const checkbox = screen.getByRole('checkbox', { name: /data wajah/i });
+    await user.click(checkbox);
+
+    const continueBtn = screen.getByRole('button', { name: /lanjut/i });
+    await user.click(continueBtn);
 
     expect(screen.getByTestId('facescanner')).toBeInTheDocument();
   });

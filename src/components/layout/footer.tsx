@@ -19,7 +19,7 @@ export default function Footer() {
     support: [
       { title: 'Pusat Bantuan', href: '#' },
       { title: 'Kontak', href: '#' },
-      { title: 'Kebijakan Privasi', href: '#' },
+      { title: 'Kebijakan Privasi', href: '/kebijakan-privasi' },
       { title: 'Syarat Layanan', href: '#' },
     ],
   };
