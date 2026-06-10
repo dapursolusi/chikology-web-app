@@ -121,6 +121,7 @@ describe('ChapterList', () => {
     expect(
       screen.getByRole('button', { name: /beli ulang/i })
     ).toBeInTheDocument();
+    expect(screen.getByText(/Bukti Pembayaran Ditolak/i)).toBeInTheDocument();
     expect(screen.getByText(/screenshoot tidak valid/i)).toBeInTheDocument();
   });
 

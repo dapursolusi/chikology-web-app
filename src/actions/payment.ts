@@ -34,19 +34,6 @@ export async function submitPaymentProof(
     return { error: 'ID bab diperlukan' };
   }
 
-  const file = formData.get('file');
-  if (!file || !(file instanceof File)) {
-    return { error: 'File bukti pembayaran diperlukan' };
-  }
-
-  if (!ALLOWED_TYPES.includes(file.type)) {
-    return { error: 'Format file harus JPEG, PNG, atau WebP' };
-  }
-
-  if (file.size > MAX_FILE_SIZE) {
-    return { error: 'Ukuran file maksimal 5MB' };
-  }
-
   const existing = await db
     .select({
       id: paymentProofs.id,
@@ -70,9 +57,26 @@ export async function submitPaymentProof(
 
   const rejectedProof = existing.find((p) => p.status === 'rejected');
   if (rejectedProof?.proofPath) {
-    await supabase.storage
+    const serviceClient = createServiceClient();
+    const { error: removeError } = await serviceClient.storage
       .from('payment-proofs')
       .remove([rejectedProof.proofPath]);
+    if (removeError) {
+      console.error('Failed to remove old proof file:', removeError.message);
+    }
+  }
+
+  const file = formData.get('file');
+  if (!file || !(file instanceof File)) {
+    return { error: 'File bukti pembayaran diperlukan' };
+  }
+
+  if (!ALLOWED_TYPES.includes(file.type)) {
+    return { error: 'Format file harus JPEG, PNG, atau WebP' };
+  }
+
+  if (file.size > MAX_FILE_SIZE) {
+    return { error: 'Ukuran file maksimal 5MB' };
   }
 
   const ext = file.name.split('.').pop() ?? 'png';

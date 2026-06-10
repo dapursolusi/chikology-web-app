@@ -65,7 +65,7 @@ const mockCreateSignedUrl = vi.hoisted(() =>
   }))
 );
 const mockServiceStorageFrom = vi.hoisted(() =>
-  vi.fn(() => ({ createSignedUrl: mockCreateSignedUrl }))
+  vi.fn(() => ({ createSignedUrl: mockCreateSignedUrl, remove: mockRemove }))
 );
 
 vi.mock('@/db', () => ({

@@ -50,8 +50,20 @@ export function PurchaseModal({
   );
   const [rejectedProofUrl, setRejectedProofUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const prevChapterId = useRef(chapter?.id);
 
   const isRejected = chapter?.proofStatus === 'rejected';
+
+  if (prevChapterId.current !== chapter?.id) {
+    prevChapterId.current = chapter?.id;
+    if (chapter) {
+      setStep(chapter?.proofStatus === 'rejected' ? 2 : 1);
+      setError(null);
+      setSelectedFile(null);
+      setPreview(null);
+      setRejectedProofUrl(null);
+    }
+  }
 
   useEffect(() => {
     if (chapter?.proofStatus === 'rejected' && chapter?.id) {
@@ -59,7 +71,7 @@ export function PurchaseModal({
         if ('url' in result) setRejectedProofUrl(result.url);
       });
     }
-  }, [chapter?.id, chapter?.proofStatus]);
+  }, [chapter?.id, chapter?.proofStatus, open]);
 
   function handleOpenChange(newOpen: boolean) {
     if (!newOpen) {
@@ -209,7 +221,7 @@ export function PurchaseModal({
                 className="text-xs text-destructive"
                 data-testid="rejection-reason"
               >
-                Alasan: {chapter.rejectionReason}
+                Bukti Pembayaran Ditolak: {chapter.rejectionReason}
               </p>
             )}
 

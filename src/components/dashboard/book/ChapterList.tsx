@@ -140,7 +140,7 @@ function ChapterAction({
                 data-testid="rejection-reason"
                 className="text-xs text-destructive"
               >
-                {chapter.rejectionReason}
+                Bukti Pembayaran Ditolak: {chapter.rejectionReason}
               </p>
             )}
           </div>
