@@ -31,4 +31,12 @@ describe('Footer', () => {
       screen.getByText(/Datamu aman, privasi terjamin/)
     ).toBeInTheDocument();
   });
+
+  it('links "Kebijakan Privasi" to /kebijakan-privasi', () => {
+    render(<Footer />);
+
+    const link = screen.getByRole('link', { name: 'Kebijakan Privasi' });
+    expect(link).toBeInTheDocument();
+    expect(link).toHaveAttribute('href', '/kebijakan-privasi');
+  });
 });

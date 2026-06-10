@@ -12,7 +12,7 @@ import { StressResultCard } from '@/components/dashboard/scanner/StressResultCar
 
 import { PreScanQuestionnaire } from './PreScanQuestionnaire';
 
-type FlowState = 'form' | 'camera' | 'result';
+type FlowState = 'form' | 'consent' | 'camera' | 'result';
 
 export function ScannerFlow() {
   const router = useRouter();
@@ -21,6 +21,7 @@ export function ScannerFlow() {
     Record<string, string> | undefined
   >(undefined);
   const [result, setResult] = useState<StressLevel | null>(null);
+  const [consentChecked, setConsentChecked] = useState(false);
   const [, startFormTransition] = useTransition();
 
   const handleQuestionnaireSubmit = useCallback(
@@ -28,7 +29,7 @@ export function ScannerFlow() {
       startFormTransition(async () => {
         await saveQuestionnaireResponse({ answers });
         setQuestionnaireAnswers(answers);
-        setFlowState('camera');
+        setFlowState('consent');
       });
     },
     []
@@ -44,10 +45,52 @@ export function ScannerFlow() {
     router.push(`/dashboard/journal?tier=${result.tier}`);
   }, [result, router]);
 
+  const handleConsentConfirm = useCallback(() => {
+    setFlowState('camera');
+  }, []);
+
   const handleReset = useCallback(() => {
     setResult(null);
     setFlowState('camera');
   }, []);
+
+  if (flowState === 'consent') {
+    return (
+      <div className="space-y-6 rounded-xl border bg-card p-6">
+        <div>
+          <h2 className="text-lg font-semibold text-foreground">
+            Persetujuan Privasi
+          </h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Sebelum melanjutkan, kami perlu persetujuan Anda terkait pemrosesan
+            data wajah.
+          </p>
+        </div>
+
+        <label className="flex items-start gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            className="mt-1 h-4 w-4 rounded border-gray-300"
+            checked={consentChecked}
+            onChange={(e) => setConsentChecked(e.target.checked)}
+            aria-label="Saya setuju data wajah saya diproses untuk analisis stres dan tidak disimpan."
+          />
+          <span className="text-sm text-muted-foreground">
+            Saya setuju data wajah saya diproses untuk analisis stres dan tidak
+            disimpan.
+          </span>
+        </label>
+
+        <button
+          onClick={handleConsentConfirm}
+          disabled={!consentChecked}
+          className="w-full rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
+        >
+          Lanjutkan
+        </button>
+      </div>
+    );
+  }
 
   if (flowState === 'result' && result) {
     return (
