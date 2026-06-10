@@ -1,47 +1,77 @@
-## [Tuesday, 09-06-2026 14:23] — Implemented re-upload flow + two-step purchase wizard (issue #55)
+## [Wednesday, 10-06-2026 12:00] — Soft Launch Hardening: Implementation Complete
 
 ### Session Target
 
-Implement issue #55 using TDD with 5 vertical tracer bullets.
+- Implement 5 critical production gaps + kill email auth before June 12 soft launch
+- All decisions locked via grilling session
 
 ### Current State
 
-- Status: shipped
-- Scope: payment/purchase domain (data layer, ChapterList, PurchaseModal, payment action, integration)
+- Status: shipped (code changes done, user-side config items remain)
+- Scope: 6 phases across 15+ files
+- PRD published: GitHub issue #60
 
 ### What Changed
 
-- `src/lib/chapters.ts` — Added `rejectionReason` to `ChapterWithState` type; updated `getChaptersWithState` to query and pass rejectionReason from rejected payment proofs
-- `src/components/dashboard/book/ChapterList.tsx` — Added "Beli Ulang" button + rejection reason display for chapters with `proofStatus === 'rejected'`
-- `src/components/dashboard/book/PurchaseModal.tsx` — Two-step wizard: step 1 (confirm + "Lanjutkan"), step 2 (file upload / "Kirim"). Re-upload flow starts at step 2 showing old rejected proof image via `getRejectedProofUrl` action
-- `src/actions/payment.ts` — `submitPaymentProof` now handles re-upload: queries all proofs (not just pending/approved), blocks active proofs, cleans up old rejected proof file from Storage before uploading new one
-- `src/actions/proof.ts` — **NEW** server action `getRejectedProofUrl` returns signed URL for the latest rejected proof image
-- `src/components/dashboard/book/ChapterList.test.tsx` — Tests for "Beli Ulang" button + rejection reason rendering + onPurchase callback
-- `src/components/dashboard/book/PurchaseModal.test.tsx` — Tests for two-step wizard, Lanjutkan→step 2 transition, rejected chapter flow with old proof image, re-upload submission
-- `src/test/actions/payment.test.ts` — Test for re-upload flow (deletes old file, uploads new, inserts new proof)
-- `src/test/lib/chapters.test.ts` — Test for rejectionReason in getChaptersWithState response
-- `src/test/integration/book-purchase-flow.test.tsx` — Integration test: user sees rejection + Beli Ulang → re-uploads proof → modal closes → router.refresh
+- `src/components/login-form.tsx` — Removed email/password fields + handler. Google OAuth only.
+- `src/components/signup-form.tsx` — Removed email/password fields + handler. Google OAuth only.
+- `src/db/schema.ts` — Added `scan_usage` table (user_id, scan_date, count) with UNIQUE constraint.
+- `drizzle/0005_shallow_mathemanic.sql` — Migration for scan_usage table (applied via drizzle-kit migrate).
+- `src/app/api/analyze-face/route.ts` — Complete rewrite: ensureUserRecord() for FK safety, @()5MB image size validation, per-user daily quota (5/day), burst window (3 scans/2min), 60-min cooldown, scan_usage upsert on success.
+- `src/proxy.ts` — Excluded `/api/health` from session refresh matcher.
+- `src/app/api/health/route.ts` — NEW: Deep health check with DB ping. Returns 200/503.
+- `next.config.ts` — Added CSP + X-Content-Type-Options + X-Frame-Options + Referrer-Policy + Permissions-Policy security headers.
+- `sentry.client.config.ts` — NEW: Sentry client config.
+- `sentry.server.config.ts` — NEW: Sentry server config.
+- `sentry.edge.config.ts` — NEW: Sentry edge config.
+- `src/app/layout.tsx` — Changed `lang="en"` to `lang="id"`.
+- `src/app/error.tsx` — NEW: Branded catch-all error page with Chikology colors, "Coba Lagi" button.
+- `src/app/global-error.tsx` — NEW: Branded catastrophic error page with own `<html>`.
+- `src/app/loading.tsx` — NEW: Skeleton loading state using shadcn Skeleton.
 
 ### Verification
 
-- Commands run: `vitest run`, `tsc --noEmit`
-- Results: 276 tests pass, 0 TypeScript errors, 0 lint errors (skipped 11 unrelated)
+- `bun lint` — 0 errors, 11 pre-existing warnings.
+- `bunx --bun tsc --noEmit` — 0 errors.
+- `bun run test --run` — 276 tests passed, 11 skipped (unchanged).
+- `bun run build` — Compiled successfully in 18.3s.
 
 ### Decisions
 
-- D-055-01: `rejectedProofUrl` generated via dedicated server action (`getRejectedProofUrl`) rather than embedding in `getChaptersWithState` — keeps data layer free of Storage concerns; one extra fetch only when opening re-upload dialog
-- D-055-02: `submitPaymentProof` modified in-place to handle re-upload instead of creating separate action — identical validation/upload logic, just adds cleanup step for rejected proofs
+- D-027: Email/password auth killed for soft launch. Google OAuth only. Revisit post-launch.
+- D-028: Rate limiting uses per-user daily quota (5 scans/day) + in-memory burst/cooldown. Stored in new `scan_usage` table.
+- D-029: Deep health check over shallow — Supabase free tier pauses projects after 7 days idle.
+- D-030: Sentry files created manually (wizard requires interactive DSN input). User must add DSN to `.env.local` + verify.
+- D-031: CSP includes `'unsafe-inline'` and `'unsafe-eval'` — required by Tiptap + shadcn runtime. Tighten post-launch.
 
 ### Known Issues / Risks
 
-- `getRejectedProofUrl` calls Supabase storage service client to generate signed URL with 24h expiry — if the user keeps the modal open for >24h before re-uploading, the old proof image won't display (safe failure, just no preview)
+- **Sentry DSN not configured** — user must add `NEXT_PUBLIC_SENTRY_DSN` and `SENTRY_DSN` to `.env.local` and Vercel env vars. Without this, Sentry silently no-ops.
+- **UptimeRobot not set up** — user must create account and add monitor for `https://chikology.id/api/health`.
+- **Vercel Analytics not enabled** — one-click in Vercel dashboard. Needed for Web Vitals visibility.
+- **pg_cron job not verified** — user must run `SELECT * FROM cron.job` in Supabase SQL editor.
+- **`.env.example` not created** — deferred to non-urgent task.
+
+### User's Post-Implementation Checklist
+
+1. Create Sentry account → add DSN to `.env.local` + deploy → confirm Sentry dashboard shows errors
+2. Enable Vercel Analytics in dashboard (one click)
+3. Set up UptimeRobot → add monitor on `https://chikology.id/api/health` → confirm email alerts
+4. Verify pg_cron job: `SELECT * FROM cron.job WHERE jobname = 'flip-ebook-live-2026-06-16'`
+5. Deploy to Vercel: `git push` → CI runs → Vercel auto-deploys
+6. Full page test in browser after deploy (verify CSP doesn't break Tiptap, camera, sidebar)
+7. If running `bunx --bun drizzle-kit push` (not migrate), it may fail with a check-constraint bug. Use `drizzle-kit generate` + `drizzle-kit migrate` instead.
 
 ### Next Steps (ordered)
 
-1. [Pending] Admin rejection UI — add reason input field when admin rejects a proof (currently hardcoded in tests)
-2. Push/migrate DB schema if any new columns needed (none added in this slice)
-3. Deploy to preview for UAT
+1. Deploy (git push)
+2. Configure Sentry DSN + verify
+3. Set up UptimeRobot + verify alert
+4. Test every page in browser with new CSP headers
+5. Soft launch June 12
 
-### Blockers (if any)
+### Blockers
 
-None
+- None. Code changes are complete and verified.
+
+---

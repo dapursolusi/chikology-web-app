@@ -111,6 +111,19 @@ export const questionnaireResponses = pgTable('questionnaire_responses', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
+export const scanUsage = pgTable(
+  'scan_usage',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id),
+    scanDate: date('scan_date').notNull().defaultNow(),
+    count: integer('count').notNull().default(1),
+  },
+  (table) => [unique().on(table.userId, table.scanDate)]
+);
+
 export const appSettings = pgTable('app_settings', {
   key: text('key').primaryKey(),
   value: text('value').notNull(),
