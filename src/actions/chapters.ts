@@ -101,7 +101,7 @@ export async function purchaseChapter(chapterId: string): Promise<
   };
 }
 
-export async function claimFreeChapter(_chapterId: string): Promise<
+export async function claimFreeChapter(chapterId: string): Promise<
   | {
       success: true;
       chapter: { id: string; title: string; chapterNumber: number };
@@ -117,7 +117,77 @@ export async function claimFreeChapter(_chapterId: string): Promise<
     return { error: 'Not authenticated' };
   }
 
-  return { error: 'Not implemented' };
+  const targetChapters = await db
+    .select()
+    .from(bookChapters)
+    .where(eq(bookChapters.id, chapterId));
+  const chapter = targetChapters[0];
+
+  if (!chapter) {
+    return { error: 'Bab tidak ditemukan' };
+  }
+
+  if (!chapter.isFree) {
+    return { error: 'Bab ini tidak gratis' };
+  }
+
+  if (!isReleased(chapter, new Date())) {
+    return { error: 'Bab belum dirilis' };
+  }
+
+  const allChapters = await db
+    .select({
+      id: bookChapters.id,
+      chapterNumber: bookChapters.chapterNumber,
+      releaseDate: bookChapters.releaseDate,
+      priceIdr: bookChapters.priceIdr,
+      isFree: bookChapters.isFree,
+    })
+    .from(bookChapters)
+    .orderBy(asc(bookChapters.chapterNumber));
+
+  const purchases = await db
+    .select({ chapterId: chapterPurchases.chapterId })
+    .from(chapterPurchases)
+    .where(eq(chapterPurchases.userId, user.id));
+
+  const ownedChapterIds = new Set(purchases.map((p) => p.chapterId));
+
+  if (ownedChapterIds.has(chapterId)) {
+    return { error: 'Bab sudah dimiliki' };
+  }
+
+  const ownedChapterNumbers = new Set(
+    allChapters
+      .filter((c) => ownedChapterIds.has(c.id))
+      .map((c) => c.chapterNumber)
+  );
+
+  const state = computeChapterState(chapter, ownedChapterNumbers, allChapters);
+
+  if (state === 'locked') {
+    return { error: 'Selesaikan bab sebelumnya terlebih dahulu' };
+  }
+
+  if (state !== 'buyable') {
+    return { error: 'Bab belum dapat diklaim' };
+  }
+
+  await db
+    .insert(chapterPurchases)
+    .values({ userId: user.id, chapterId })
+    .returning({ id: chapterPurchases.id });
+
+  revalidatePath('/dashboard/book');
+
+  return {
+    success: true,
+    chapter: {
+      id: chapter.id,
+      title: chapter.title,
+      chapterNumber: chapter.chapterNumber,
+    },
+  };
 }
 
 export async function getChapterSignedUrl(
