@@ -148,7 +148,7 @@ function ToolbarButton({
           size="sm"
           type="button"
           onClick={onClick}
-          className={`size-8 p-0 ${active ? 'bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground' : ''}`}
+          className={`size-9 min-h-[44px] min-w-[44px] p-0 ${active ? 'bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground' : ''}`}
         >
           {children}
         </Button>

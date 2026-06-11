@@ -41,14 +41,14 @@ export function StressResultCard({
     <div className="w-full animate-in fade-in slide-in-from-bottom-2 duration-300">
       <div className="overflow-hidden rounded-xl border">
         <div
-          className="h-1.5 w-full"
+          className="h-1 w-full rounded-full"
           style={{ backgroundColor: result.color }}
         />
         <div
           className={`space-y-4 bg-gradient-to-br p-5 ${tierGradients[result.tier]} border-l-4 ${tierBorders[result.tier]}`}
         >
           <div className="flex items-center gap-4">
-            <span className="flex size-14 shrink-0 items-center justify-center rounded-full bg-white/80 text-3xl shadow-sm ring-1 ring-black/5">
+            <span className="flex size-12 shrink-0 items-center justify-center rounded-full bg-white/90 text-2xl shadow-sm ring-1 ring-black/5">
               {result.emoji}
             </span>
             <div className="min-w-0">
@@ -62,52 +62,46 @@ export function StressResultCard({
             </div>
           </div>
 
-          <details className="group space-y-2 rounded-lg bg-white/60 p-4 ring-1 ring-black/5">
+          <details className="group space-y-2 rounded-lg bg-white p-4 shadow-sm">
             <summary className="cursor-pointer text-xs font-semibold uppercase tracking-wider text-muted-foreground group-open:text-primary">
               Lihat Detail
             </summary>
             <div className="mt-2 space-y-2 text-sm">
               <div>
                 <p className="font-medium text-foreground">Ciri:</p>
-                <p className="text-foreground/70">
-                  <ul>
-                    {result.signs.map((sign, index) => (
-                      <li key={index}>{sign}</li>
-                    ))}
-                  </ul>
-                </p>
+                <ul className="text-foreground/70">
+                  {result.signs.map((sign, index) => (
+                    <li key={index}>{sign}</li>
+                  ))}
+                </ul>
               </div>
               <div>
                 <p className="font-medium text-foreground">Risiko:</p>
-                <p className="text-foreground/70">
-                  <ul>
-                    {result.risks.map((risk, index) => (
-                      <li key={index}>{risk}</li>
-                    ))}
-                  </ul>
-                </p>
+                <ul className="text-foreground/70">
+                  {result.risks.map((risk, index) => (
+                    <li key={index}>{risk}</li>
+                  ))}
+                </ul>
               </div>
             </div>
           </details>
 
-          <div className="rounded-lg bg-white/60 p-4 ring-1 ring-black/5">
+          <div className="rounded-lg bg-white p-4 shadow-sm">
             <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Intervensi
             </p>
-            <p className="text-sm">
-              <ol>
-                {result.interventions.map((intervention, index) => (
-                  <li key={index}>
-                    <div className="space-y-1 rounded-md bg-primary/5 p-3">
-                      <p>{intervention.title}</p>
-                      <p className="text-foreground/70">
-                        {intervention.description}
-                      </p>
-                    </div>
-                  </li>
-                ))}
-              </ol>
-            </p>
+            <ol className="text-sm">
+              {result.interventions.map((intervention, index) => (
+                <li key={index}>
+                  <div className="space-y-1 rounded-md bg-primary/5 p-3">
+                    <p>{intervention.title}</p>
+                    <p className="text-foreground/70">
+                      {intervention.description}
+                    </p>
+                  </div>
+                </li>
+              ))}
+            </ol>
           </div>
 
           <div className="space-y-2">
@@ -126,12 +120,11 @@ export function StressResultCard({
             className="block"
           >
             <Button variant="secondary" className="w-full" size="lg">
-              Butuh rekomendasi lebih dalam? Jadwalkan konsultasi dengan Mas
-              Chiko
+              Konsultasi dengan Mas Chiko
             </Button>
           </Link>
 
-          <div className="flex flex-col gap-2 sm:flex-row">
+          <div className="flex gap-2">
             {onSave && (
               <Button
                 onClick={onSave}
