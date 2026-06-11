@@ -8,6 +8,10 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest",
+    "db:generate": "bunx --bun drizzle-kit generate",
+    "db:migrate": "bunx --bun drizzle-kit migrate",
+    "db:generate:prod": "export $(grep -v '^#' .env.production | xargs) && bunx --bun drizzle-kit generate",
+    "db:migrate:prod": "export $(grep -v '^#' .env.production | xargs) && bunx --bun drizzle-kit migrate",
     "prepare": "husky"
   },
   "dependencies": {

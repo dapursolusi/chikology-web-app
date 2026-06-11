@@ -27,49 +27,60 @@ Return {"tier": <1-5>}. JSON only.`;
 
 const DAILY_LIMIT = 5;
 const BURST_LIMIT = 3;
-const BURST_WINDOW_MS = 2 * 60 * 1000;
+const MIN_SPACING_MS = 60 * 1000;
 const COOLDOWN_MS = 60 * 60 * 1000;
 const MAX_IMAGE_BYTES = 5_000_000;
 
 type BurstState = {
   burstCount: number;
-  windowStart: number;
+  lastScanTime: number;
   cooldownUntil: number;
+  scanDate: string;
 };
 const burstMap = new Map<string, BurstState>();
 
-function getBurstState(userId: string): BurstState {
+function getBurstState(userId: string, today: string): BurstState {
   let state = burstMap.get(userId);
-  if (!state || Date.now() > state.cooldownUntil) {
-    state = { burstCount: 0, windowStart: Date.now(), cooldownUntil: 0 };
+  if (!state || state.scanDate !== today) {
+    state = {
+      burstCount: 0,
+      lastScanTime: 0,
+      cooldownUntil: 0,
+      scanDate: today,
+    };
     burstMap.set(userId, state);
   }
   return state;
 }
 
-function checkBurst(userId: string): { allowed: boolean; reason?: string } {
-  const state = getBurstState(userId);
+function checkBurst(state: BurstState): { allowed: boolean; reason?: string } {
+  const now = Date.now();
 
-  if (Date.now() < state.cooldownUntil) {
+  if (now < state.cooldownUntil) {
     return { allowed: false, reason: 'cooldown' };
   }
 
-  if (Date.now() - state.windowStart > BURST_WINDOW_MS) {
-    state.burstCount = 0;
-    state.windowStart = Date.now();
-  }
+  state.cooldownUntil = 0;
 
-  if (state.burstCount >= BURST_LIMIT) {
-    state.cooldownUntil = Date.now() + COOLDOWN_MS;
-    return { allowed: false, reason: 'burst' };
+  if (state.burstCount > 0) {
+    const timeSinceLast = now - state.lastScanTime;
+    if (timeSinceLast < MIN_SPACING_MS) {
+      return { allowed: false, reason: 'spacing' };
+    }
   }
 
   return { allowed: true };
 }
 
-function recordBurst(userId: string) {
-  const state = getBurstState(userId);
+function recordBurst(state: BurstState) {
+  const now = Date.now();
+
   state.burstCount++;
+  state.lastScanTime = now;
+
+  if (state.burstCount >= BURST_LIMIT) {
+    state.cooldownUntil = now + COOLDOWN_MS;
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -99,15 +110,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const burst = checkBurst(user.id);
+    const today = new Date().toISOString().split('T')[0];
+    const burstState = getBurstState(user.id, today);
+    const burst = checkBurst(burstState);
     if (!burst.allowed) {
       return NextResponse.json(
         { error: 'Terlalu banyak permintaan. Coba lagi nanti' },
         { status: 429 }
       );
     }
-
-    const today = new Date().toISOString().split('T')[0];
     const usage = await db
       .select({ count: scanUsage.count })
       .from(scanUsage)
@@ -144,47 +155,67 @@ export async function POST(request: NextRequest) {
 
     let content: string | null = null;
 
-    try {
-      const response = await sumopod.chat.completions.create({
-        model: 'MiniMax-M3',
-        messages: [
-          {
-            role: 'user',
-            content: [
-              { type: 'text', text: promptWithContext },
-              {
-                type: 'image_url',
-                image_url: {
-                  url: `data:image/jpeg;base64,${image}`,
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        const response = await sumopod.chat.completions.create({
+          model: 'MiniMax-M3',
+          messages: [
+            {
+              role: 'user',
+              content: [
+                { type: 'text', text: promptWithContext },
+                {
+                  type: 'image_url',
+                  image_url: {
+                    url: `data:image/jpeg;base64,${image}`,
+                  },
                 },
-              },
-            ],
-          },
-        ],
-        temperature: 0.2,
-        max_tokens: 300,
-      });
-      content = response.choices?.[0]?.message?.content;
-    } catch (e) {
-      console.error('SumoPod call failed:', e);
+              ],
+            },
+          ],
+          temperature: 0.2,
+          max_tokens: 300,
+        });
+        content = response.choices?.[0]?.message?.content;
+      } catch (e) {
+        console.error('SumoPod call failed:', e);
+      }
+
+      if (content?.trim()) break;
+
+      if (attempt === 1) {
+        console.warn('SumoPod returned empty, retrying...');
+        await new Promise((r) => setTimeout(r, 500));
+      }
     }
 
-    if (!content) {
+    if (!content?.trim()) {
+      console.error('Empty content from model after retry');
       return NextResponse.json(
-        { error: 'SumoPod returned empty response' },
+        { error: 'terjadi kesalahan dari server AI' },
         { status: 502 }
       );
     }
 
-    const tierMatch = content.match(/\{[\s\S]*?"tier"\s*:\s*(\d+)[\s\S]*?\}/);
-    if (!tierMatch) {
+    let tier: number;
+
+    try {
+      const parsed = JSON.parse(content);
+      tier = parsed.tier ?? Math.round(parsed);
+    } catch {
+      const match = content.match(/\{[\s\S]*?"tier"\s*:\s*(\d+)/);
+      tier = match ? Number(match[1]) : NaN;
+    }
+
+    if (!Number.isFinite(tier)) {
+      console.error('Parse failed. Content:', content);
       return NextResponse.json(
-        { error: 'Invalid JSON from model', raw: content },
+        { error: 'terjadi kesalahan dari server AI' },
         { status: 502 }
       );
     }
 
-    const tier = Math.max(1, Math.min(5, Math.round(Number(tierMatch[1]))));
+    tier = Math.max(1, Math.min(5, Math.round(tier)));
 
     await db
       .insert(scanUsage)
@@ -194,7 +225,7 @@ export async function POST(request: NextRequest) {
         set: { count: sql`scan_usage.count + 1` },
       });
 
-    recordBurst(user.id);
+    recordBurst(burstState);
 
     return NextResponse.json({ tier });
   } catch (error) {

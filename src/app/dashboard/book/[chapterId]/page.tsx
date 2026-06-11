@@ -10,7 +10,7 @@ import { createClient } from '@/lib/supabase/server';
 import { ReaderClient } from './ReaderClient';
 
 export const metadata = {
-  title: 'Baca Bab · Chikology',
+  title: 'Baca Bab',
 };
 
 export default async function ReaderPage({

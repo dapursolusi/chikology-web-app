@@ -7,7 +7,7 @@ import { getEbookLive } from '@/lib/feature-flags';
 import { createClient } from '@/lib/supabase/server';
 
 export const metadata = {
-  title: 'E-Book · Chikology',
+  title: 'E-Book',
 };
 
 export default async function BookPage() {
