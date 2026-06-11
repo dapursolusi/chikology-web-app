@@ -1,4 +1,4 @@
-import { BookOpen, ScanFace, Speech } from 'lucide-react';
+import { BookOpen, NotebookPen, ScanFace } from 'lucide-react';
 
 export default function Features() {
   return (
@@ -11,23 +11,22 @@ export default function Features() {
           </h2>
           <p className="mt-4 text-lg leading-relaxed text-muted-foreground">
             Platform lengkap untuk mendukung perjalanan kesehatan mental kamu
-            dengan teknologi AI dan dukungan konseling profesional.
+            dengan teknologi AI.
           </p>
         </div>
 
         {/* Features grid */}
         <div className="mt-12 grid grid-cols-1 gap-6 md:grid-cols-3">
-          {/* Feature 1: Counseling */}
+          {/* Feature 1: Journal */}
           <div className="group rounded-2xl border border-border bg-card p-6 shadow-sm transition-all duration-250 hover:shadow-md hover:border-primary/20 hover:-translate-y-0.5">
             <div className="inline-flex rounded-xl bg-primary/10 p-3 text-primary transition-colors group-hover:bg-primary/20">
-              <Speech className="size-6" />
+              <NotebookPen className="size-6" />
             </div>
             <h3 className="mt-4 text-xl font-semibold text-card-foreground">
-              Konseling
+              Jurnal Harian
             </h3>
             <p className="mt-2 leading-relaxed text-muted-foreground">
-              Berbicara dengan profesional untuk mendapatkan dukungan dan
-              panduan yang kamu butuhkan.
+              Catat perasaan dan pantau perkembangan emosi kamu setiap hari.
             </p>
           </div>
 
@@ -59,20 +58,6 @@ export default function Features() {
             </p>
           </div>
         </div>
-      </div>
-
-      <div className="mx-auto mt-16 max-w-2xl px-4 text-center md:px-8">
-        <p className="text-lg leading-relaxed text-muted-foreground">
-          Butuh rekomendasi lebih dalam?{' '}
-          <a
-            href="https://wa.me/6287853186759"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="font-semibold text-primary underline underline-offset-4 hover:text-primary/80"
-          >
-            Jadwalkan konsultasi dengan Mas Chiko
-          </a>
-        </p>
       </div>
     </section>
   );

@@ -5,24 +5,10 @@ import Logo from '../logo';
 export default function Footer() {
   const currentYear = new Date().getFullYear();
 
-  const footerLinks = {
-    product: [
-      { title: 'Fitur', href: '#' },
-      { title: 'Harga', href: '#' },
-      { title: 'Testimoni', href: '#' },
-    ],
-    company: [
-      { title: 'Tentang Kami', href: '#' },
-      { title: 'Karir', href: '#' },
-      { title: 'Blog', href: '#' },
-    ],
-    support: [
-      { title: 'Pusat Bantuan', href: '#' },
-      { title: 'Kontak', href: '#' },
-      { title: 'Kebijakan Privasi', href: '/kebijakan-privasi' },
-      { title: 'Syarat Layanan', href: '#' },
-    ],
-  };
+  const layanan = [
+    { title: 'Jurnal Harian', href: '/dashboard/journal' },
+    { title: 'Deteksi Mood', href: '/dashboard/scanner' },
+  ];
 
   const socialLinks = [
     {
@@ -106,61 +92,23 @@ export default function Footer() {
     <footer className="border-t bg-muted/30">
       <div className="container-custom py-12 md:py-16">
         {/* Main footer content */}
-        <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
           {/* Brand column */}
-          <div className="col-span-2 md:col-span-1">
+          <div>
             <Logo />
             <p className="mt-4 max-w-xs text-sm text-muted-foreground leading-relaxed">
               Platform kesehatan mental yang membantu kamu memahami dan merawat
-              diri sendiri dengan teknologi AI dan konseling profesional.
+              diri sendiri dengan teknologi AI.
             </p>
           </div>
 
-          {/* Product links */}
+          {/* Layanan links */}
           <div>
             <h4 className="mb-4 text-sm font-semibold text-foreground">
-              Produk
+              Layanan
             </h4>
             <ul className="space-y-2">
-              {footerLinks.product.map((link) => (
-                <li key={link.title}>
-                  <Link
-                    href={link.href}
-                    className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-                  >
-                    {link.title}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Company links */}
-          <div>
-            <h4 className="mb-4 text-sm font-semibold text-foreground">
-              Perusahaan
-            </h4>
-            <ul className="space-y-2">
-              {footerLinks.company.map((link) => (
-                <li key={link.title}>
-                  <Link
-                    href={link.href}
-                    className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-                  >
-                    {link.title}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Support links */}
-          <div>
-            <h4 className="mb-4 text-sm font-semibold text-foreground">
-              Dukungan
-            </h4>
-            <ul className="space-y-2">
-              {footerLinks.support.map((link) => (
+              {layanan.map((link) => (
                 <li key={link.title}>
                   <Link
                     href={link.href}

@@ -80,13 +80,6 @@ const Navbar1 = ({
       url: '#',
       items: [
         {
-          title: 'Konseling',
-          description:
-            'Layanan konseling profesional untuk mendukung kesehatan mental',
-          icon: <Book className="size-5 shrink-0" />,
-          url: '/dashboard/scanner',
-        },
-        {
           title: 'Jurnal Harian',
           description: 'Catat perasaan dan pantau perkembangan emosi kamu',
           icon: <Sparkles className="size-5 shrink-0" />,
@@ -117,14 +110,6 @@ const Navbar1 = ({
           url: '#',
         },
       ],
-    },
-    {
-      title: 'Harga',
-      url: '#',
-    },
-    {
-      title: 'Blog',
-      url: '#',
     },
   ],
   auth = {
