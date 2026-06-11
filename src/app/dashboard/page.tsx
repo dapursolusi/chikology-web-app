@@ -67,7 +67,7 @@ export default async function Page() {
       title: 'Rata-rata stres',
       value: avgMood !== null ? String(Math.round(avgMood)) : '—',
       change: avgMood !== null ? 'Tingkat stres mingguan' : 'Belum ada data',
-      icon: Calendar,
+      icon: Sparkles,
       color: 'text-orange-600 dark:text-orange-400',
       bg: 'bg-orange-100 dark:bg-orange-900/30',
     },
@@ -121,33 +121,36 @@ export default async function Page() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-              <Link href="/dashboard/journal">
-                <Button
-                  variant="outline"
-                  className="h-24 flex-col gap-2 border-2 hover:border-primary/20 hover:bg-primary/5"
-                >
+              <Button
+                variant="outline"
+                asChild
+                className="h-24 flex-col gap-2 border-2 hover:border-primary/20 hover:bg-primary/5"
+              >
+                <Link href="/dashboard/journal">
                   <Calendar className="size-6 text-primary" />
                   <span className="text-sm font-medium">Tulis Jurnal</span>
-                </Button>
-              </Link>
-              <Link href="/dashboard/scanner">
-                <Button
-                  variant="outline"
-                  className="h-24 flex-col gap-2 border-2 hover:border-primary/20 hover:bg-primary/5"
-                >
+                </Link>
+              </Button>
+              <Button
+                variant="outline"
+                asChild
+                className="h-24 flex-col gap-2 border-2 hover:border-primary/20 hover:bg-primary/5"
+              >
+                <Link href="/dashboard/scanner">
                   <Sparkles className="size-6 text-secondary-foreground" />
                   <span className="text-sm font-medium">Deteksi Mood</span>
-                </Button>
-              </Link>
-              <Link href="/dashboard/journal">
-                <Button
-                  variant="outline"
-                  className="h-24 flex-col gap-2 border-2 hover:border-primary/20 hover:bg-primary/5"
-                >
+                </Link>
+              </Button>
+              <Button
+                variant="outline"
+                asChild
+                className="h-24 flex-col gap-2 border-2 hover:border-primary/20 hover:bg-primary/5"
+              >
+                <Link href="/dashboard/journal">
                   <BookOpen className="size-6 text-secondary-foreground" />
                   <span className="text-sm font-medium">Jurnal</span>
-                </Button>
-              </Link>
+                </Link>
+              </Button>
             </div>
           </CardContent>
         </Card>

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 
 import { type Mood, deleteJournalEntry } from '@/actions/journal';
 import { stressLevels } from '@/data/stressLevels';
+import { ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
 
 import {
@@ -119,7 +120,7 @@ function JournalHistoryItem({
       <button
         type="button"
         onClick={() => setExpanded((prev) => !prev)}
-        className="flex w-full items-start gap-3 p-3 text-left"
+        className="flex w-full cursor-pointer items-start gap-3 p-3 text-left"
       >
         <span className="text-2xl">{MOOD_EMOJI[entry.mood ?? 'neutral']}</span>
         <div className="flex-1 space-y-1">
@@ -130,11 +131,9 @@ function JournalHistoryItem({
             {preview.length > 120 ? preview.slice(0, 120) + '...' : preview}
           </p>
         </div>
-        <span
-          className={`ml-auto shrink-0 text-muted-foreground transition-transform ${expanded ? 'rotate-180' : ''}`}
-        >
-          ▼
-        </span>
+        <ChevronDown
+          className={`ml-auto shrink-0 size-5 text-muted-foreground transition-transform ${expanded ? 'rotate-180' : ''}`}
+        />
       </button>
 
       {expanded && (

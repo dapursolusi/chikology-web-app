@@ -163,11 +163,17 @@
     font-feature-settings: 'kern', 'liga', 'clig', 'calt';
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    touch-action: manipulation;
   }
 
   html {
     @apply font-sans;
-    scroll-behavior: smooth;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    html {
+      scroll-behavior: smooth;
+    }
   }
 
   h1,

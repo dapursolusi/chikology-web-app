@@ -9,6 +9,7 @@ import type { StressLevel } from '@/data/stressLevels';
 
 import FaceScanner from '@/components/dashboard/scanner/FaceScanner';
 import { StressResultCard } from '@/components/dashboard/scanner/StressResultCard';
+import { Button } from '@/components/ui/button';
 
 import { PreScanQuestionnaire } from './PreScanQuestionnaire';
 
@@ -67,10 +68,10 @@ export function ScannerFlow() {
           </p>
         </div>
 
-        <label className="flex items-start gap-3 cursor-pointer">
+        <label className="flex cursor-pointer items-start gap-3">
           <input
             type="checkbox"
-            className="mt-1 h-4 w-4 rounded border-gray-300"
+            className="mt-0.5 size-5 shrink-0 cursor-pointer rounded border-2 border-primary/30 bg-white accent-primary"
             checked={consentChecked}
             onChange={(e) => setConsentChecked(e.target.checked)}
             aria-label="Saya setuju data wajah saya diproses untuk analisis stres dan tidak disimpan."
@@ -81,13 +82,13 @@ export function ScannerFlow() {
           </span>
         </label>
 
-        <button
+        <Button
           onClick={handleConsentConfirm}
           disabled={!consentChecked}
-          className="w-full rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
+          className="w-full"
         >
           Lanjutkan
-        </button>
+        </Button>
       </div>
     );
   }

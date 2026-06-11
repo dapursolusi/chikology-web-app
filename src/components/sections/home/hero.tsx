@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 
+import Link from 'next/link';
+
 import { ArrowRight, BookOpen, MessageCircle, Sparkles } from 'lucide-react';
 
 import { LoginForm } from '@/components/login-form';
@@ -9,7 +11,7 @@ import Modal from '@/components/modal';
 import { SignupForm } from '@/components/signup-form';
 import { Button } from '@/components/ui/button';
 
-export function Hero() {
+export function Hero({ isAuthenticated }: { isAuthenticated: boolean }) {
   const [activeAuth, setActiveAuth] = useState<'login' | 'signup' | null>(null);
   const handleOpenLogin = () => setActiveAuth('login');
   const handleOpenSignup = () => setActiveAuth('signup');
@@ -39,26 +41,44 @@ export function Hero() {
           </p>
         </div>
 
-        {/* CTA Buttons */}
-        <div className="mb-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-          <Button
-            size="lg"
-            className="h-12 min-w-[200px] rounded-lg px-8 text-base shadow-sm"
-            onClick={handleOpenSignup}
-          >
-            Daftar
-            <ArrowRight className="ml-2 size-4" />
-          </Button>
+        {/* CTA or Welcome-back */}
+        {isAuthenticated ? (
+          <div className="mb-8 flex flex-col items-center gap-3">
+            <p className="text-sm font-medium text-muted-foreground">
+              Selamat datang kembali
+            </p>
+            <Button
+              size="lg"
+              asChild
+              className="h-12 rounded-lg px-8 text-base shadow-sm"
+            >
+              <Link href="/dashboard">
+                Buka Dashboard
+                <ArrowRight className="ml-2 size-4" />
+              </Link>
+            </Button>
+          </div>
+        ) : (
+          <div className="mb-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <Button
+              size="lg"
+              className="h-12 min-w-[200px] rounded-lg px-8 text-base shadow-sm"
+              onClick={handleOpenSignup}
+            >
+              Daftar
+              <ArrowRight className="ml-2 size-4" />
+            </Button>
 
-          <Button
-            variant="outline"
-            size="lg"
-            className="h-12 min-w-[200px] rounded-lg border-2 px-8 text-base"
-            onClick={handleOpenLogin}
-          >
-            Masuk
-          </Button>
-        </div>
+            <Button
+              variant="outline"
+              size="lg"
+              className="h-12 min-w-[200px] rounded-lg border-2 px-8 text-base"
+              onClick={handleOpenLogin}
+            >
+              Masuk
+            </Button>
+          </div>
+        )}
 
         {/* Social proof */}
         <div className="mt-10 flex flex-wrap items-center justify-center gap-6 text-sm text-muted-foreground md:text-base">
@@ -151,22 +171,24 @@ export function Hero() {
         </div>
       </div>
 
-      <Modal
-        trigger={null}
-        open={activeAuth !== null}
-        onOpenChange={(open) => {
-          if (!open) handleClose();
-        }}
-        content={{
-          variant: 'direct',
-          directContent:
-            activeAuth === 'login' ? (
-              <LoginForm onSwitchToSignup={handleOpenSignup} />
-            ) : activeAuth === 'signup' ? (
-              <SignupForm onSwitchToLogin={handleOpenLogin} />
-            ) : null,
-        }}
-      />
+      {!isAuthenticated && (
+        <Modal
+          trigger={null}
+          open={activeAuth !== null}
+          onOpenChange={(open) => {
+            if (!open) handleClose();
+          }}
+          content={{
+            variant: 'direct',
+            directContent:
+              activeAuth === 'login' ? (
+                <LoginForm onSwitchToSignup={handleOpenSignup} />
+              ) : activeAuth === 'signup' ? (
+                <SignupForm onSwitchToLogin={handleOpenLogin} />
+              ) : null,
+          }}
+        />
+      )}
     </section>
   );
 }

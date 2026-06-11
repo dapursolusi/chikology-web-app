@@ -40,7 +40,7 @@ vi.mock('lucide-react', () => ({
 
 describe('Hero', () => {
   it('renders primary CTA as "Daftar" not "Mulai Gratis"', () => {
-    render(<Hero />);
+    render(<Hero isAuthenticated={false} />);
 
     const ctaButtons = screen.getAllByRole('button');
     const primaryCTA = ctaButtons.find((btn) =>
