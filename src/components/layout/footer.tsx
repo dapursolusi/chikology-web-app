@@ -132,9 +132,18 @@ export default function Footer() {
 
         {/* Bottom bar */}
         <div className="mt-6 flex flex-col items-center justify-between gap-4 border-t pt-8 md:flex-row">
-          <p className="text-sm text-muted-foreground">
-            © {currentYear} Chikology. Hak cipta dilindungi.
-          </p>
+          <div className="flex items-center gap-4">
+            <p className="text-sm text-muted-foreground">
+              © {currentYear} Chikology. Hak cipta dilindungi.
+            </p>
+            <span className="hidden text-muted-foreground/30 md:inline">|</span>
+            <Link
+              href="/kebijakan-privasi"
+              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Kebijakan Privasi
+            </Link>
+          </div>
 
           {/* Social icons */}
           <div className="flex items-center gap-4">
