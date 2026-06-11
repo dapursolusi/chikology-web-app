@@ -1,47 +1,44 @@
-## [Wednesday, 10-06-2026 — ] — Implemented issue #64: consent gate, privacy policy page, Supabase keep-alive
+## [Wednesday, 11-06-2026 13:26] — Pre-launch landing page polish
 
 ### Session Target
 
-- Ship issue #64 via TDD: consent checkbox in scanner flow, privacy policy page at /kebijakan-privasi, footer link, and Supabase keep-alive cron migration.
+- Polish landing page before soft launch: remove counseling references, simplify nav/footer, add Google icon to auth buttons, clean up hero copy, remove logo image.
 
 ### Current State
 
 - Status: shipped
-- Scope: scanner flow, footer, new privacy route, drizzle migration
+- Scope: `src/components/navbar1.tsx`, `src/components/login-form.tsx`, `src/components/signup-form.tsx`, `src/components/layout/footer.tsx`, `src/components/sections/home/hero.tsx`, `src/components/sections/home/features.tsx`, `src/components/logo.tsx`
 
 ### What Changed
 
-- `src/components/dashboard/scanner/ScannerFlow.tsx` — Added consent gate state between questionnaire and camera; checkbox "Saya setuju data wajah saya diproses untuk analisis stres dan tidak disimpan." with disabled "Lanjutkan" button until checked
-- `src/components/dashboard/scanner/scanner-flow.test.tsx` — Replaced "switches to camera after submit" test with "shows consent gate after questionnaire submit, not camera" + "shows camera after consent checked and confirmed"
-- `src/components/layout/footer.tsx` — Changed "Kebijakan Privasi" link href from '#' to '/kebijakan-privasi'
-- `src/components/layout/footer.test.tsx` — Added test verifying "Kebijakan Privasi" link points to /kebijakan-privasi
-- `src/app/(main)/kebijakan-privasi/page.tsx` — New static privacy policy page in Indonesian (data collection, purpose, storage, user rights per UU PDP No. 27/2022, contact info)
-- `src/app/(main)/kebijakan-privasi/page.test.tsx` — Test verifying page renders key IN phrases (kebijakan privasi, data wajah, tidak disimpan, UU No. 27)
-- `drizzle/0004_supabase_keepalive_cron.sql` — Recurring pg_cron job running SELECT 1 every 6 days at midnight UTC to prevent Supabase free-tier pausing. Idempotent, follows 0003 pattern.
+- `src/components/navbar1.tsx` — Removed "Konseling" from Layanan dropdown, removed "Harga" and "Blog" top-level nav items
+- `src/components/login-form.tsx` — Added Google "G" SVG icon to "Masuk dengan Google" button
+- `src/components/signup-form.tsx` — Added Google "G" SVG icon to "Daftar dengan Google" button
+- `src/components/layout/footer.tsx` — Simplified to 2 columns: brand + Layanan (Jurnal Harian, Deteksi Mood); removed Produk/Perusahaan/Dukungan columns; removed "konseling profesional" from description
+- `src/components/sections/home/hero.tsx` — Removed "What's new | Read more" badge; changed subheadline to "Jurnal harian, deteksi mood dengan AI, dan panduan kesehatan mental dalam satu tempat."; removed unused `next/link` import
+- `src/components/sections/home/features.tsx` — Replaced "Konseling" feature card with "Jurnal Harian"; removed "dukungan konseling profesional" from section description; removed "Jadwalkan konsultasi dengan Mas Chiko" CTA
+- `src/components/logo.tsx` — Removed CDN SVG image, simplified to text-only "Chikology" link
 
 ### Verification
 
-- Commands run: `npx vitest` on scanner-flow (3 pass), footer (2 pass), privacy page (1 pass)
-- Lint: `npx eslint` on all changed files — no issues
-- Results: 6/6 tests pass, 0 lint errors
+- Commands run: `bun run lint`, `bun run build`
+- Results: Lint 0 errors (8 pre-existing warnings), build successful (all routes compiled)
 
 ### Decisions
 
-- D-011: Consent state — local React useState, no DB persistence. Ephemeral per-scan consent is sufficient for soft launch.
-- D-012: Test runner — `npx vitest` works correctly with jsdom; `bun test` has a jsdom incompatibility (document is not defined). Use `npx vitest` for all test runs.
+- D-001: Replaced Konseling feature card with Jurnal Harian instead of removing the column — keeps 3-column grid and highlights an actual service
+- D-002: Used inline Google SVG icon instead of a package — avoids adding a dependency for one icon
 
 ### Known Issues / Risks
 
-- Bun test runner does not work with jsdom in this project — `document is not defined` errors across many test files. npx vitest works fine.
-- Privacy page has no .env-dependent content — all contact info is hardcoded. No risk.
-- Keep-alive cron applied to Supabase — `supabase-keep-alive-6d` active, runs `SELECT 1` every 6 days.
+- "Jadwalkan konsultasi dengan Mas Chiko" CTA still exists in dashboard StressResultCard.tsx and ReaderClient.tsx (out of scope for this landing page polish)
 
 ### Next Steps (ordered)
 
-1. Tag v0.1.0 on June 12
-2. Upload Mas Chiko's book draft on June 12
-3. Verify consent gate and privacy page in staging preview
+1. Merge PR #67
+2. Consider whether to remove "konsultasi" CTA from StressResultCard as well
+3. Soft launch
 
-### Blockers
+### Blockers (if any)
 
-- None
+- none

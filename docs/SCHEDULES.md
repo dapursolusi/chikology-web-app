@@ -6,46 +6,10 @@
 
 ---
 
-## Versioning Strategy
-
-| Tag      | Date          | Meaning                                        |
-| -------- | ------------- | ---------------------------------------------- |
-| `v0.1.0` | June 12, 2026 | Soft launch — scanner + journal, e-book gated  |
-| `v0.1.x` | June 12–15    | Cosmetic fixes only, batched 1-2x per week     |
-| `v1.0.0` | June 16, 2026 | Full launch — e-book live, all features active |
-| `v1.0.x` | Post-June 16  | Bug fixes                                      |
-| `v1.x.0` | Post-June 16  | New features (profile, analytics, etc.)        |
-| `v2.0.0` | TBD           | Major redesign or mobile app exists            |
-
-Mobile app: separate repo (`chikology-mobile-app`), starts at its own `v0.1.0`. Independent versioning.
-
-## Key Dates
-
 | Milestone   | Date                                     | Scope                                                      |
 | ----------- | ---------------------------------------- | ---------------------------------------------------------- |
 | Soft Launch | **June 12, 2026**                        | Scanner + Journal + Landing Page. E-book = countdown only. |
 | Full Launch | **June 16, 2026** (Mas Chiko's birthday) | E-book unlocks. Chapter buttons appear. Countdown removed. |
-
----
-
-## Tech Stack Decisions (Locked)
-
-| Layer           | Choice                                |
-| --------------- | ------------------------------------- |
-| Framework       | Next.js (App Router)                  |
-| UI              | Tailwind CSS v4 + shadcn/ui           |
-| Database        | Supabase (Postgres)                   |
-| ORM             | Drizzle ORM + postgres driver         |
-| Auth            | Supabase Auth (Google OAuth only)     |
-| Face Detection  | Groq (Llama 4 Scout) server-side      |
-| Storage         | Supabase Storage (book PDFs, Phase 3) |
-| PDF Rendering   | PDF.js v6.0.227 (self-hosted viewer)  |
-| PDF Watermark   | pdf-lib v1.17.1 (server-side only)    |
-| Deploy          | Vercel                                |
-| Payment         | Mock (real gateway deferred)          |
-| Book Pricing    | Waiting on Mas Chiko                  |
-| Email Marketing | Deferred until 500+ users             |
-| Package Manager | bun — `bunx --bun`, not npx           |
 
 ---
 

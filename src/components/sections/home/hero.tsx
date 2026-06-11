@@ -2,8 +2,6 @@
 
 import { useState } from 'react';
 
-import Link from 'next/link';
-
 import { ArrowRight, BookOpen, MessageCircle, Sparkles } from 'lucide-react';
 
 import { LoginForm } from '@/components/login-form';
@@ -26,20 +24,6 @@ export function Hero() {
       </div>
 
       <div className="mx-auto w-full max-w-6xl px-4 md:px-8">
-        {/* Badge */}
-        <div className="mx-auto mb-6 flex w-fit items-center">
-          <div className="rounded-full px-4 py-2 text-sm shadow-sm glass">
-            <Sparkles className="mr-2 inline size-4 text-primary" />
-            <span className="font-semibold text-foreground">
-              What&apos;s new
-            </span>
-            <span className="mx-2 text-muted-foreground">|</span>
-            <Link href="#" className="text-primary hover:underline">
-              Read more
-            </Link>
-          </div>
-        </div>
-
         {/* Main headline */}
         <div className="mx-auto mb-6 max-w-4xl text-center">
           <h1 className="mb-4 text-4xl font-bold tracking-tight text-foreground md:text-5xl lg:text-6xl">
@@ -50,8 +34,8 @@ export function Hero() {
           </h1>
 
           <p className="mx-auto max-w-2xl text-lg leading-relaxed text-muted-foreground md:text-xl">
-            Kenali dirimu lebih dalam. Jurnal harian, Mood AI, dan akses
-            eksklusif dengan Chiko.
+            Jurnal harian, deteksi mood dengan AI, dan panduan kesehatan mental
+            dalam satu tempat.
           </p>
         </div>
 

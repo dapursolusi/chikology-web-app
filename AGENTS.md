@@ -28,6 +28,19 @@ Always use `bunx --bun` instead of `bunx` or `npx`.
 Fallback to `npm`/`npx` only if `bun` fails multiple times.
 Lockfile: `bun.lock` (never `package-lock.json` or `yarn.lock`).
 
+## Versioning Strategy
+
+| Tag      | Date          | Meaning                                        |
+| -------- | ------------- | ---------------------------------------------- |
+| `v0.1.0` | June 12, 2026 | Soft launch — scanner + journal, e-book gated  |
+| `v0.1.x` | June 12–15    | Cosmetic fixes only, batched 1-2x per week     |
+| `v1.0.0` | June 16, 2026 | Full launch — e-book live, all features active |
+| `v1.0.x` | Post-June 16  | Bug fixes                                      |
+| `v1.x.0` | Post-June 16  | New features (profile, analytics, etc.)        |
+| `v2.0.0` | TBD           | Major redesign or mobile app exists            |
+
+Mobile app: separate repo (`chikology-mobile-app`), starts at its own `v0.1.0`. Independent versioning.
+
 ## Tech Stack (Locked)
 
 | Layer           | Choice                                |
@@ -39,8 +52,12 @@ Lockfile: `bun.lock` (never `package-lock.json` or `yarn.lock`).
 | Auth            | Supabase Auth (Google OAuth only)     |
 | Face Detection  | Groq (Llama 4 Scout) server-side      |
 | Storage         | Supabase Storage (book PDFs, Phase 3) |
+| PDF Rendering   | PDF.js v6.0.227 (self-hosted viewer)  |
+| PDF Watermark   | pdf-lib v1.17.1 (server-side only)    |
 | Deploy          | Vercel                                |
 | Payment         | Mock (real gateway deferred)          |
+| Book Pricing    | Waiting on Mas Chiko                  |
+| Email Marketing | Deferred until 500+ users             |
 | Package Manager | bun — `bunx --bun`, not npx           |
 
 ## Canonical File Structure
@@ -109,7 +126,7 @@ Single-context repo. See `docs/agents/domain.md`.
 
 ### Schedule tracking
 
-Update `docs/SCHEDULES.md` after every session — mark tasks done/blocked/skipped, adjust dates if schedule drifts, and update tech stack decisions if they change. The schedule is the source of truth for what's shipped vs pending.
+Update `docs/SCHEDULES.md` after every session — mark tasks done/blocked/skipped and adjust dates if schedule drifts. The schedule is the source of truth for what's shipped vs pending.
 
 ## Data Mutation
 
