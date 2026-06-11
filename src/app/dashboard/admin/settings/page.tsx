@@ -7,7 +7,7 @@ import { EbookLiveToggle } from '@/components/dashboard/admin/EbookLiveToggle';
 import { getEbookLive } from '@/lib/feature-flags';
 
 export const metadata = {
-  title: 'Pengaturan Admin · Chikology',
+  title: 'Pengaturan Admin',
 };
 
 export default async function AdminSettingsPage() {

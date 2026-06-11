@@ -10,7 +10,7 @@ import { EbookLiveToggle } from '@/components/dashboard/admin/EbookLiveToggle';
 import { getEbookLive } from '@/lib/feature-flags';
 
 export const metadata = {
-  title: 'Kelola E-Book · Chikology',
+  title: 'Kelola E-Book',
 };
 
 export default async function AdminBookPage() {

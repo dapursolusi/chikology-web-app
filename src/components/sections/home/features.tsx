@@ -60,6 +60,20 @@ export default function Features() {
           </div>
         </div>
       </div>
+
+      <div className="mx-auto mt-16 max-w-2xl px-4 text-center md:px-8">
+        <p className="text-lg leading-relaxed text-muted-foreground">
+          Butuh rekomendasi lebih dalam?{' '}
+          <a
+            href="https://wa.me/6287853186759"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-semibold text-primary underline underline-offset-4 hover:text-primary/80"
+          >
+            Jadwalkan konsultasi dengan Mas Chiko
+          </a>
+        </p>
+      </div>
     </section>
   );
 }

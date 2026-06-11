@@ -1,10 +1,23 @@
 # Chikology.id — Sprint Schedule
 
-> Last updated: 1 Juni 2026 (Phase 2 done ahead of schedule)
+> Last updated: 11 Juni 2026 (All MUST-DO before soft launch complete)
 > Rescheduled after Mas Chiko meeting (May 31). All feedback items marked with 🆕
 > Phase 2 PRD published (GitHub issue #7). Architecture decisions finalized.
 
 ---
+
+## Versioning Strategy
+
+| Tag      | Date          | Meaning                                        |
+| -------- | ------------- | ---------------------------------------------- |
+| `v0.1.0` | June 12, 2026 | Soft launch — scanner + journal, e-book gated  |
+| `v0.1.x` | June 12–15    | Cosmetic fixes only, batched 1-2x per week     |
+| `v1.0.0` | June 16, 2026 | Full launch — e-book live, all features active |
+| `v1.0.x` | Post-June 16  | Bug fixes                                      |
+| `v1.x.0` | Post-June 16  | New features (profile, analytics, etc.)        |
+| `v2.0.0` | TBD           | Major redesign or mobile app exists            |
+
+Mobile app: separate repo (`chikology-mobile-app`), starts at its own `v0.1.0`. Independent versioning.
 
 ## Key Dates
 
@@ -197,23 +210,28 @@
 
 ---
 
-### Soft Launch Checklist — Jun 9–11 (This Week)
+### 🔴 MUST-DO Before Soft Launch (Jun 10–11) — Issue #64
 
-**Goal:** "Everything tested on mobile. Soft launch ready for Jun 12."
+| #   | Task                                                                     | Est.   | Done?                           |
+| --- | ------------------------------------------------------------------------ | ------ | ------------------------------- |
+| 1   | Consent checkbox: scanner flow gate before camera activates              | 15 min | ✅                              |
+| 2   | Privacy Policy page: `/kebijakan-privasi` static page in Indonesian      | 30 min | ✅                              |
+| 3   | Footer link: "Kebijakan Privasi" link next to privacy tagline            | 5 min  | ✅                              |
+| 4   | Supabase keep-alive pg_cron: `SELECT 1` every 6 days                     | 15 min | ⏳ Apply via Supabase Dashboard |
+| 5   | Mobile E2E: full flow on phone — questionnaire → consent → scan → result | 15 min | ✅                              |
 
-| #   | Task                                                                                                                  | Est.   | Done? |
-| --- | --------------------------------------------------------------------------------------------------------------------- | ------ | ----- |
-| 1   | Connect navigation: scanner → journal → book (greyed)                                                                 | 20 min | ☐     |
-| 2   | Privacy check: privacy tagline visible on scanner, result card, landing page footer                                   | 10 min | ☐     |
-| 3   | Consultation CTA check: visible on result card + landing page                                                         | 10 min | ☐     |
-| 4   | 🆕 Mobile responsive: full E2E on phone — questionnaire → scan → result → journal → landing page                      | 30 min | ☐     |
-| 5   | SEO basics: title, description, og:image                                                                              | 20 min | ☐     |
-| 6   | Deploy soft launch build to Vercel                                                                                    | 15 min | ☐     |
-| 7   | Full E2E test: new user → daftar → questionnaire → scan → result (CTA + privacy) → journal → landing page (countdown) | 30 min | ☐     |
-| 8   | Bug fixes from E2E test                                                                                               | 60 min | ☐     |
-| 9   | Mas Chiko UAT (share preview link)                                                                                    | 30 min | ☐     |
-| 10  | Final adjustments based on Mas Chiko feedback                                                                         | 60 min | ☐     |
-| 11  | Deploy final soft launch build                                                                                        | 15 min | ☐     |
+### Soft Launch Checklist — Jun 10–11 (Nice-to-Have)
+
+| #   | Task                                                                    | Est.   | Done? |
+| --- | ----------------------------------------------------------------------- | ------ | ----- |
+| 6   | Connect navigation: scanner → journal → book (greyed)                   | 20 min | ☐     |
+| 7   | Privacy tagline check: visible on scanner, result card, footer          | 10 min | ☐     |
+| 8   | Consultation CTA check: visible on result card + landing page           | 10 min | ☐     |
+| 9   | SEO basics: title, description, og:image                                | 20 min | ☐     |
+| 10  | Full E2E test: new user → daftar → questionnaire → consent → scan → etc | 30 min | ☐     |
+| 11  | Bug fixes from E2E test                                                 | 60 min | ☐     |
+| 12  | Mas Chiko UAT (share preview link)                                      | 30 min | ☐     |
+| 13  | Final adjustments + deploy                                              | 30 min | ☐     |
 
 ---
 
