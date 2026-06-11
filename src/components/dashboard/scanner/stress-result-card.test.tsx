@@ -53,7 +53,7 @@ describe('StressResultCard', () => {
     render(<StressResultCard result={mockResult} />);
 
     const cta = screen.getByRole('link', {
-      name: /Butuh rekomendasi lebih dalam\? Jadwalkan konsultasi dengan Mas Chiko/i,
+      name: /Konsultasi dengan Mas Chiko/i,
     });
     expect(cta).toBeInTheDocument();
     expect(cta).toHaveAttribute('href', 'https://wa.me/6287853186759');
