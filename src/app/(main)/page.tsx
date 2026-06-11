@@ -26,7 +26,7 @@ export default async function MainPage() {
 
   return (
     <div className="flex flex-col gap-8 min-h-screen">
-      <Hero />
+      <Hero isAuthenticated={!!user} />
       <EBook
         ebookLive={ebookLive}
         userId={user?.id ?? null}
