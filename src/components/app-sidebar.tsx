@@ -6,6 +6,7 @@ import { BookOpenIcon, BotIcon, NotebookPen, Settings } from 'lucide-react';
 
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
+import { BookCountdown } from '@/components/sections/home/BookCountdown';
 import {
   Sidebar,
   SidebarContent,
@@ -22,7 +23,11 @@ const DASHBOARD_PREFIX = '/dashboard';
 const dashboardLink = (path: string = '') =>
   path ? `${DASHBOARD_PREFIX}/${path}` : DASHBOARD_PREFIX;
 
-function buildNavMain(ebookLive: boolean, isAdmin: boolean) {
+function buildNavMain(
+  ebookLive: boolean,
+  isAdmin: boolean,
+  countdown?: React.ReactNode
+) {
   const mainNav = [
     {
       title: 'Jurnal Pribadi',
@@ -51,7 +56,7 @@ function buildNavMain(ebookLive: boolean, isAdmin: boolean) {
       url: '#',
       icon: <BookOpenIcon />,
       disabled: !ebookLive,
-      tooltipMessage: ebookLive ? undefined : 'Segera hadir 16 Juni',
+      countdown: !ebookLive ? countdown : undefined,
       items: [
         {
           title: 'Baca E-Book',
@@ -89,11 +94,13 @@ function buildNavMain(ebookLive: boolean, isAdmin: boolean) {
 type AppSidebarProps = React.ComponentProps<typeof Sidebar> & {
   ebookLive?: boolean;
   isAdmin?: boolean;
+  initialNow?: number;
 };
 
 export function AppSidebar({
   ebookLive = false,
   isAdmin = false,
+  initialNow,
   ...props
 }: AppSidebarProps) {
   const [user, setUser] = useState<{
@@ -118,7 +125,11 @@ export function AppSidebar({
     });
   }, []);
 
-  const navMain = buildNavMain(ebookLive, isAdmin);
+  const ebookCountdown = !ebookLive ? (
+    <BookCountdown size="compact" initialNow={initialNow} intervalMs={60_000} />
+  ) : undefined;
+
+  const navMain = buildNavMain(ebookLive, isAdmin, ebookCountdown);
 
   return (
     <Sidebar collapsible="icon" {...props} className="mobile:w-64">

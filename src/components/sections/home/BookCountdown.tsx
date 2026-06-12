@@ -13,16 +13,39 @@ function diff(nowMs: number) {
   return { days, hours, minutes, seconds };
 }
 
-export function BookCountdown() {
-  const [now, setNow] = useState(() => Date.now());
+type Props = {
+  size?: 'full' | 'compact';
+  initialNow?: number;
+  intervalMs?: number;
+};
+
+export function BookCountdown({
+  size = 'full',
+  initialNow,
+  intervalMs = 1000,
+}: Props) {
+  const [now, setNow] = useState(() => initialNow ?? Date.now());
 
   useEffect(() => {
-    const id = setInterval(() => setNow(Date.now()), 1000);
+    const id = setInterval(() => setNow(Date.now()), intervalMs);
     return () => clearInterval(id);
-  }, []);
+  }, [intervalMs]);
 
   const { days, hours, minutes, seconds } = diff(now);
   const released = now >= LAUNCH_AT;
+
+  if (size === 'compact') {
+    return (
+      <span
+        data-testid="countdown-compact"
+        className="text-xs text-muted-foreground px-3 pb-2"
+      >
+        {released
+          ? 'Sudah rilis'
+          : `${days} hari ${hours} jam ${minutes} menit`}
+      </span>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-4">
