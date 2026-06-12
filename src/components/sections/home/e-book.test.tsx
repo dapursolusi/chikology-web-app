@@ -97,22 +97,15 @@ describe('EBook section', () => {
     const { rerender } = render(
       <EBook ebookLive={false} userId={null} chapters={[]} />
     );
+    expect(screen.getByText(/Bicaralah, dan Sembuhlah/i)).toBeInTheDocument();
     expect(
-      screen.getByText(/Seni Berdamai Dengan Diri Sendiri/i)
+      screen.getByText(/Ketidakberanian bicara seringkali/i)
     ).toBeInTheDocument();
-    expect(
-      screen.getByText(/Panduan praktis untuk memahami/i)
-    ).toBeInTheDocument();
-    expect(screen.getByText(/Chapter 1/i)).toBeInTheDocument();
 
     rerender(<EBook ebookLive userId={null} chapters={[releasedChapter]} />);
-    expect(
-      screen.getByText(/Seni Berdamai Dengan Diri Sendiri/i)
-    ).toBeInTheDocument();
+    expect(screen.getByText(/Bicaralah, dan Sembuhlah/i)).toBeInTheDocument();
 
     rerender(<EBook ebookLive userId="user-1" chapters={[releasedChapter]} />);
-    expect(
-      screen.getByText(/Seni Berdamai Dengan Diri Sendiri/i)
-    ).toBeInTheDocument();
+    expect(screen.getByText(/Bicaralah, dan Sembuhlah/i)).toBeInTheDocument();
   });
 });
