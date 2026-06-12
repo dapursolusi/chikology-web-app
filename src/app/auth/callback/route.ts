@@ -9,6 +9,25 @@ export async function GET(_request: NextRequest) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL || 'undefined';
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'undefined';
   const baseUrl = getBaseUrl();
+  const authSettingsUrl = `${baseUrl}/auth/v1/settings`;
+  let authProbeStatus: number | null = null;
+  let authProbeBody = '';
+
+  try {
+    const probeResponse = await fetch(authSettingsUrl, {
+      headers: {
+        apikey: key,
+        Authorization: `Bearer ${key}`,
+      },
+      cache: 'no-store',
+    });
+
+    authProbeStatus = probeResponse.status;
+    authProbeBody = await probeResponse.text();
+  } catch (error) {
+    authProbeBody = error instanceof Error ? error.message : 'unknown error';
+  }
+
   console.log(
     `DIAGNOSTIC: URL=${url} (len=${url.length}), Key=${key.substring(0, 10)}... (len=${key.length}), BaseUrl=${baseUrl}`
   );
@@ -20,6 +39,9 @@ export async function GET(_request: NextRequest) {
       supabase_key_start: key.substring(0, 30),
       supabase_key_len: key.length,
       base_url_processed: baseUrl,
+      auth_probe_url: authSettingsUrl,
+      auth_probe_status: authProbeStatus,
+      auth_probe_body_start: authProbeBody.substring(0, 200),
     },
   });
 }
