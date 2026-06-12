@@ -1,101 +1,30 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
-// import { ensureUserRecord, getUserRole } from '@/actions/auth';
-// import { type CookieOptions, createServerClient } from '@supabase/ssr';
+import { ensureUserRecord, getUserRole } from '@/actions/auth';
 
-import { getBaseUrl } from '@/lib/supabase/base-url';
+import { createClient } from '@/lib/supabase/server';
 
-export async function GET(_request: NextRequest) {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || 'undefined';
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'undefined';
-  const baseUrl = getBaseUrl();
-  const authSettingsUrl = `${baseUrl}/auth/v1/settings`;
-  let authProbeStatus: number | null = null;
-  let authProbeBody = '';
-
-  try {
-    const probeResponse = await fetch(authSettingsUrl, {
-      headers: {
-        apikey: key,
-        Authorization: `Bearer ${key}`,
-      },
-      cache: 'no-store',
-    });
-
-    authProbeStatus = probeResponse.status;
-    authProbeBody = await probeResponse.text();
-  } catch (error) {
-    authProbeBody = error instanceof Error ? error.message : 'unknown error';
-  }
-
-  console.log(
-    `DIAGNOSTIC: URL=${url} (len=${url.length}), Key=${key.substring(0, 10)}... (len=${key.length}), BaseUrl=${baseUrl}`
-  );
-
-  return NextResponse.json({
-    diagnostic: {
-      supabase_url_start: url.substring(0, 35),
-      supabase_url_len: url.length,
-      supabase_key_start: key.substring(0, 30),
-      supabase_key_len: key.length,
-      base_url_processed: baseUrl,
-      auth_probe_url: authSettingsUrl,
-      auth_probe_status: authProbeStatus,
-      auth_probe_body_start: authProbeBody.substring(0, 200),
-    },
-  });
+function getAppOrigin(origin: string) {
+  return process.env.NODE_ENV === 'production'
+    ? 'https://www.chikology.id'
+    : origin;
 }
 
-// Keep the rest of the file commented out for now so it doesn't complain about unused imports/locals
-/*
-export async function GET_original(request: NextRequest) {
-  throw new Error(
-    `DIAGNOSTIC: URL=${url.substring(0, 35)} (len=${url.length}), Key=${key.substring(0, 30)}... (len=${key.length}), BaseUrl=${baseUrl}`
-  );
-
+export async function GET(request: NextRequest) {
+  const { searchParams, origin } = new URL(request.url);
+  const appOrigin = getAppOrigin(origin);
   const code = searchParams.get('code');
   const error = searchParams.get('error');
   const errorDescription = searchParams.get('error_description');
 
   if (error) {
     console.error('OAuth error:', error, errorDescription);
-    return NextResponse.redirect(`${origin}/?auth=error&reason=${error}`);
+    return NextResponse.redirect(`${appOrigin}/?auth=error&reason=${error}`);
   }
 
   if (code) {
-    const response = new NextResponse();
-
-    const supabase = createServerClient(
-      getBaseUrl(),
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return request.cookies.getAll();
-          },
-          setAll(cookiesToSet) {
-            cookiesToSet.forEach(
-              ({
-                name,
-                value,
-                options,
-              }: {
-                name: string;
-                value: string;
-                options?: CookieOptions;
-              }) =>
-                response.cookies.set(
-                  name,
-                  value,
-                  options as Record<string, string>
-                )
-            );
-          },
-        },
-      }
-    );
-
     try {
+      const supabase = await createClient();
       const { error: exchangeError } =
         await supabase.auth.exchangeCodeForSession(code);
 
@@ -120,14 +49,7 @@ export async function GET_original(request: NextRequest) {
           }
         }
 
-        const redirectUrl = new URL('/dashboard', origin);
-        const redirectResponse = NextResponse.redirect(redirectUrl);
-
-        response.cookies.getAll().forEach(({ name, value, ...rest }) => {
-          redirectResponse.cookies.set(name, value, rest);
-        });
-
-        return redirectResponse;
+        return NextResponse.redirect(`${appOrigin}/dashboard`);
       }
 
       console.error('Session exchange error:', exchangeError);
@@ -136,6 +58,5 @@ export async function GET_original(request: NextRequest) {
     }
   }
 
-  return NextResponse.redirect(`${origin}/?auth=error`);
+  return NextResponse.redirect(`${appOrigin}/?auth=error`);
 }
-*/

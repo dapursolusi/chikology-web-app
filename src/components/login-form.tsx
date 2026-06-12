@@ -14,6 +14,12 @@ import {
 import { createClient } from '@/lib/supabase/client';
 import { cn } from '@/lib/utils';
 
+function getOAuthRedirectUrl() {
+  return process.env.NODE_ENV === 'production'
+    ? 'https://www.chikology.id/auth/callback'
+    : `${window.location.origin}/auth/callback`;
+}
+
 export function LoginForm({
   className,
   onSwitchToSignup,
@@ -32,7 +38,7 @@ export function LoginForm({
 
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: `${window.location.origin}/auth/callback` },
+      options: { redirectTo: getOAuthRedirectUrl() },
     });
 
     if (error) {
