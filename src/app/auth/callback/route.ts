@@ -8,6 +8,16 @@ import { getBaseUrl } from '@/lib/supabase/base-url';
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
 
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || 'undefined';
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'undefined';
+  const baseUrl = getBaseUrl();
+  console.log(
+    `DIAGNOSTIC: URL=${url} (len=${url.length}), Key=${key.substring(0, 10)}... (len=${key.length}), BaseUrl=${baseUrl}`
+  );
+  throw new Error(
+    `DIAGNOSTIC: URL=${url.substring(0, 35)} (len=${url.length}), Key=${key.substring(0, 30)}... (len=${key.length}), BaseUrl=${baseUrl}`
+  );
+
   const code = searchParams.get('code');
   const error = searchParams.get('error');
   const errorDescription = searchParams.get('error_description');
