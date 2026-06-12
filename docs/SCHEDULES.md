@@ -176,13 +176,13 @@
 
 ### 🔴 MUST-DO Before Soft Launch (Jun 10–11) — Issue #64
 
-| #   | Task                                                                     | Est.   | Done?                           |
-| --- | ------------------------------------------------------------------------ | ------ | ------------------------------- |
-| 1   | Consent checkbox: scanner flow gate before camera activates              | 15 min | ✅                              |
-| 2   | Privacy Policy page: `/kebijakan-privasi` static page in Indonesian      | 30 min | ✅                              |
-| 3   | Footer link: "Kebijakan Privasi" link next to privacy tagline            | 5 min  | ✅                              |
-| 4   | Supabase keep-alive pg_cron: `SELECT 1` every 6 days                     | 15 min | ⏳ Apply via Supabase Dashboard |
-| 5   | Mobile E2E: full flow on phone — questionnaire → consent → scan → result | 15 min | ✅                              |
+| #   | Task                                                                     | Est.   | Done? |
+| --- | ------------------------------------------------------------------------ | ------ | ----- |
+| 1   | Consent checkbox: scanner flow gate before camera activates              | 15 min | ✅    |
+| 2   | Privacy Policy page: `/kebijakan-privasi` static page in Indonesian      | 30 min | ✅    |
+| 3   | Footer link: "Kebijakan Privasi" link next to privacy tagline            | 5 min  | ✅    |
+| 4   | Supabase keep-alive pg_cron: `SELECT 1` every 6 days                     | 15 min | ✅    |
+| 5   | Mobile E2E: full flow on phone — questionnaire → consent → scan → result | 15 min | ✅    |
 
 ### Soft Launch Checklist — Jun 10–11 (Nice-to-Have)
 

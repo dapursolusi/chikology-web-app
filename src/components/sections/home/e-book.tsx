@@ -19,7 +19,7 @@ export default function EBook({ ebookLive, userId, chapters }: Props) {
         <div className="grid grid-cols-1 items-center gap-8 lg:grid-cols-2 lg:gap-12">
           {/* Content side */}
           <div className="order-2 lg:order-1">
-            <div className="mx-auto max-w-xl">
+            <div className="mx-auto max-w-xl px-2 sm:px-0">
               {/* Section indicator */}
               <div className="mb-4 inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-sm">
                 <BookOpen className="mr-2 size-4 text-primary" />
@@ -30,17 +30,19 @@ export default function EBook({ ebookLive, userId, chapters }: Props) {
 
               {/* Title */}
               <h2 className="text-3xl font-bold tracking-tight text-foreground md:text-4xl">
-                Buku{' '}
                 <span className="text-primary">
-                  <i className="font-bold">Seni Berdamai Dengan Diri Sendiri</i>
+                  <i className="font-bold">Bicaralah, dan Sembuhlah</i>
                 </span>
               </h2>
 
               {/* Description */}
               <p className="mt-4 text-lg leading-relaxed text-muted-foreground">
-                Panduan praktis untuk memahami dan menerima diri sendiri.
-                Pelajari teknik berdamai dengan pikiran negatif dan membangun
-                hubungan yang healthier dengan diri kamu.
+                Ketidakberanian bicara seringkali membawa seseorang pada
+                hilangnya koneksi dengan diri sendiri, kerapuhan jiwa, dan
+                matinya RASA. Refleksi yang saya angkat dari berbagai kisah
+                nyata, pelik, problematik, dan menguras energi ini akan membawa
+                anda menemukan kembali suara dan keberanian bicara sebagai
+                langkah kecil pencerahan jiwa .
               </p>
 
               {/* CTA zone: countdown before launch, chapter rows after */}
@@ -62,24 +64,14 @@ export default function EBook({ ebookLive, userId, chapters }: Props) {
           </div>
 
           {/* Image side */}
-          <div className="order-1 lg:order-2">
-            <div className="relative mx-auto max-w-lg lg:max-w-none">
+          <div className="order-1 flex justify-center lg:order-2">
+            <div className="relative w-full max-w-[340px] md:max-w-72">
               <div className="relative overflow-hidden rounded-3xl border-2 border-border shadow-2xl">
                 <img
-                  alt="E-Book cover - Seni Berdamai Dengan Diri Sendiri"
-                  src="https://images.unsplash.com/photo-1716892001590-79a5b6207662?q=80&w=1074&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
-                  className="h-auto w-full object-cover"
+                  alt="E-Book cover - Bicaralah, dan Sembuhlah"
+                  src="/ebook_cover.png"
+                  className="h-auto w-full"
                 />
-              </div>
-
-              {/* Decorative label */}
-              <div className="absolute -bottom-4 -right-4 rounded-2xl bg-card border-2 border-border px-4 py-2 shadow-lg">
-                <div className="flex items-center gap-2">
-                  <BookOpen className="size-5 text-primary" />
-                  <span className="font-semibold text-foreground">
-                    Chapter 1
-                  </span>
-                </div>
               </div>
             </div>
           </div>
