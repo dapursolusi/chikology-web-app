@@ -54,6 +54,52 @@ describe('BookCountdown', () => {
     expect(screen.getByTestId('countdown-seconds')).toHaveTextContent('44');
   });
 
+  it('compact mode ticks at 60s interval (advance 60s → minutes decrement)', () => {
+    vi.setSystemTime(new Date('2026-06-14T20:30:00+07:00'));
+    render(<BookCountdown size="compact" intervalMs={60_000} />);
+    expect(screen.getByTestId('countdown-compact')).toHaveTextContent(
+      '1 hari 3 jam 30 menit'
+    );
+
+    act(() => {
+      vi.advanceTimersByTime(60_000);
+    });
+
+    expect(screen.getByTestId('countdown-compact')).toHaveTextContent(
+      '1 hari 3 jam 29 menit'
+    );
+  });
+
+  it('uses initialNow when provided (avoids flash of 0 before hydration)', () => {
+    // Set system time to launch day, but pass an initialNow far from launch
+    vi.setSystemTime(new Date('2026-06-16T00:00:00+07:00'));
+    render(
+      <BookCountdown
+        size="compact"
+        initialNow={new Date('2026-06-14T20:30:15+07:00').getTime()}
+      />
+    );
+    // Should show the initialNow-based diff, not the system-time-based diff
+    expect(screen.getByTestId('countdown-compact')).toHaveTextContent(
+      '1 hari 3 jam 29 menit'
+    );
+  });
+
+  it('compact mode shows "Sudah rilis" once launch time is reached', () => {
+    vi.setSystemTime(new Date('2026-06-16T00:00:00+07:00'));
+    render(<BookCountdown size="compact" />);
+    expect(screen.getByTestId('countdown-compact')).toHaveTextContent(
+      'Sudah rilis'
+    );
+  });
+
+  it('compact mode renders single-line text "X hari Y jam Z menit"', () => {
+    vi.setSystemTime(new Date('2026-06-14T20:30:15+07:00'));
+    render(<BookCountdown size="compact" />);
+    const text = screen.getByTestId('countdown-compact');
+    expect(text).toHaveTextContent('1 hari 3 jam 29 menit');
+  });
+
   it('shows "Sudah rilis" once launch time is reached', () => {
     vi.setSystemTime(new Date('2026-06-16T00:00:00+07:00'));
     render(<BookCountdown />);

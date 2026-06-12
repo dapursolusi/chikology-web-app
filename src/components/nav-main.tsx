@@ -25,6 +25,7 @@ type NavItem = {
   isActive?: boolean;
   disabled?: boolean;
   tooltipMessage?: string;
+  countdown?: React.ReactNode;
   items?: {
     title: string;
     url: string;
@@ -98,6 +99,7 @@ function DisabledItem({ item }: { item: NavItem }) {
         {item.icon}
         <span>{item.title}</span>
       </SidebarMenuButton>
+      {item.countdown}
     </SidebarMenuItem>
   );
 }

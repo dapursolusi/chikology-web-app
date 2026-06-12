@@ -1,5 +1,7 @@
+import { act } from 'react';
+
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AppSidebar } from '@/components/app-sidebar';
 import { SidebarProvider } from '@/components/ui/sidebar';
@@ -21,33 +23,56 @@ vi.mock('@/components/nav-user', () => ({
   NavUser: () => <div data-testid="nav-user" />,
 }));
 
-function renderSidebar(ebookLive: boolean) {
+function renderSidebar(ebookLive: boolean, initialNow?: number) {
   return render(
     <TooltipProvider>
       <SidebarProvider>
-        <AppSidebar ebookLive={ebookLive} />
+        <AppSidebar ebookLive={ebookLive} initialNow={initialNow} />
       </SidebarProvider>
     </TooltipProvider>
   );
 }
 
 describe('AppSidebar — E-Book gate', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it('renders E-Book row as aria-disabled when ebookLive is false', () => {
+    vi.setSystemTime(new Date('2026-06-14T20:30:15+07:00'));
     renderSidebar(false);
     const ebookRow = screen.getByRole('button', { name: /E-Book/i });
     expect(ebookRow).toHaveAttribute('aria-disabled', 'true');
   });
 
-  it('exposes "Segera hadir 16 Juni" as tooltip on the disabled E-Book row', () => {
+  it('shows compact countdown below disabled E-Book row when ebookLive is false', () => {
+    vi.setSystemTime(new Date('2026-06-14T20:30:15+07:00'));
+    renderSidebar(false);
+    expect(screen.getByTestId('countdown-compact')).toHaveTextContent(
+      '1 hari 3 jam 29 menit'
+    );
+  });
+
+  it('does not expose "Segera hadir 16 Juni" tooltip (removed)', () => {
+    vi.setSystemTime(new Date('2026-06-14T20:30:15+07:00'));
     renderSidebar(false);
     const ebookRow = screen.getByRole('button', { name: /E-Book/i });
-    expect(ebookRow).toHaveAttribute('title', 'Segera hadir 16 Juni');
+    expect(ebookRow).not.toHaveAttribute('title', 'Segera hadir 16 Juni');
   });
 
   it('renders E-Book row as enabled when ebookLive is true', () => {
     renderSidebar(true);
     const ebookRow = screen.getByRole('button', { name: /E-Book/i });
     expect(ebookRow).not.toHaveAttribute('aria-disabled', 'true');
+  });
+
+  it('shows no countdown when ebookLive is true', () => {
+    renderSidebar(true);
+    expect(screen.queryByTestId('countdown-compact')).not.toBeInTheDocument();
   });
 });
 

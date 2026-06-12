@@ -2,6 +2,10 @@ import { db } from '@/db';
 import { appSettings } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 
+export function getServerTimestamp(): number {
+  return Date.now();
+}
+
 export async function getEbookLive(): Promise<boolean> {
   try {
     const rows = await db
