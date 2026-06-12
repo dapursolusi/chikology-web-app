@@ -45,6 +45,7 @@ vi.mock('@/components/app-sidebar', () => ({
 
 vi.mock('@/lib/feature-flags', () => ({
   getEbookLive: vi.fn(() => Promise.resolve(false)),
+  getServerTimestamp: vi.fn(() => 1_000_000_000_000),
 }));
 
 vi.mock('@/components/ui/sidebar', () => ({
