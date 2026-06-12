@@ -1,43 +1,47 @@
-## [Friday, 12-06-2026 06:15] — E-book typo fix + trust indicator removal + v0.1.1
+## [Friday, 12-06-2026 13:45] — New e-book cover, title, copy from Mas Chiko
 
 ### Session Target
 
-- Fix e-book title typo "Berdamain" → "Berdamai", remove "Sudah diakses 10K+ pembaca", bump version
+- Swap Unsplash cover for Mas Chiko's portrait PNG, update title & description, mobile layout
 
 ### Current State
 
-- Status: shipped
-- Scope: 2 files — e-book component + test
+- Status: shipped (PR #71 merged, auto-deployed)
+- Scope: 3 files + 1 new asset
 
 ### What Changed
 
-- `src/components/sections/home/e-book.tsx` — Title typo fixed ("Berdamain" → "Berdamai"), removed "Sudah diakses 10K+ pembaca" trust indicator badge, image alt text corrected
-- `src/components/sections/home/e-book.test.tsx` — Test matchers updated to match new typo
+- `public/ebook_cover.png` — New cover from Mas Chiko (941×1672 portrait PNG)
+- `src/components/sections/home/e-book.tsx` — Replaced Unsplash URL with local PNG; portrait-friendly sizing (`w-full max-w-[340px] md:max-w-72`); title → _Bicaralah, dan Sembuhlah_; description → Mas Chiko's copy; removed Chapter 1 decorative label; added `px-2 sm:px-0` to content side for mobile padding
+- `src/components/sections/home/e-book.test.tsx` — Updated title + description matchers
+- `HANDOFFS.md` — This session log (committed per new policy)
+- `docs/SCHEDULES.md` — Marked cron jobs as done (from earlier session)
 
 ### Verification
 
-- Merged via PR #70 → auto-deployed to production
-- Visual QA confirmed: snapshot shows "Buku Seni Berdamai Dengan Diri Sendiri" heading, no trust indicator
-- Tagged `v0.1.1`
+- Build: clean
+- Tests: 4/4 pass
+- PR #71: quality-gate passed, auto-merged
 
 ### Decisions
 
-- None (trivial cosmetic fixes)
+- D-071: Portrait PNG constrained to `max-w-[340px]` mobile / `max-w-72` desktop — realistic book sizing without overpowering text
+- D-071b: Description `text-left` (not justified) — better readability at mobile widths
 
 ### Known Issues / Risks
 
 - None
 
+### New Policy (from user)
+
+- HANDOFFS.md and SCHEDULES.md must be committed with every session so all changes are git-tracked
+
 ### External Operations (done by user in Supabase dashboard)
 
-- `flip-ebook-live-2026-06-16` cron — scheduled in production
-- `supabase-keep-alive-6d` cron — scheduled in production
+- `flip-ebook-live-2026-06-16` cron — scheduled
+- `supabase-keep-alive-6d` cron — scheduled
 
-### Next Steps (ordered)
+### Next Steps
 
-1. Manual QA on 375px/390px viewports (carry-over from prior session — deferred)
-2. Post-launch: animated gradient background (Route B from audit — deferred)
-
-### Blockers
-
-- None
+1. Manual visual QA on mobile (deferred)
+2. Full launch June 16 — autopilot (pg_cron flips ebook_live=true)
