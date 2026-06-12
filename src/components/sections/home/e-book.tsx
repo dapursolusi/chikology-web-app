@@ -32,9 +32,7 @@ export default function EBook({ ebookLive, userId, chapters }: Props) {
               <h2 className="text-3xl font-bold tracking-tight text-foreground md:text-4xl">
                 Buku{' '}
                 <span className="text-primary">
-                  <i className="font-bold">
-                    Seni Berdamain Dengan Diri Sendiri
-                  </i>
+                  <i className="font-bold">Seni Berdamai Dengan Diri Sendiri</i>
                 </span>
               </h2>
 
@@ -59,12 +57,7 @@ export default function EBook({ ebookLive, userId, chapters }: Props) {
               </div>
 
               {/* Trust indicators */}
-              <div className="mt-6 flex items-center gap-4 text-sm text-muted-foreground">
-                <div className="flex items-center gap-1.5">
-                  <div className="h-2 w-2 rounded-full bg-green-500" />
-                  <span>Sudah diakses 10K+ pembaca</span>
-                </div>
-              </div>
+              <div className="mt-6 flex items-center gap-4 text-sm text-muted-foreground"></div>
             </div>
           </div>
 
@@ -73,7 +66,7 @@ export default function EBook({ ebookLive, userId, chapters }: Props) {
             <div className="relative mx-auto max-w-lg lg:max-w-none">
               <div className="relative overflow-hidden rounded-3xl border-2 border-border shadow-2xl">
                 <img
-                  alt="E-Book cover - Seni Berdamain Dengan Diri Sendiri"
+                  alt="E-Book cover - Seni Berdamai Dengan Diri Sendiri"
                   src="https://images.unsplash.com/photo-1716892001590-79a5b6207662?q=80&w=1074&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
                   className="h-auto w-full object-cover"
                 />

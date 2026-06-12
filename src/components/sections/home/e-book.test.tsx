@@ -98,7 +98,7 @@ describe('EBook section', () => {
       <EBook ebookLive={false} userId={null} chapters={[]} />
     );
     expect(
-      screen.getByText(/Seni Berdamain Dengan Diri Sendiri/i)
+      screen.getByText(/Seni Berdamai Dengan Diri Sendiri/i)
     ).toBeInTheDocument();
     expect(
       screen.getByText(/Panduan praktis untuk memahami/i)
@@ -107,12 +107,12 @@ describe('EBook section', () => {
 
     rerender(<EBook ebookLive userId={null} chapters={[releasedChapter]} />);
     expect(
-      screen.getByText(/Seni Berdamain Dengan Diri Sendiri/i)
+      screen.getByText(/Seni Berdamai Dengan Diri Sendiri/i)
     ).toBeInTheDocument();
 
     rerender(<EBook ebookLive userId="user-1" chapters={[releasedChapter]} />);
     expect(
-      screen.getByText(/Seni Berdamain Dengan Diri Sendiri/i)
+      screen.getByText(/Seni Berdamai Dengan Diri Sendiri/i)
     ).toBeInTheDocument();
   });
 });
