@@ -83,6 +83,52 @@ function recordBurst(state: BurstState) {
   }
 }
 
+async function callAIModel(
+  client: OpenAI,
+  model: string,
+  prompt: string,
+  image: string,
+  providerName: string
+): Promise<string | null> {
+  let content: string | null = null;
+
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      const response = await client.chat.completions.create({
+        model,
+        messages: [
+          {
+            role: 'user',
+            content: [
+              { type: 'text', text: prompt },
+              {
+                type: 'image_url',
+                image_url: {
+                  url: `data:image/jpeg;base64,${image}`,
+                },
+              },
+            ],
+          },
+        ],
+        temperature: 0.2,
+        max_tokens: 300,
+      });
+      content = response.choices?.[0]?.message?.content;
+    } catch (e) {
+      console.error(`${providerName} call failed:`, e);
+    }
+
+    if (content?.trim()) break;
+
+    if (attempt === 1) {
+      console.warn(`${providerName} returned empty, retrying...`);
+      await new Promise((r) => setTimeout(r, 500));
+    }
+  }
+
+  return content?.trim() || null;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
@@ -133,68 +179,58 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const apiKey =
-      process.env.CHIKOLOGY_SUMOPOD_API_KEY || process.env.GROQ_API_KEY;
-    if (!apiKey) {
-      return NextResponse.json(
-        { error: 'CHIKOLOGY_SUMOPOD_API_KEY or GROQ_API_KEY not configured' },
-        { status: 500 }
-      );
-    }
-
     const promptWithContext = questionnaire
       ? `${STRESS_PROMPT}\n\n[Questionnaire Answers]\n${JSON.stringify(questionnaire, null, 2)}`
       : STRESS_PROMPT;
 
-    const sumopod = new OpenAI({
-      apiKey: process.env.CHIKOLOGY_SUMOPOD_API_KEY,
-      baseURL: process.env.OPENAI_BASE_URL,
+    const openrouterKey = process.env.OPENROUTER_API_KEY;
+    if (!openrouterKey) {
+      return NextResponse.json(
+        { error: 'OPENROUTER_API_KEY not configured' },
+        { status: 500 }
+      );
+    }
+
+    const openrouter = new OpenAI({
+      apiKey: openrouterKey,
+      baseURL: 'https://openrouter.ai/api/v1',
       timeout: 20000,
       maxRetries: 0,
     });
 
-    let content: string | null = null;
+    let content = await callAIModel(
+      openrouter,
+      'minimax/minimax-m3',
+      promptWithContext,
+      image,
+      'OpenRouter'
+    );
 
-    for (let attempt = 1; attempt <= 2; attempt++) {
-      try {
-        const response = await sumopod.chat.completions.create({
-          model: 'MiniMax-M3',
-          messages: [
-            {
-              role: 'user',
-              content: [
-                { type: 'text', text: promptWithContext },
-                {
-                  type: 'image_url',
-                  image_url: {
-                    url: `data:image/jpeg;base64,${image}`,
-                  },
-                },
-              ],
-            },
-          ],
-          temperature: 0.2,
-          max_tokens: 300,
-        });
-        content = response.choices?.[0]?.message?.content;
-      } catch (e) {
-        console.error('SumoPod call failed:', e);
-      }
+    if (!content) {
+      console.warn('OpenRouter failed, falling back to SumoPod');
 
-      if (content?.trim()) break;
+      const sumopod = new OpenAI({
+        apiKey: process.env.CHIKOLOGY_SUMOPOD_API_KEY,
+        baseURL: process.env.OPENAI_BASE_URL,
+        timeout: 20000,
+        maxRetries: 0,
+      });
 
-      if (attempt === 1) {
-        console.warn('SumoPod returned empty, retrying...');
-        await new Promise((r) => setTimeout(r, 500));
-      }
-    }
-
-    if (!content?.trim()) {
-      console.error('Empty content from model after retry');
-      return NextResponse.json(
-        { error: 'terjadi kesalahan dari server AI' },
-        { status: 502 }
+      content = await callAIModel(
+        sumopod,
+        'MiniMax-M3',
+        promptWithContext,
+        image,
+        'SumoPod'
       );
+
+      if (!content) {
+        console.error('Both OpenRouter and SumoPod failed');
+        return NextResponse.json(
+          { error: 'terjadi kesalahan dari server AI' },
+          { status: 502 }
+        );
+      }
     }
 
     let tier: number;
