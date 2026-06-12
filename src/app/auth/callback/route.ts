@@ -1,13 +1,14 @@
-import { NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { ensureUserRecord, getUserRole } from '@/actions/auth';
+import { type CookieOptions, createServerClient } from '@supabase/ssr';
 
-import { createClient } from '@/lib/supabase/server';
+import { getBaseUrl } from '@/lib/supabase/base-url';
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
-  const code = searchParams.get('code');
 
+  const code = searchParams.get('code');
   const error = searchParams.get('error');
   const errorDescription = searchParams.get('error_description');
 
@@ -17,8 +18,39 @@ export async function GET(request: Request) {
   }
 
   if (code) {
+    const response = new NextResponse();
+
+    const supabase = createServerClient(
+      getBaseUrl(),
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return request.cookies.getAll();
+          },
+          setAll(cookiesToSet) {
+            cookiesToSet.forEach(
+              ({
+                name,
+                value,
+                options,
+              }: {
+                name: string;
+                value: string;
+                options?: CookieOptions;
+              }) =>
+                response.cookies.set(
+                  name,
+                  value,
+                  options as Record<string, string>
+                )
+            );
+          },
+        },
+      }
+    );
+
     try {
-      const supabase = await createClient();
       const { error: exchangeError } =
         await supabase.auth.exchangeCodeForSession(code);
 
@@ -35,7 +67,6 @@ export async function GET(request: Request) {
             user.user_metadata?.avatar_url ?? user.user_metadata?.picture
           );
 
-          // Sync role from database to user_metadata for admin nav visibility
           const role = await getUserRole(user.id);
           if (role && role !== user.user_metadata?.role) {
             await supabase.auth.updateUser({
@@ -44,7 +75,14 @@ export async function GET(request: Request) {
           }
         }
 
-        return NextResponse.redirect(`${origin}/dashboard`);
+        const redirectUrl = new URL('/dashboard', origin);
+        const redirectResponse = NextResponse.redirect(redirectUrl);
+
+        response.cookies.getAll().forEach(({ name, value, ...rest }) => {
+          redirectResponse.cookies.set(name, value, rest);
+        });
+
+        return redirectResponse;
       }
 
       console.error('Session exchange error:', exchangeError);
