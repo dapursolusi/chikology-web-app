@@ -1,12 +1,35 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
-import { ensureUserRecord, getUserRole } from '@/actions/auth';
-import { type CookieOptions, createServerClient } from '@supabase/ssr';
+// import { ensureUserRecord, getUserRole } from '@/actions/auth';
+// import { type CookieOptions, createServerClient } from '@supabase/ssr';
 
 import { getBaseUrl } from '@/lib/supabase/base-url';
 
-export async function GET(request: NextRequest) {
-  const { searchParams, origin } = new URL(request.url);
+export async function GET(_request: NextRequest) {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || 'undefined';
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'undefined';
+  const baseUrl = getBaseUrl();
+  console.log(
+    `DIAGNOSTIC: URL=${url} (len=${url.length}), Key=${key.substring(0, 10)}... (len=${key.length}), BaseUrl=${baseUrl}`
+  );
+
+  return NextResponse.json({
+    diagnostic: {
+      supabase_url_start: url.substring(0, 35),
+      supabase_url_len: url.length,
+      supabase_key_start: key.substring(0, 30),
+      supabase_key_len: key.length,
+      base_url_processed: baseUrl,
+    },
+  });
+}
+
+// Keep the rest of the file commented out for now so it doesn't complain about unused imports/locals
+/*
+export async function GET_original(request: NextRequest) {
+  throw new Error(
+    `DIAGNOSTIC: URL=${url.substring(0, 35)} (len=${url.length}), Key=${key.substring(0, 30)}... (len=${key.length}), BaseUrl=${baseUrl}`
+  );
 
   const code = searchParams.get('code');
   const error = searchParams.get('error');
@@ -93,3 +116,4 @@ export async function GET(request: NextRequest) {
 
   return NextResponse.redirect(`${origin}/?auth=error`);
 }
+*/
