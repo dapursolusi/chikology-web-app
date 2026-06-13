@@ -44,6 +44,7 @@ export default function RootLayout({
     <html
       lang="id"
       suppressHydrationWarning
+      data-scroll-behavior="smooth"
       className={cn(
         'antialiased',
         fontMono.variable,
@@ -51,7 +52,15 @@ export default function RootLayout({
         inter.variable
       )}
     >
-      <body>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              'new MutationObserver(function(m){for(var i=0;i<m.length;i++){var r=m[i];if(r.type==="childList"){for(var j=0;j<r.addedNodes.length;j++){var n=r.addedNodes[j];if(n.nodeType===1){n.removeAttribute("bis_skin_checked");var e=n.querySelectorAll("[bis_skin_checked]");for(var k=0;k<e.length;k++)e[k].removeAttribute("bis_skin_checked")}}}if(r.type==="attributes"&&r.attributeName==="bis_skin_checked")r.target.removeAttribute("bis_skin_checked")}}).observe(document.documentElement,{childList:true,attributes:true,subtree:true,attributeFilter:["bis_skin_checked"]})',
+          }}
+        />
+      </head>
+      <body suppressHydrationWarning>
         <ThemeProvider>
           <TooltipProvider>{children}</TooltipProvider>
           <Toaster richColors position="top-center" />

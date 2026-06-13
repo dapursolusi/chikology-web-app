@@ -1,48 +1,32 @@
-## [Saturday, 13-06-2026 12:45] — Extract shared lib modules (currency, validators, rate-limiter)
+## [Saturday, 13-06-2026 14:20] — Fix PDF viewer blocked by X-Frame-Options DENY + merge redundant DB queries
 
 ### Session Target
 
-- Candidate #5: Consolidate currency formatter + file validators into shared modules
-- Candidate #6: Extract in-memory burst rate limiter from analyze-face route
-- Update docs and commit all
+- Fix PDF viewer iframe not loading (blocked by `X-Frame-Options: DENY`)
+- Merge redundant DB queries on `[chapterId]/page.tsx` to reduce SSR latency
 
 ### Current State
 
 - Status: shipped
-- Scope: `src/lib/{currency,validators,rate-limiter}.ts`, `src/app/api/analyze-face/route.ts`, 4 component files, 1 action file, `docs/agents/architecture.md`
+- Scope: `next.config.ts`, `src/app/layout.tsx`, `src/app/dashboard/book/[chapterId]/page.tsx`, `src/app/dashboard/book/[chapterId]/page.test.tsx`
 
 ### What Changed
 
-- `src/lib/currency.ts` — New file. Shared `idrFormatter` singleton (Intl.NumberFormat for IDR). Replaces 4 duplicate definitions.
-- `src/lib/validators.ts` — New file. Shared `ALLOWED_IMAGE_TYPES` and `MAX_IMAGE_SIZE_BYTES`. Replaces 2 duplicate definitions.
-- `src/lib/rate-limiter.ts` — New file. In-memory burst rate limiter extracted from `analyze-face/route.ts`: `getBurstState()`, `checkBurst()`, `recordBurst()`. Pure logic, no dependencies.
-- `src/components/dashboard/book/ChapterList.tsx` — Imports `idrFormatter` from `currency.ts` instead of defining locally.
-- `src/components/dashboard/book/PurchaseModal.tsx` — Imports `idrFormatter` from `currency.ts` and `ALLOWED_IMAGE_TYPES`/`MAX_IMAGE_SIZE_BYTES` from `validators.ts` instead of defining locally.
-- `src/components/dashboard/admin/ChapterTable.tsx` — Imports `idrFormatter` from `currency.ts` instead of defining locally.
-- `src/components/sections/home/embedded-chapter-row.tsx` — Imports `idrFormatter` from `currency.ts` instead of defining locally.
-- `src/actions/payment.ts` — Imports `ALLOWED_IMAGE_TYPES`/`MAX_IMAGE_SIZE_BYTES` from `validators.ts` instead of defining locally.
-- `src/app/api/analyze-face/route.ts` — Removed 60 lines of inline rate limiter (type, map, 3 functions, 4 constants). Now imports `getBurstState`, `checkBurst`, `recordBurst` from `rate-limiter.ts`. Route dropped from 274 to 214 lines.
-- `docs/agents/architecture.md` — Added auth guard section, shared lib modules table, updated scanner rate limit description.
+- `next.config.ts` — Added `X-Frame-Options: SAMEORIGIN` for `/pdfjs/:path*` to allow PDF.js viewer to load in the chapter reader iframe. Added `https://va.vercel-scripts.com` to CSP `script-src` to fix Vercel Analytics being blocked.
+- `src/app/layout.tsx` — Added `suppressHydrationWarning` to `<body>`, `data-scroll-behavior="smooth"` to `<html>`, and a MutationObserver inline script to strip `bis_skin_checked` from DOM elements injected by security browser extensions.
+- `src/app/dashboard/book/[chapterId]/page.tsx` — Merged `canUserReadChapter` (3 DB queries) into `getChaptersWithState` (3 DB queries). Access control is now derived from chapter state. 6 queries → 3 per page load.
+- `src/app/dashboard/book/[chapterId]/page.test.tsx` — Removed `canUserReadChapter` mock dependency. Access-denial tests now derive from `getChaptersWithState` return values.
 
 ### Verification
 
-- Commands run: `bun run build` (pass)
-- Results: Build compiles cleanly. No test changes needed — rate limiter is pure logic tested implicitly via existing route tests; validators are constants; currency is a formatter instance.
+- Commands run: All 75 tests in 8 test files pass
+- Headers: `/pdfjs/web/viewer.html` returns `X-Frame-Options: SAMEORIGIN` (was `DENY`)
+- CSP: includes `https://va.vercel-scripts.com` in `script-src`
+- Next.js errors: none
 
 ### Decisions
 
-- D-008: **Rate limiter stays in-memory (Map), not extracted to DB** — The burstMap is intentionally transient (resets on server restart). Storing burst state in DB would add latency to a hot path. The DB daily limit still enforces the hard quota.
-- D-009: **Currency module exports formatter, not formatPrice() helper** — The "Gratis" vs price check is display logic that differs per component. Exporting the formatter gives callers flexibility.
-- D-010: **Validator module exports constants, not validateImageFile() function** — The validation logic is simple (`includes` + `>`), and error handling differs (return vs setState). Shared constants suffice.
+- D-001: Override `X-Frame-Options` via specific header rule for `/pdfjs/:path*` rather than changing the global rule — keeps DENY for all other routes
+- D-002: Derive chapter access from state instead of separate `canUserReadChapter` — reduces DB queries from 6 to 3 per page load
 
-### Known Issues / Risks
-
-- `MAX_IMAGE_BYTES` (5,000,000) in analyze-face route and `MAX_IMAGE_SIZE_BYTES` (5,242,880) in validators are slightly different values. Not addressed — the base64 image check and file upload check have different contexts.
-
-### Next Steps
-
-- Push branch `feat/architecture/merge-claim-purchase-chapter` when ready (6 commits ahead of main)
-
-### Blockers
-
-- None
+---

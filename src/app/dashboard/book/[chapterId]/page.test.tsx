@@ -7,7 +7,6 @@ import type { ChapterWithState, NextChapterAction } from '@/lib/chapters';
 const {
   mockGetUser,
   mockGetChaptersWithState,
-  mockCanUserReadChapter,
   ReaderClient,
   mockRedirect,
   mockGetNextChapterAction,
@@ -34,7 +33,6 @@ const {
     mockGetChaptersWithState: vi.fn<() => Promise<ChapterWithState[]>>(
       async () => []
     ),
-    mockCanUserReadChapter: vi.fn(),
     mockRedirect: vi.fn((url: string) => {
       throw new Error(`NEXT_REDIRECT:${url}`);
     }),
@@ -51,7 +49,6 @@ vi.mock('@/lib/supabase/server', () => ({
 
 vi.mock('@/lib/chapters', () => ({
   getChaptersWithState: mockGetChaptersWithState,
-  canUserReadChapter: mockCanUserReadChapter,
   getNextChapterAction: mockGetNextChapterAction,
 }));
 
@@ -84,11 +81,6 @@ describe('ReaderPage', () => {
     // Reset all queued values but keep implementations
     mockGetChaptersWithState.mockReset();
     mockGetChaptersWithState.mockImplementation(async () => []);
-    mockCanUserReadChapter.mockReset();
-    mockCanUserReadChapter.mockImplementation(async () => ({
-      canRead: false,
-      reason: 'not-found' as const,
-    }));
     mockGetNextChapterAction.mockReset();
     mockGetNextChapterAction.mockImplementation(() => ({
       kind: 'end-of-book' as const,
@@ -105,10 +97,6 @@ describe('ReaderPage', () => {
 
   it('redirects to /dashboard/book?denied=not-found when chapter does not exist', async () => {
     mockGetChaptersWithState.mockResolvedValueOnce([]);
-    mockCanUserReadChapter.mockResolvedValueOnce({
-      canRead: false,
-      reason: 'not-found',
-    });
 
     await expect(
       ReaderPage({ params: Promise.resolve({ chapterId: 'missing' }) })
@@ -116,10 +104,9 @@ describe('ReaderPage', () => {
   });
 
   it('redirects to /dashboard/book?denied=unreleased when chapter is not yet released', async () => {
-    mockCanUserReadChapter.mockResolvedValueOnce({
-      canRead: false,
-      reason: 'unreleased',
-    });
+    mockGetChaptersWithState.mockResolvedValueOnce([
+      makeChapter({ id: 'ch-future', state: 'unreleased' }),
+    ]);
 
     await expect(
       ReaderPage({ params: Promise.resolve({ chapterId: 'ch-future' }) })
@@ -127,10 +114,9 @@ describe('ReaderPage', () => {
   });
 
   it('redirects to /dashboard/book?denied=locked when previous chapter is not owned', async () => {
-    mockCanUserReadChapter.mockResolvedValueOnce({
-      canRead: false,
-      reason: 'locked',
-    });
+    mockGetChaptersWithState.mockResolvedValueOnce([
+      makeChapter({ id: 'ch-2', state: 'locked' }),
+    ]);
 
     await expect(
       ReaderPage({ params: Promise.resolve({ chapterId: 'ch-2' }) })
@@ -138,10 +124,9 @@ describe('ReaderPage', () => {
   });
 
   it('redirects to /dashboard/book?denied=paid when chapter is paid and not owned', async () => {
-    mockCanUserReadChapter.mockResolvedValueOnce({
-      canRead: false,
-      reason: 'paid',
-    });
+    mockGetChaptersWithState.mockResolvedValueOnce([
+      makeChapter({ id: 'ch-paid', state: 'buyable', isFree: false }),
+    ]);
 
     await expect(
       ReaderPage({ params: Promise.resolve({ chapterId: 'ch-paid' }) })
@@ -150,10 +135,6 @@ describe('ReaderPage', () => {
 
   it('renders ReaderClient with chapter and computed next action when access is allowed', async () => {
     const chapter = makeChapter({ id: 'ch-1' });
-    mockCanUserReadChapter.mockImplementation(async () => ({
-      canRead: true as const,
-      reason: 'owned' as const,
-    }));
     mockGetChaptersWithState.mockImplementation(async () => [chapter]);
     mockGetNextChapterAction.mockReturnValueOnce({
       kind: 'navigate',
