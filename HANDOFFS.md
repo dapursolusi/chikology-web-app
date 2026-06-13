@@ -1,33 +1,39 @@
-## [Saturday, 13-06-2026 17:30] — Fixed blank PDF in admin preview (root cause: PDF.js URL re-encoding)
+## [Saturday, 13-06-2026 17:56] — Fixed stale PDF cache (browser cached PDF for 1 hour)
 
 ### Session Target
 
-- Fix blank PDF.js viewer in admin preview mode.
+- Diagnose why re-uploaded PDF still shows old content.
 
 ### Current State
 
 - Status: shipped
-- Scope: 12 files changed, 302 tests passing, build passing
+- Scope: `src/app/api/chapters/[id]/view/route.ts`, `src/app/api/chapters/[id]/download/route.ts`, `src/actions/book.ts` + test updates
+- Tests: 304 passed (up from 302), 41 files, 11 skipped
 
 ### What Changed
 
-- **Root cause found**: PDF.js viewer (`viewer.mjs:18698`) re-encodes the `file` URL. When the file URL contained `?preview=1`, `encodeURIComponent` turned `?` → `%3F`, and `.replaceAll("%2F", "/")` only restored `/` characters. The final fetch URL became `/api/.../view%3Fpreview%3D1` (with `%3F` in the path, not a query separator), which didn't match any Next.js route → 404 → blank iframe.
-- **Fix**: Removed `?preview=1` from the PDF viewer and download URLs entirely. Instead, the API routes (view + download) now check the admin role directly — admins can access any chapter's PDF regardless of ownership/release state. The page-level gate (`?preview=1` + admin check in ReaderPage) is unchanged and remains the primary access control.
-- `src/app/api/chapters/[id]/view/route.ts` — Admin role check replaces `?preview=1` query param check.
-- `src/app/api/chapters/[id]/download/route.ts` — Same.
-- `src/app/dashboard/book/[chapterId]/ReaderClient.tsx` — Reverted viewer and download URLs to normal (no query param). `isPreview` prop only affects UI (back link, next-action footer).
-- All test files updated to match new approach.
+- **Root cause**: `Cache-Control: private, max-age=3600` on both view and download API routes told the browser to cache the PDF response for 1 hour. After re-uploading a new PDF, the browser served the cached old PDF without even hitting the server.
+
+- **Additional finding**: Both files in Supabase Storage (`1-1781347386094.pdf` and `1-1781347435044.pdf`) had identical SHA-256 hashes — the second upload via admin form sent the same random content.
+
+- `src/app/api/chapters/[id]/view/route.ts:96` — `max-age=3600` → `max-age=60`
+- `src/app/api/chapters/[id]/download/route.ts:135` — `max-age=3600` → `max-age=60`
+- `src/actions/book.ts` — Added `cacheControl: 'max-age=60'` to both `createChapter` and `updateChapter` Supabase Storage upload calls
+- `src/app/api/chapters/[id]/view/route.test.ts` — New test: `sets Cache-Control to a short max-age to prevent stale PDF caching`
+- `src/app/api/chapters/[id]/download/route.test.ts` — New test: same
 
 ### Verification
 
-- `bun run test` — 302 passed (41 files, 11 skipped)
+- `bun run test` — 304 passed (41 files, 11 skipped)
 - `bun run build` — Passed
-- Curl: `/api/chapters/ch-1/view` → 401 (correct, no auth via curl)
 
 ### Known Issues / Risks
 
-- None. Admins already have full access to upload/delete PDFs via admin panel; allowing direct PDF access is consistent.
+- `max-age=60` means users get a potentially stale PDF for up to 1 minute after upload. Acceptable for admin preview; if longer cache needed, implement ETag support with conditional 304 responses.
 
 ### Next Steps
 
-- Mas Chiko can test: click Pratinjau on Kelola Bab → PDF should render immediately, no blank.
+- Upload the real PDF via admin Edit Chapter form → wait 60s → refresh → new PDF should render
+- Fix the identical-hash issue separately if the admin form re-submits the wrong file
+
+---
