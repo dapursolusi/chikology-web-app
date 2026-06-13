@@ -11,7 +11,7 @@ import {
   computeChapterState,
   isReleased,
 } from '@/lib/chapters';
-import { createClient, createServiceClient } from '@/lib/supabase/server';
+import { createServiceClient, getAuthUser } from '@/lib/supabase/server';
 
 export async function purchaseChapter(chapterId: string): Promise<
   | {
@@ -20,14 +20,8 @@ export async function purchaseChapter(chapterId: string): Promise<
     }
   | { error: string }
 > {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return { error: 'Not authenticated' };
-  }
+  const user = await getAuthUser();
+  if (!user) return { error: 'Not authenticated' };
 
   // Fetch target chapter
   const targetChapters = await db
@@ -104,14 +98,8 @@ export async function purchaseChapter(chapterId: string): Promise<
 export async function getChapterSignedUrl(
   chapterId: string
 ): Promise<{ url: string; expiresIn: 14400 } | { error: string }> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return { error: 'Not authenticated' };
-  }
+  const user = await getAuthUser();
+  if (!user) return { error: 'Not authenticated' };
 
   const access = await canUserReadChapter(user.id, chapterId);
 

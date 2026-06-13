@@ -5,7 +5,7 @@ import { db } from '@/db';
 import { journalEntries } from '@/db/schema';
 import { and, desc, eq, gte, isNull, sql } from 'drizzle-orm';
 
-import { createClient } from '@/lib/supabase/server';
+import { getAuthUser } from '@/lib/supabase/server';
 
 export interface DashboardStats {
   journalCount: number;
@@ -29,14 +29,8 @@ export interface DayMood {
 }
 
 export async function getDashboardStats(): Promise<DashboardStats> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return { journalCount: 0, avgMood: null, weekChange: null };
-  }
+  const user = await getAuthUser();
+  if (!user) return { journalCount: 0, avgMood: null, weekChange: null };
 
   const weekStart = getWeekStart();
   const prevWeekStart = new Date(weekStart);
@@ -81,11 +75,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
 }
 
 export async function getRecentActivity(): Promise<RecentActivityItem[]> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+  const user = await getAuthUser();
   if (!user) return [];
 
   const entries = await db
@@ -112,11 +102,7 @@ export async function getRecentActivity(): Promise<RecentActivityItem[]> {
 }
 
 export async function getWeekMoods(): Promise<DayMood[]> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+  const user = await getAuthUser();
   const weekStart = getWeekStart();
   const weekEnd = new Date(weekStart);
   weekEnd.setDate(weekEnd.getDate() + 7);

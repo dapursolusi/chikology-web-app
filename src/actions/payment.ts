@@ -12,7 +12,11 @@ import {
 } from '@/db/schema';
 import { and, eq } from 'drizzle-orm';
 
-import { createClient, createServiceClient } from '@/lib/supabase/server';
+import {
+  createClient,
+  createServiceClient,
+  getAuthUser,
+} from '@/lib/supabase/server';
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
@@ -20,14 +24,8 @@ const MAX_FILE_SIZE = 5 * 1024 * 1024;
 export async function submitPaymentProof(
   formData: FormData
 ): Promise<{ success: true } | { error: string }> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return { error: 'Not authenticated' };
-  }
+  const user = await getAuthUser();
+  if (!user) return { error: 'Not authenticated' };
 
   const chapterId = formData.get('chapterId');
   if (!chapterId || typeof chapterId !== 'string') {
@@ -83,6 +81,7 @@ export async function submitPaymentProof(
   const timestamp = Date.now();
   const proofPath = `${user.id}/${chapterId}-${timestamp}.${ext}`;
 
+  const supabase = await createClient();
   const { error: uploadError } = await supabase.storage
     .from('payment-proofs')
     .upload(proofPath, file, { contentType: file.type });
@@ -147,10 +146,7 @@ export async function verifyPaymentProof(
   if (role !== 'admin')
     return { error: 'Hanya admin yang dapat memverifikasi pembayaran' };
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthUser();
 
   if (action === 'approve') {
     const [proof] = await db

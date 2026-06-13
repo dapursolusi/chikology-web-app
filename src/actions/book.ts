@@ -7,7 +7,7 @@ import { bookChapters, users } from '@/db/schema';
 import { type ChapterParsedValues, chapterSchema } from '@/schemas/chapter';
 import { asc, eq } from 'drizzle-orm';
 
-import { createClient } from '@/lib/supabase/server';
+import { createClient, getAuthUser } from '@/lib/supabase/server';
 
 const BOOK_BUCKET = 'book-chapters';
 
@@ -19,11 +19,7 @@ export async function getBookChapters() {
 }
 
 export async function getAdminRole(): Promise<'user' | 'admin'> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+  const user = await getAuthUser();
   if (!user) return 'user';
 
   const rows = await db
