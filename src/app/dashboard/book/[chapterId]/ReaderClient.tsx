@@ -25,7 +25,7 @@ export function ReaderClient({
   const downloadUrl = `/api/chapters/${chapter.id}/download`;
 
   return (
-    <div className="flex flex-1 flex-col gap-4 -m-4 md:m-0 md:p-6">
+    <div className="flex flex-1 flex-col gap-4 px-4 pt-0 md:p-6">
       <header className="flex items-center gap-2">
         <Button asChild variant="ghost" size="icon" aria-label="Kembali">
           <Link href={isPreview ? '/dashboard/admin/book' : '/dashboard/book'}>
