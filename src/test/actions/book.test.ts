@@ -73,8 +73,13 @@ vi.mock('@/lib/supabase/server', () => {
     auth: { getUser: mockGetUser },
     storage: { from: mockStorageFrom },
   }));
+  const createServiceClient = vi.fn(() => ({
+    auth: { getUser: mockGetUser },
+    storage: { from: mockStorageFrom },
+  }));
   return {
     createClient,
+    createServiceClient,
     getAuthUser: async () => {
       const supabase = createClient();
       const {
