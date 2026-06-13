@@ -2,19 +2,14 @@
 
 import { revalidatePath } from 'next/cache';
 
+import { type Mood } from '@/data/stressLevels';
 import { db } from '@/db';
 import { journalEntries } from '@/db/schema';
 import { and, desc, eq, isNull } from 'drizzle-orm';
 
 import { createClient } from '@/lib/supabase/server';
 
-export type Mood =
-  | 'very_calm'
-  | 'calm'
-  | 'neutral'
-  | 'stressed'
-  | 'very_stressed';
-
+export { type Mood };
 export async function saveJournalEntry(data: {
   mood: Mood;
   content?: string;

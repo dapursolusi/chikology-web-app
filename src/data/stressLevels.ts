@@ -20,6 +20,22 @@ export const MOOD_MAP = {
 
 export type Mood = (typeof MOOD_MAP)[keyof typeof MOOD_MAP];
 
+export const MOOD_NUMERIC: Record<Mood, number> = {
+  very_calm: 1,
+  calm: 2,
+  neutral: 3,
+  stressed: 4,
+  very_stressed: 5,
+};
+
+export const MOOD_EMOJI: Record<Mood, string> = {
+  very_calm: '😌',
+  calm: '😊',
+  neutral: '😐',
+  stressed: '😟',
+  very_stressed: '😰',
+};
+
 export type StressLevel = {
   tier: StressTier;
   label: string;

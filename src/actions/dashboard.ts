@@ -1,18 +1,11 @@
 'use server';
 
+import { MOOD_EMOJI, MOOD_NUMERIC } from '@/data/stressLevels';
 import { db } from '@/db';
 import { journalEntries } from '@/db/schema';
 import { and, desc, eq, gte, isNull, sql } from 'drizzle-orm';
 
 import { createClient } from '@/lib/supabase/server';
-
-const MOOD_NUMERIC: Record<string, number> = {
-  very_calm: 1,
-  calm: 2,
-  neutral: 3,
-  stressed: 4,
-  very_stressed: 5,
-};
 
 export interface DashboardStats {
   journalCount: number;
@@ -129,17 +122,10 @@ export async function getWeekMoods(): Promise<DayMood[]> {
   weekEnd.setDate(weekEnd.getDate() + 7);
 
   const dayNames = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
-  const moodEmojis: Record<string, string> = {
-    very_calm: '😌',
-    calm: '😊',
-    neutral: '😐',
-    stressed: '😟',
-    very_stressed: '😰',
-  };
 
   const result: DayMood[] = dayNames.map((day) => ({
     day,
-    emoji: moodEmojis.neutral,
+    emoji: MOOD_EMOJI.neutral,
     mood: null,
     hasEntry: false,
   }));

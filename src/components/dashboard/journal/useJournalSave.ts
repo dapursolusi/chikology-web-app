@@ -11,7 +11,7 @@ import {
 
 import { useRouter } from 'next/navigation';
 
-import { type Mood as MoodType, saveJournalEntry } from '@/actions/journal';
+import { saveJournalEntry } from '@/actions/journal';
 import {
   MOOD_MAP,
   type Mood,
@@ -40,8 +40,8 @@ type ActionState =
   | null;
 
 interface UseJournalSaveReturn {
-  mood: MoodType | undefined;
-  setMood: (mood: MoodType) => void;
+  mood: Mood | undefined;
+  setMood: (mood: Mood) => void;
   content: string;
   setContent: Dispatch<SetStateAction<string>>;
   entries: JournalEntry[];
@@ -59,10 +59,10 @@ export function useJournalSave({
   const router = useRouter();
   const hasTier = tier !== null;
 
-  const defaultMood: MoodType | undefined =
-    hasTier && tier ? (MOOD_MAP[tier] as MoodType) : undefined;
+  const defaultMood: Mood | undefined =
+    hasTier && tier ? (MOOD_MAP[tier] as Mood) : undefined;
 
-  const [mood, setMoodState] = useState<MoodType | undefined>(defaultMood);
+  const [mood, setMoodState] = useState<Mood | undefined>(defaultMood);
   const [content, setContent] = useState('');
   const [localEntries, setLocalEntries] = useState(entries);
   const moodRef = useRef<HTMLInputElement>(null);
@@ -86,7 +86,7 @@ export function useJournalSave({
 
   const [state, formAction, isPending] = useActionState<ActionState, FormData>(
     (_state, formData) => {
-      const moodValue = formData.get('mood') as MoodType | null;
+      const moodValue = formData.get('mood') as Mood | null;
       if (!moodValue) return { error: 'Mood wajib dipilih' };
       return saveJournalEntry({
         mood: moodValue,
@@ -135,7 +135,7 @@ export function useJournalSave({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state]);
 
-  function setMood(newMood: MoodType) {
+  function setMood(newMood: Mood) {
     setMoodState(newMood);
     if (moodRef.current) {
       moodRef.current.value = newMood;
