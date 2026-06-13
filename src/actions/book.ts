@@ -7,7 +7,7 @@ import { bookChapters, users } from '@/db/schema';
 import { type ChapterParsedValues, chapterSchema } from '@/schemas/chapter';
 import { asc, eq } from 'drizzle-orm';
 
-import { createClient, getAuthUser } from '@/lib/supabase/server';
+import { createServiceClient, getAuthUser } from '@/lib/supabase/server';
 
 const BOOK_BUCKET = 'book-chapters';
 
@@ -57,21 +57,11 @@ export async function createChapter(
   }
   const values: ChapterParsedValues = parsed.data;
 
-  const supabase = await createClient();
+  const supabase = createServiceClient();
 
   let pdfPath: string | null = null;
   if (values.pdf) {
     const objectPath = `${values.chapter_number}-${Date.now()}.pdf`;
-    const hostUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    console.error('[DEBUG-b1c3] supabaseUrl:', hostUrl);
-    try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      console.error('[DEBUG-b1c3] auth user:', user?.id, user?.email);
-    } catch (authErr) {
-      console.error('[DEBUG-b1c3] auth check error:', JSON.stringify(authErr));
-    }
     const { error: uploadError } = await supabase.storage
       .from(BOOK_BUCKET)
       .upload(objectPath, values.pdf, {
@@ -79,10 +69,6 @@ export async function createChapter(
         cacheControl: 'max-age=60',
       });
     if (uploadError) {
-      console.error(
-        '[DEBUG-b1c3] createChapter upload error:',
-        JSON.stringify(uploadError)
-      );
       return { error: 'Gagal mengunggah file PDF' };
     }
     pdfPath = objectPath;
@@ -131,7 +117,7 @@ export async function updateChapter(
   }
   const values: ChapterParsedValues = parsed.data;
 
-  const supabase = await createClient();
+  const supabase = createServiceClient();
 
   let pdfPath: string | undefined;
   if (values.pdf) {
@@ -143,10 +129,6 @@ export async function updateChapter(
         cacheControl: 'max-age=60',
       });
     if (uploadError) {
-      console.error(
-        '[DEBUG-b1c3] updateChapter upload error:',
-        JSON.stringify(uploadError)
-      );
       return { error: 'Gagal mengunggah file PDF' };
     }
     pdfPath = objectPath;
