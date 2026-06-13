@@ -1,47 +1,45 @@
-## [Friday, 12-06-2026 17:50] — Compact BookCountdown in dashboard sidebar
+## [Friday, 12-06-2026 19:49] — Architecture review + merge purchaseChapter/claimFreeChapter
 
 ### Session Target
 
-- Add compact countdown below disabled E-Book nav item in dashboard sidebar during soft launch
+- Surface architectural friction via HTML report
+- Execute candidate #1: Merge `purchaseChapter` and `claimFreeChapter` into single action
 
 ### Current State
 
 - Status: shipped
-- Scope: `src/components/sections/home/BookCountdown.tsx`, `src/components/sections/home/book-countdown.test.tsx`, `src/components/nav-main.tsx`, `src/components/app-sidebar.tsx`, `src/components/app-sidebar.test.tsx`, `src/app/dashboard/layout.tsx`, `src/lib/feature-flags.ts`
+- Scope: `src/actions/chapters.ts`, `src/test/actions/chapters.test.ts`, `src/test/integration/book-purchase-flow.test.tsx`, `src/app/dashboard/book/BookPageClient.test.tsx`, `tmp/architecture-review-20260612.html`, `AGENTS.md` (external)
 
 ### What Changed
 
-- `src/components/sections/home/BookCountdown.tsx` — Added `size`, `initialNow`, `intervalMs` props. Compact mode renders single-line text "X hari Y jam Z menit" instead of 4-box grid. Uses `initialNow` when provided (avoids hydration flash). Compact mode defaults to 60s interval.
-- `src/components/sections/home/book-countdown.test.tsx` — 4 new tests: compact mode text format, compact 60s interval tick, compact "Sudah rilis", `initialNow` override.
-- `src/components/nav-main.tsx` — Added `countdown?: ReactNode` to `NavItem` type. `DisabledItem` renders `{item.countdown}` below the disabled button.
-- `src/components/app-sidebar.tsx` — Added `initialNow` prop. Removed `tooltipMessage` from E-Book nav item. Passes `<BookCountdown size="compact" intervalMs={60000} />` as `countdown` slot when `!ebookLive`.
-- `src/components/app-sidebar.test.tsx` — 3 updated tests: replaced tooltip assertion with countdown assertion, added `ebookLive=true` no-countdown test, added `vi.useFakeTimers()` support.
-- `src/app/dashboard/layout.tsx` — Passes `initialNow` to `AppSidebar` from server component via `getServerTimestamp()`.
-- `src/lib/feature-flags.ts` — Added `getServerTimestamp()` to avoid React purity lint error on `Date.now()` inside server component.
+- `tmp/architecture-review-20260612.html` — New file. Architecture review report with 6 deepening candidates ranked by testability impact. Generated to repo-local `tmp/` for reference.
+- `src/actions/chapters.ts` — Removed `claimFreeChapter()` (89 lines). It was dead code — no component or page ever imported it. `purchaseChapter()` already handled both free and paid chapter acquisition; callers (PurchaseModal, NextChapterButton) already called `purchaseChapter` for free chapters.
+- `src/test/actions/chapters.test.ts` — Removed `describe('claimFreeChapter', ...)` test suite (7 tests, 164 lines). Coverage of the gating logic is preserved in the `purchaseChapter` tests (14 tests still pass).
+- `src/test/integration/book-purchase-flow.test.tsx` — Removed `claimFreeChapter: vi.fn()` mock from module mock (dead mock).
+- `src/app/dashboard/book/BookPageClient.test.tsx` — Removed `claimFreeChapter: vi.fn()` mock from module mock (dead mock).
+- `AGENTS.md` — External changes detected (70 lines added). Not from this session.
 
 ### Verification
 
-- Commands run: `bun vitest run` (294 pass, 11 skipped), `bun run lint` (0 errors, 9 pre-existing warnings), `bun run build` (pass)
+- Commands run: `bun vitest run -- --run src/test/actions/chapters.test.ts` (14 pass), `bun vitest run` (287 pass, 11 skipped), `bun run build` (pass)
 - Results: All green
 
 ### Decisions
 
-- D-001: Reuse BookCountdown with `size="compact"` prop instead of separate component — single source of truth for countdown logic, keeps both variants consistent.
-- D-002: `initialNow` server-side timestamp to avoid hydration flash — minimal data transfer (one number), no server-side diff computation needed.
-- D-003: 60s interval for compact mode — no seconds displayed, so 1s ticks are wasteful and distracting.
-- D-004: `getServerTimestamp()` in feature-flags.ts — works around React compiler purity lint that forbids `Date.now()` in server component body.
+- D-001: **Delete `claimFreeChapter`, don't rename `purchaseChapter`** — The report proposed renaming to `acquireChapter`, but since callers already use `purchaseChapter` for both free and paid chapters, renaming would add import churn across 3 components + 4 test files with zero behavioral benefit. Keeping the name is the minimal change.
+- D-002: **Don't add `isFree` guard to `purchaseChapter`** — The guard from `claimFreeChapter` existed to prevent calling it on a paid chapter. Since `purchaseChapter` is intentionally used for both free and paid (the only difference is whether the UI shows a payment-proof step), the guard doesn't apply. `purchaseChapter` works correctly for any `buyable` chapter regardless of price.
 
 ### Known Issues / Risks
 
-- AGENTS.md has uncommitted external changes from earlier session — not part of this change.
-- In collapsed (icon-only) sidebar mode, the countdown is not visible — by design (accepted tradeoff).
+- AGENTS.md has uncommitted external changes from the session environment — not part of this change.
+- The `claimFreeChapter` removal exposed that `chapters.test.ts`'s `purchaseChapter` tests already covered free chapter claiming thoroughly (all happy-path tests used `isFree: true` chapters) — no test coverage was lost.
 
 ### Next Steps
 
-1. Feature is done — no follow-up needed if schedule holds. When `ebookLive` flips to true on Jun 16, the countdown naturally disappears.
+1. Candidate #2 (Extract `useJournalSave` hook from `JournalPageClient`) — highest testability impact remaining
+2. Candidate #3 (Extract auth guard module) — affects 10+ files, low risk
+3. Candidate #4 (Mood type single source of truth) — pure data refactor
 
 ### Blockers
 
 - None
-
----

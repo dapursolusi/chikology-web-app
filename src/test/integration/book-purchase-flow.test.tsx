@@ -28,7 +28,6 @@ const {
 vi.mock('@/actions/chapters', () => ({
   purchaseChapter: mockPurchaseChapter,
   getChapterSignedUrl: mockGetChapterSignedUrl,
-  claimFreeChapter: vi.fn(),
 }));
 
 vi.mock('@/actions/payment', () => ({

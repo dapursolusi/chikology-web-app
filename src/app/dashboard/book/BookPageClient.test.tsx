@@ -16,7 +16,6 @@ vi.mock('next/navigation', () => ({
 
 vi.mock('@/actions/chapters', () => ({
   purchaseChapter: mockPurchaseChapter,
-  claimFreeChapter: vi.fn(),
 }));
 
 function makeChapter(
