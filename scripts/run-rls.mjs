@@ -7,7 +7,8 @@ if (!DATABASE_URL) {
   process.exit(1);
 }
 
-const sqlPath = new URL('../drizzle/rls_and_buckets.sql', import.meta.url).pathname;
+const sqlPath = new URL('../drizzle/rls_and_buckets.sql', import.meta.url)
+  .pathname;
 const sqlContent = fs.readFileSync(sqlPath, 'utf-8');
 const sql = postgres(DATABASE_URL);
 
