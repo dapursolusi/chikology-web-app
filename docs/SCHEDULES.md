@@ -155,20 +155,21 @@
 
 ### Phase 3 Slices — All Merged to Main
 
-| Slice | Issue | Scope                                                                  | PR       | Status          |
-| ----- | ----- | ---------------------------------------------------------------------- | -------- | --------------- |
-| 1     | #14   | Soft launch: `app_settings` flag, BookCountdown, greyed nav            | #41      | ✅ Merged Jun 8 |
-| 2A    | #15   | Chapter schema (`book_chapters`, `chapter_purchases`), admin role gate | #37, #38 | ✅ Merged Jun 6 |
-| 2B    | #25   | Admin create chapter + PDF upload                                      | #27      | ✅ Merged Jun 5 |
-| 2C    | #26   | Admin edit + hide chapter                                              | #29      | ✅ Merged Jun 5 |
-| 3     | #17   | Chapter list + purchase flow + `/dashboard/book` page                  | #31      | ✅ Merged Jun 6 |
-| 4     | #18   | Chapter reader + signed URL + 5-scenario next-chapter button           | #32      | ✅ Merged Jun 6 |
-| 5     | #19   | Landing page full launch: embedded chapter row                         | #33      | ✅ Merged Jun 6 |
-| 6     | #16   | Full launch transition: pg_cron flip, admin toggle, RLS, E2E tests     | #34–#36  | ✅ Merged Jun 6 |
-| —     | #45   | BookCountdown: add seconds + center layout                             | #52      | ✅ Merged Jun 9 |
-| —     | #44   | Admin nav items visibility in sidebar                                  | #51      | ✅ Merged Jun 9 |
-| —     | #42   | PDF signed URL generation fix for chapter reader                       | #42      | ✅ Merged Jun 9 |
-| —     | #49   | PDF Protection: PDF.js viewer + watermarking + audit logs              | #50      | ✅ Merged Jun 9 |
+| Slice | Issue | Scope                                                                            | PR       | Status           |
+| ----- | ----- | -------------------------------------------------------------------------------- | -------- | ---------------- |
+| 1     | #14   | Soft launch: `app_settings` flag, BookCountdown, greyed nav                      | #41      | ✅ Merged Jun 8  |
+| 2A    | #15   | Chapter schema (`book_chapters`, `chapter_purchases`), admin role gate           | #37, #38 | ✅ Merged Jun 6  |
+| 2B    | #25   | Admin create chapter + PDF upload                                                | #27      | ✅ Merged Jun 5  |
+| 2C    | #26   | Admin edit + hide chapter                                                        | #29      | ✅ Merged Jun 5  |
+| 3     | #17   | Chapter list + purchase flow + `/dashboard/book` page                            | #31      | ✅ Merged Jun 6  |
+| 4     | #18   | Chapter reader + signed URL + 5-scenario next-chapter button                     | #32      | ✅ Merged Jun 6  |
+| 5     | #19   | Landing page full launch: embedded chapter row                                   | #33      | ✅ Merged Jun 6  |
+| 6     | #16   | Full launch transition: pg_cron flip, admin toggle, RLS, E2E tests               | #34–#36  | ✅ Merged Jun 6  |
+| —     | #45   | BookCountdown: add seconds + center layout                                       | #52      | ✅ Merged Jun 9  |
+| —     | #44   | Admin nav items visibility in sidebar                                            | #51      | ✅ Merged Jun 9  |
+| —     | #42   | PDF signed URL generation fix for chapter reader                                 | #42      | ✅ Merged Jun 9  |
+| —     | #49   | PDF Protection: PDF.js viewer + watermarking + audit logs                        | #50      | ✅ Merged Jun 9  |
+| —     | #85   | Admin Preview: preview chapter before release (bypass ebook_live + state checks) | —        | ✅ Merged Jun 13 |
 
 **All core e-book infrastructure is complete and deployed.**
 

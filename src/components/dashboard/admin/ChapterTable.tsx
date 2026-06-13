@@ -1,5 +1,9 @@
 import { useState } from 'react';
 
+import Link from 'next/link';
+
+import { Eye } from 'lucide-react';
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -101,6 +105,17 @@ function ChapterRowItem({ chapter, onEdit, onHide }: ChapterRowItemProps) {
       <TableCell>{formatRelease(chapter)}</TableCell>
       <TableCell className="text-right">
         <div className="flex justify-end gap-2">
+          {chapter.pdfPath && (
+            <Button asChild variant="outline" size="sm">
+              <Link
+                href={`/dashboard/book/${chapter.id}?preview=1`}
+                target="_blank"
+              >
+                <Eye className="mr-1 size-4" />
+                Pratinjau
+              </Link>
+            </Button>
+          )}
           {onEdit && (
             <Button
               type="button"

@@ -1,5 +1,7 @@
 import { redirect } from 'next/navigation';
 
+import { getAdminRole } from '@/actions/book';
+
 import { getChaptersWithState, getNextChapterAction } from '@/lib/chapters';
 import { createClient } from '@/lib/supabase/server';
 
@@ -11,10 +13,15 @@ export const metadata = {
 
 export default async function ReaderPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ chapterId: string }>;
+  searchParams?: Promise<{ preview?: string }>;
 }) {
   const { chapterId } = await params;
+  const { preview } = searchParams ? await searchParams : {};
+  const isPreview = preview === '1' && (await getAdminRole()) === 'admin';
+
   const supabase = await createClient();
   const {
     data: { user },
@@ -31,16 +38,18 @@ export default async function ReaderPage({
     redirect('/dashboard/book?denied=not-found');
   }
 
-  if (current.state === 'unreleased') {
-    redirect('/dashboard/book?denied=unreleased');
-  }
+  if (!isPreview) {
+    if (current.state === 'unreleased') {
+      redirect('/dashboard/book?denied=unreleased');
+    }
 
-  if (current.state === 'locked') {
-    redirect('/dashboard/book?denied=locked');
-  }
+    if (current.state === 'locked') {
+      redirect('/dashboard/book?denied=locked');
+    }
 
-  if (current.state === 'buyable' && !current.isFree) {
-    redirect('/dashboard/book?denied=paid');
+    if (current.state === 'buyable' && !current.isFree) {
+      redirect('/dashboard/book?denied=paid');
+    }
   }
 
   const nextAction = getNextChapterAction(current.chapterNumber, chapters);
@@ -53,6 +62,7 @@ export default async function ReaderPage({
         chapterNumber: current.chapterNumber,
       }}
       nextAction={nextAction}
+      isPreview={isPreview}
     />
   );
 }

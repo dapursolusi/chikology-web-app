@@ -1,32 +1,33 @@
-## [Saturday, 13-06-2026 14:20] — Fix PDF viewer blocked by X-Frame-Options DENY + merge redundant DB queries
+## [Saturday, 13-06-2026 17:30] — Fixed blank PDF in admin preview (root cause: PDF.js URL re-encoding)
 
 ### Session Target
 
-- Fix PDF viewer iframe not loading (blocked by `X-Frame-Options: DENY`)
-- Merge redundant DB queries on `[chapterId]/page.tsx` to reduce SSR latency
+- Fix blank PDF.js viewer in admin preview mode.
 
 ### Current State
 
 - Status: shipped
-- Scope: `next.config.ts`, `src/app/layout.tsx`, `src/app/dashboard/book/[chapterId]/page.tsx`, `src/app/dashboard/book/[chapterId]/page.test.tsx`
+- Scope: 12 files changed, 302 tests passing, build passing
 
 ### What Changed
 
-- `next.config.ts` — Added `X-Frame-Options: SAMEORIGIN` for `/pdfjs/:path*` to allow PDF.js viewer to load in the chapter reader iframe. Added `https://va.vercel-scripts.com` to CSP `script-src` to fix Vercel Analytics being blocked.
-- `src/app/layout.tsx` — Added `suppressHydrationWarning` to `<body>`, `data-scroll-behavior="smooth"` to `<html>`, and a MutationObserver inline script to strip `bis_skin_checked` from DOM elements injected by security browser extensions.
-- `src/app/dashboard/book/[chapterId]/page.tsx` — Merged `canUserReadChapter` (3 DB queries) into `getChaptersWithState` (3 DB queries). Access control is now derived from chapter state. 6 queries → 3 per page load.
-- `src/app/dashboard/book/[chapterId]/page.test.tsx` — Removed `canUserReadChapter` mock dependency. Access-denial tests now derive from `getChaptersWithState` return values.
+- **Root cause found**: PDF.js viewer (`viewer.mjs:18698`) re-encodes the `file` URL. When the file URL contained `?preview=1`, `encodeURIComponent` turned `?` → `%3F`, and `.replaceAll("%2F", "/")` only restored `/` characters. The final fetch URL became `/api/.../view%3Fpreview%3D1` (with `%3F` in the path, not a query separator), which didn't match any Next.js route → 404 → blank iframe.
+- **Fix**: Removed `?preview=1` from the PDF viewer and download URLs entirely. Instead, the API routes (view + download) now check the admin role directly — admins can access any chapter's PDF regardless of ownership/release state. The page-level gate (`?preview=1` + admin check in ReaderPage) is unchanged and remains the primary access control.
+- `src/app/api/chapters/[id]/view/route.ts` — Admin role check replaces `?preview=1` query param check.
+- `src/app/api/chapters/[id]/download/route.ts` — Same.
+- `src/app/dashboard/book/[chapterId]/ReaderClient.tsx` — Reverted viewer and download URLs to normal (no query param). `isPreview` prop only affects UI (back link, next-action footer).
+- All test files updated to match new approach.
 
 ### Verification
 
-- Commands run: All 75 tests in 8 test files pass
-- Headers: `/pdfjs/web/viewer.html` returns `X-Frame-Options: SAMEORIGIN` (was `DENY`)
-- CSP: includes `https://va.vercel-scripts.com` in `script-src`
-- Next.js errors: none
+- `bun run test` — 302 passed (41 files, 11 skipped)
+- `bun run build` — Passed
+- Curl: `/api/chapters/ch-1/view` → 401 (correct, no auth via curl)
 
-### Decisions
+### Known Issues / Risks
 
-- D-001: Override `X-Frame-Options` via specific header rule for `/pdfjs/:path*` rather than changing the global rule — keeps DENY for all other routes
-- D-002: Derive chapter access from state instead of separate `canUserReadChapter` — reduces DB queries from 6 to 3 per page load
+- None. Admins already have full access to upload/delete PDFs via admin panel; allowing direct PDF access is consistent.
 
----
+### Next Steps
+
+- Mas Chiko can test: click Pratinjau on Kelola Bab → PDF should render immediately, no blank.

@@ -10,19 +10,23 @@ const {
   ReaderClient,
   mockRedirect,
   mockGetNextChapterAction,
+  mockGetAdminRole,
 } = vi.hoisted(() => {
   const ReaderClient = vi.fn(
     ({
       chapter,
       nextAction,
+      isPreview,
     }: {
       chapter: { id: string; title: string; chapterNumber: number };
       nextAction: NextChapterAction;
+      isPreview?: boolean;
     }) => (
       <div
         data-testid="reader-client"
         data-chapter-id={chapter.id}
         data-next-kind={nextAction.kind}
+        data-is-preview={isPreview ? 'true' : 'false'}
       />
     )
   );
@@ -37,6 +41,9 @@ const {
       throw new Error(`NEXT_REDIRECT:${url}`);
     }),
     mockGetNextChapterAction: vi.fn(),
+    mockGetAdminRole: vi.fn<() => Promise<'admin' | 'user'>>(
+      async () => 'user'
+    ),
     ReaderClient,
   };
 });
@@ -54,6 +61,10 @@ vi.mock('@/lib/chapters', () => ({
 
 vi.mock('@/app/dashboard/book/[chapterId]/ReaderClient', () => ({
   ReaderClient,
+}));
+
+vi.mock('@/actions/book', () => ({
+  getAdminRole: mockGetAdminRole,
 }));
 
 vi.mock('next/navigation', () => ({
@@ -131,6 +142,72 @@ describe('ReaderPage', () => {
     await expect(
       ReaderPage({ params: Promise.resolve({ chapterId: 'ch-paid' }) })
     ).rejects.toThrow('NEXT_REDIRECT:/dashboard/book?denied=paid');
+  });
+
+  it('renders ReaderClient when admin uses preview=1 on an unreleased chapter', async () => {
+    mockGetAdminRole.mockResolvedValueOnce('admin');
+    mockGetChaptersWithState.mockResolvedValueOnce([
+      makeChapter({ id: 'ch-future', state: 'unreleased' }),
+    ]);
+
+    const element = await ReaderPage({
+      params: Promise.resolve({ chapterId: 'ch-future' }),
+      searchParams: Promise.resolve({ preview: '1' }),
+    });
+    render(element);
+
+    const client = screen.getByTestId('reader-client');
+    expect(client).toBeInTheDocument();
+    expect(client.dataset.isPreview).toBe('true');
+  });
+
+  it('redirects to /dashboard/book?denied=unreleased when non-admin uses preview=1 on an unreleased chapter', async () => {
+    mockGetChaptersWithState.mockResolvedValueOnce([
+      makeChapter({ id: 'ch-future', state: 'unreleased' }),
+    ]);
+
+    await expect(
+      ReaderPage({
+        params: Promise.resolve({ chapterId: 'ch-future' }),
+        searchParams: Promise.resolve({ preview: '1' }),
+      })
+    ).rejects.toThrow('NEXT_REDIRECT:/dashboard/book?denied=unreleased');
+  });
+
+  it('renders ReaderClient when admin uses preview=1 on a locked chapter', async () => {
+    mockGetAdminRole.mockResolvedValueOnce('admin');
+    mockGetChaptersWithState.mockResolvedValueOnce([
+      makeChapter({ id: 'ch-2', chapterNumber: 2, state: 'locked' }),
+    ]);
+    mockGetNextChapterAction.mockReturnValueOnce({ kind: 'end-of-book' });
+
+    const element = await ReaderPage({
+      params: Promise.resolve({ chapterId: 'ch-2' }),
+      searchParams: Promise.resolve({ preview: '1' }),
+    });
+    render(element);
+
+    const client = screen.getByTestId('reader-client');
+    expect(client).toBeInTheDocument();
+    expect(client.dataset.isPreview).toBe('true');
+  });
+
+  it('renders ReaderClient when admin uses preview=1 on a paid buyable chapter', async () => {
+    mockGetAdminRole.mockResolvedValueOnce('admin');
+    mockGetChaptersWithState.mockResolvedValueOnce([
+      makeChapter({ id: 'ch-paid', state: 'buyable', isFree: false }),
+    ]);
+    mockGetNextChapterAction.mockReturnValueOnce({ kind: 'end-of-book' });
+
+    const element = await ReaderPage({
+      params: Promise.resolve({ chapterId: 'ch-paid' }),
+      searchParams: Promise.resolve({ preview: '1' }),
+    });
+    render(element);
+
+    const client = screen.getByTestId('reader-client');
+    expect(client).toBeInTheDocument();
+    expect(client.dataset.isPreview).toBe('true');
   });
 
   it('renders ReaderClient with chapter and computed next action when access is allowed', async () => {

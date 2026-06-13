@@ -15,9 +15,11 @@ const PDFJS_VIEWER = '/pdfjs/web/viewer.html';
 export function ReaderClient({
   chapter,
   nextAction,
+  isPreview,
 }: {
   chapter: { id: string; title: string; chapterNumber: number };
   nextAction: NextChapterAction;
+  isPreview?: boolean;
 }) {
   const viewerUrl = `${PDFJS_VIEWER}?file=${encodeURIComponent(`/api/chapters/${chapter.id}/view`)}`;
   const downloadUrl = `/api/chapters/${chapter.id}/download`;
@@ -26,7 +28,7 @@ export function ReaderClient({
     <div className="flex flex-1 flex-col gap-4 p-4 pt-0 md:p-6">
       <header className="flex items-center gap-2">
         <Button asChild variant="ghost" size="icon" aria-label="Kembali">
-          <Link href="/dashboard/book">
+          <Link href={isPreview ? '/dashboard/admin/book' : '/dashboard/book'}>
             <ArrowLeft className="size-4" />
           </Link>
         </Button>
@@ -54,16 +56,27 @@ export function ReaderClient({
         className="h-[calc(100vh-12rem)] w-full rounded-md border bg-white"
       />
 
-      <a
-        href={WA_LINK}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="text-sm text-primary underline-offset-4 hover:underline"
-      >
-        Butuh rekomendasi lebih dalam? Jadwalkan konsultasi dengan Mas Chiko
-      </a>
+      {isPreview ? (
+        <Link
+          href="/dashboard/admin/book"
+          className="text-sm text-primary underline-offset-4 hover:underline"
+        >
+          Kembali ke Panel Admin
+        </Link>
+      ) : (
+        <>
+          <a
+            href={WA_LINK}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm text-primary underline-offset-4 hover:underline"
+          >
+            Butuh rekomendasi lebih dalam? Jadwalkan konsultasi dengan Mas Chiko
+          </a>
 
-      <NextChapterButton action={nextAction} />
+          <NextChapterButton action={nextAction} />
+        </>
+      )}
     </div>
   );
 }
