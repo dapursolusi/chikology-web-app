@@ -57,20 +57,43 @@ export async function createChapter(
   }
   const values: ChapterParsedValues = parsed.data;
 
-  const supabase = createServiceClient();
+  console.error(
+    '[DEBUG-pdf] serviceKey present:',
+    !!process.env.SUPABASE_SERVICE_ROLE_KEY
+  );
+  console.error(
+    '[DEBUG-pdf] supabaseUrl:',
+    process.env.NEXT_PUBLIC_SUPABASE_URL
+  );
+  let supabase;
+  try {
+    supabase = createServiceClient();
+    console.error('[DEBUG-pdf] service client created OK');
+  } catch (clientErr) {
+    console.error('[DEBUG-pdf] service client creation FAILED:', clientErr);
+    return { error: 'Gagal mengunggah file PDF' };
+  }
 
   let pdfPath: string | null = null;
   if (values.pdf) {
     const objectPath = `${values.chapter_number}-${Date.now()}.pdf`;
-    const { error: uploadError } = await supabase.storage
+    console.error(
+      '[DEBUG-pdf] uploading to:',
+      objectPath,
+      'size:',
+      values.pdf.size
+    );
+    const { data: uploadData, error: uploadError } = await supabase.storage
       .from(BOOK_BUCKET)
       .upload(objectPath, values.pdf, {
         contentType: 'application/pdf',
         cacheControl: 'max-age=60',
       });
     if (uploadError) {
+      console.error('[DEBUG-pdf] upload FAILED:', JSON.stringify(uploadError));
       return { error: 'Gagal mengunggah file PDF' };
     }
+    console.error('[DEBUG-pdf] upload OK:', JSON.stringify(uploadData));
     pdfPath = objectPath;
   }
 
