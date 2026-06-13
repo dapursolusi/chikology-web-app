@@ -17,9 +17,7 @@ import {
   createServiceClient,
   getAuthUser,
 } from '@/lib/supabase/server';
-
-const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
-const MAX_FILE_SIZE = 5 * 1024 * 1024;
+import { ALLOWED_IMAGE_TYPES, MAX_IMAGE_SIZE_BYTES } from '@/lib/validators';
 
 export async function submitPaymentProof(
   formData: FormData
@@ -69,11 +67,15 @@ export async function submitPaymentProof(
     return { error: 'File bukti pembayaran diperlukan' };
   }
 
-  if (!ALLOWED_TYPES.includes(file.type)) {
+  if (
+    !ALLOWED_IMAGE_TYPES.includes(
+      file.type as (typeof ALLOWED_IMAGE_TYPES)[number]
+    )
+  ) {
     return { error: 'Format file harus JPEG, PNG, atau WebP' };
   }
 
-  if (file.size > MAX_FILE_SIZE) {
+  if (file.size > MAX_IMAGE_SIZE_BYTES) {
     return { error: 'Ukuran file maksimal 5MB' };
   }
 

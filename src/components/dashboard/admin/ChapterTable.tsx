@@ -20,6 +20,8 @@ import {
   TableRow,
 } from '@/components/ui/table';
 
+import { idrFormatter } from '@/lib/currency';
+
 export interface ChapterRow {
   id: string;
   title: string;
@@ -37,12 +39,6 @@ interface ChapterTableProps {
   onEdit?: (chapter: ChapterRow) => void;
   onHide?: (chapter: ChapterRow) => void;
 }
-
-const idrFormatter = new Intl.NumberFormat('id-ID', {
-  style: 'currency',
-  currency: 'IDR',
-  maximumFractionDigits: 0,
-});
 
 function formatPrice(chapter: ChapterRow): string {
   if (chapter.isFree) return 'Gratis';
