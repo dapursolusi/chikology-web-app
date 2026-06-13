@@ -62,6 +62,16 @@ export async function createChapter(
   let pdfPath: string | null = null;
   if (values.pdf) {
     const objectPath = `${values.chapter_number}-${Date.now()}.pdf`;
+    const hostUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    console.error('[DEBUG-b1c3] supabaseUrl:', hostUrl);
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      console.error('[DEBUG-b1c3] auth user:', user?.id, user?.email);
+    } catch (authErr) {
+      console.error('[DEBUG-b1c3] auth check error:', JSON.stringify(authErr));
+    }
     const { error: uploadError } = await supabase.storage
       .from(BOOK_BUCKET)
       .upload(objectPath, values.pdf, {
