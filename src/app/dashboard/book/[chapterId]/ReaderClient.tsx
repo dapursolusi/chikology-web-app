@@ -25,7 +25,7 @@ export function ReaderClient({
   const downloadUrl = `/api/chapters/${chapter.id}/download`;
 
   return (
-    <div className="flex flex-1 flex-col gap-4 -m-4 md:m-0 md:p-6">
+    <div className="flex flex-1 flex-col gap-4 px-4 pt-0 md:p-6">
       <header className="flex items-center gap-2">
         <Button asChild variant="ghost" size="icon" aria-label="Kembali">
           <Link href={isPreview ? '/dashboard/admin/book' : '/dashboard/book'}>
@@ -53,7 +53,7 @@ export function ReaderClient({
       <iframe
         title={`PDF ${chapter.title}`}
         src={viewerUrl}
-        className="h-[calc(100vh-12rem)] w-full rounded-md border bg-white"
+        className="-mx-4 h-[calc(100vh-12rem)] w-[calc(100%+2rem)] rounded-none border-0 md:mx-0 md:w-full md:rounded-md md:border bg-white"
       />
 
       {isPreview ? (
