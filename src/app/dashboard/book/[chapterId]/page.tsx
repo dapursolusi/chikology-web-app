@@ -1,10 +1,6 @@
 import { redirect } from 'next/navigation';
 
-import {
-  canUserReadChapter,
-  getChaptersWithState,
-  getNextChapterAction,
-} from '@/lib/chapters';
+import { getChaptersWithState, getNextChapterAction } from '@/lib/chapters';
 import { createClient } from '@/lib/supabase/server';
 
 import { ReaderClient } from './ReaderClient';
@@ -28,15 +24,23 @@ export default async function ReaderPage({
     redirect('/?auth=login');
   }
 
-  const access = await canUserReadChapter(user.id, chapterId);
-  if (access.canRead === false) {
-    redirect(`/dashboard/book?denied=${access.reason}`);
-  }
-
   const chapters = await getChaptersWithState(user.id);
   const current = chapters.find((c) => c.id === chapterId);
+
   if (!current) {
     redirect('/dashboard/book?denied=not-found');
+  }
+
+  if (current.state === 'unreleased') {
+    redirect('/dashboard/book?denied=unreleased');
+  }
+
+  if (current.state === 'locked') {
+    redirect('/dashboard/book?denied=locked');
+  }
+
+  if (current.state === 'buyable' && !current.isFree) {
+    redirect('/dashboard/book?denied=paid');
   }
 
   const nextAction = getNextChapterAction(current.chapterNumber, chapters);
