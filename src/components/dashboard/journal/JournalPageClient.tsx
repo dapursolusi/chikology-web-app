@@ -1,24 +1,15 @@
 'use client';
 
-import { useActionState } from 'react';
-import { useEffect, useRef, useState } from 'react';
-
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 
-import { type Mood as MoodType, saveJournalEntry } from '@/actions/journal';
-import {
-  MOOD_MAP,
-  type Mood,
-  type StressTier,
-  stressLevels,
-} from '@/data/stressLevels';
-import { toast } from 'sonner';
+import { type Mood, type StressTier } from '@/data/stressLevels';
 
 import { JournalEditor } from '@/components/dashboard/journal/JournalEditor';
 import { JournalHistory } from '@/components/dashboard/journal/JournalHistory';
 import { MoodSelector } from '@/components/dashboard/journal/MoodSelector';
 import { ScanResultAccordion } from '@/components/dashboard/journal/ScanResultAccordion';
+import { useJournalSave } from '@/components/dashboard/journal/useJournalSave';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -35,99 +26,26 @@ interface JournalPageClientProps {
   entries: JournalEntry[];
 }
 
-type ActionState =
-  | { success: true; entryId: string }
-  | { error: string }
-  | null;
-
 export function JournalPageClient({ entries }: JournalPageClientProps) {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const tierParam = searchParams.get('tier');
-  const tier =
+  const tier: StressTier | null =
     tierParam !== null
       ? (Math.max(1, Math.min(5, Math.round(Number(tierParam)))) as StressTier)
       : null;
-  const hasTier = tier !== null;
 
-  const defaultMood: MoodType | undefined =
-    hasTier && tier ? (MOOD_MAP[tier] as MoodType) : undefined;
-
-  const [preselectedMood, setPreselectedMood] = useState<MoodType | undefined>(
-    defaultMood
-  );
-  const [editorContent, setEditorContent] = useState('');
-  const [historyEntries, setHistoryEntries] = useState(entries);
-  const moodRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (hasTier) {
-      toast.success('Hasil scan telah diteruskan ke jurnal.');
-    }
-    if (defaultMood && moodRef.current) {
-      moodRef.current.value = defaultMood;
-    }
-  }, [hasTier, defaultMood]);
-
-  const [state, formAction, isPending] = useActionState<ActionState, FormData>(
-    (_state, formData) => {
-      const mood = formData.get('mood') as MoodType | null;
-      if (!mood) return { error: 'Mood wajib dipilih' };
-      return saveJournalEntry({
-        mood,
-        content: editorContent || undefined,
-        stressTier: tier ?? undefined,
-        recommendation: tier ? stressLevels[tier].messages[0] : undefined,
-      });
-    },
-    null
-  );
-
-  const lastSavedIdRef = useRef<string | null>(null);
-
-  // Sync historyEntries with fresh server data when entries prop changes
-  // (e.g. after router.refresh() completes)
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setHistoryEntries(entries);
-  }, [entries]);
-
-  // Handle successful save: toast, optimistic update, then refresh server data
-  useEffect(() => {
-    if (
-      state &&
-      'success' in state &&
-      state.entryId !== lastSavedIdRef.current
-    ) {
-      const newId = state.entryId;
-      lastSavedIdRef.current = newId;
-
-      toast.success('Jurnal berhasil disimpan!');
-      setEditorContent('');
-
-      // Optimistically prepend the saved entry
-      const savedEntry = entries.find((e) => e.id === newId);
-      if (savedEntry) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setHistoryEntries((prev) => [savedEntry, ...prev]);
-      } else {
-        setHistoryEntries((prev) => {
-          const newEntry = {
-            id: newId,
-            mood: preselectedMood ?? null,
-            content: editorContent || null,
-            stressTier: tier ?? null,
-            recommendation: tier ? stressLevels[tier].messages[0] : null,
-            createdAt: new Date(),
-          };
-          return [newEntry, ...prev];
-        });
-      }
-
-      router.refresh();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state]);
+  const {
+    mood,
+    setMood,
+    content,
+    setContent,
+    entries: localEntries,
+    formAction,
+    isPending,
+    error,
+    moodRef,
+    hasTier,
+  } = useJournalSave({ entries, tier });
 
   return (
     <div className="flex flex-1 flex-col gap-4 pt-0 md:p-6">
@@ -150,22 +68,9 @@ export function JournalPageClient({ entries }: JournalPageClientProps) {
         <CardContent className="space-y-4">
           <form action={formAction} className="space-y-4">
             <input type="hidden" name="mood" ref={moodRef} />
-            <MoodSelector
-              value={preselectedMood}
-              onChange={(mood) => {
-                setPreselectedMood(mood);
-                if (moodRef.current) {
-                  moodRef.current.value = mood;
-                }
-              }}
-            />
-            {state && 'error' in state && (
-              <p className="text-sm text-destructive">{state.error}</p>
-            )}
-            <JournalEditor
-              content={editorContent}
-              onChange={setEditorContent}
-            />
+            <MoodSelector value={mood} onChange={setMood} />
+            {error && <p className="text-sm text-destructive">{error}</p>}
+            <JournalEditor content={content} onChange={setContent} />
             <Button type="submit" disabled={isPending}>
               {isPending ? 'Menyimpan...' : 'Simpan'}
             </Button>
@@ -190,7 +95,7 @@ export function JournalPageClient({ entries }: JournalPageClientProps) {
         </div>
       )}
 
-      <JournalHistory entries={historyEntries} />
+      <JournalHistory entries={localEntries} />
     </div>
   );
 }
