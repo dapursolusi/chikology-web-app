@@ -132,7 +132,7 @@ export async function GET(
   headers.set('Content-Type', 'application/pdf');
   headers.set('Content-Disposition', `attachment; filename="${filename}"`);
   headers.set('Content-Length', watermarkedPdfBytes.length.toString());
-  headers.set('Cache-Control', 'private, max-age=3600');
+  headers.set('Cache-Control', 'private, max-age=60');
 
   return new NextResponse(Uint8Array.from(watermarkedPdfBytes), {
     status: 200,

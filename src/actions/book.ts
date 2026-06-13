@@ -64,7 +64,10 @@ export async function createChapter(
     const objectPath = `${values.chapter_number}-${Date.now()}.pdf`;
     const { error: uploadError } = await supabase.storage
       .from(BOOK_BUCKET)
-      .upload(objectPath, values.pdf, { contentType: 'application/pdf' });
+      .upload(objectPath, values.pdf, {
+        contentType: 'application/pdf',
+        cacheControl: 'max-age=60',
+      });
     if (uploadError) {
       return { error: 'Gagal mengunggah file PDF' };
     }
@@ -121,7 +124,10 @@ export async function updateChapter(
     const objectPath = `${values.chapter_number}-${Date.now()}.pdf`;
     const { error: uploadError } = await supabase.storage
       .from(BOOK_BUCKET)
-      .upload(objectPath, values.pdf, { contentType: 'application/pdf' });
+      .upload(objectPath, values.pdf, {
+        contentType: 'application/pdf',
+        cacheControl: 'max-age=60',
+      });
     if (uploadError) {
       return { error: 'Gagal mengunggah file PDF' };
     }

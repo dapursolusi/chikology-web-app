@@ -93,7 +93,7 @@ export async function GET(
   );
   headers.set('Content-Length', chunk.length.toString());
   headers.set('Accept-Ranges', 'bytes');
-  headers.set('Cache-Control', 'private, max-age=3600');
+  headers.set('Cache-Control', 'private, max-age=60');
 
   if (statusCode === 206) {
     headers.set('Content-Range', `bytes ${start}-${end}/${fileSize}`);

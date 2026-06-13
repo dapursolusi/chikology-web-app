@@ -1,33 +1,55 @@
-## [Saturday, 13-06-2026 17:30] — Fixed blank PDF in admin preview (root cause: PDF.js URL re-encoding)
+## [Saturday, 13-06-2026 18:31] — PDF cache fix, RLS + bucket setup, mobile edge-to-edge
 
 ### Session Target
 
-- Fix blank PDF.js viewer in admin preview mode.
+- Diagnose stale PDF after re-upload
+- Set up RLS policies + buckets for production
+- Polish mobile PDF viewer
 
 ### Current State
 
-- Status: shipped
-- Scope: 12 files changed, 302 tests passing, build passing
+- Status: in PR (#87), pending merge
+- Branch: `fix/pdf-cache-stale`
+- Tests: 304 passed (41 files, 11 skipped)
 
 ### What Changed
 
-- **Root cause found**: PDF.js viewer (`viewer.mjs:18698`) re-encodes the `file` URL. When the file URL contained `?preview=1`, `encodeURIComponent` turned `?` → `%3F`, and `.replaceAll("%2F", "/")` only restored `/` characters. The final fetch URL became `/api/.../view%3Fpreview%3D1` (with `%3F` in the path, not a query separator), which didn't match any Next.js route → 404 → blank iframe.
-- **Fix**: Removed `?preview=1` from the PDF viewer and download URLs entirely. Instead, the API routes (view + download) now check the admin role directly — admins can access any chapter's PDF regardless of ownership/release state. The page-level gate (`?preview=1` + admin check in ReaderPage) is unchanged and remains the primary access control.
-- `src/app/api/chapters/[id]/view/route.ts` — Admin role check replaces `?preview=1` query param check.
-- `src/app/api/chapters/[id]/download/route.ts` — Same.
-- `src/app/dashboard/book/[chapterId]/ReaderClient.tsx` — Reverted viewer and download URLs to normal (no query param). `isPreview` prop only affects UI (back link, next-action footer).
-- All test files updated to match new approach.
+**1. PDF cache fix** — `Cache-Control: private, max-age=3600` → `60`
+
+- `src/app/api/chapters/[id]/view/route.ts` — max-age 3600 → 60
+- `src/app/api/chapters/[id]/download/route.ts` — same
+- `src/actions/book.ts` — added `cacheControl: 'max-age=60'` on upload
+- Both route test files — new Cache-Control assertions
+
+**2. Comprehensive RLS + buckets** — `drizzle/rls_and_buckets.sql`
+
+- New superseding `book_chapter_rls_and_bucket.sql` (deleted)
+- Now covers all 9 tables: users, book_chapters, chapter_purchases,
+  payment_proofs, journal_entries, questionnaire_responses, scan_usage,
+  app_settings, chapter_access_logs
+- 2 storage buckets: book-chapters, payment-proofs
+- `package.json` — new `db:rls`, `db:rls:prod`, `db:setup`, `db:setup:prod` scripts
+
+**3. Mobile edge-to-edge** — `ReaderClient.tsx`
+
+- Container padding: `p-4 pt-0 md:p-6` → `px-0 pt-0 md:p-6`
+- PDF fills full screen width on mobile, normal padding on desktop
 
 ### Verification
 
-- `bun run test` — 302 passed (41 files, 11 skipped)
+- `bun run test` — 304 passed
 - `bun run build` — Passed
-- Curl: `/api/chapters/ch-1/view` → 401 (correct, no auth via curl)
 
 ### Known Issues / Risks
 
-- None. Admins already have full access to upload/delete PDFs via admin panel; allowing direct PDF access is consistent.
+- `max-age=60` means stale PDF possible for ≤1 minute after upload
+- RLS must be re-applied after any migration that creates a new table
+  (Drizzle never drops RLS, but new tables start RLS-disabled)
 
 ### Next Steps
 
-- Mas Chiko can test: click Pratinjau on Kelola Bab → PDF should render immediately, no blank.
+- Merge PR #87 after review
+- Run `bun run db:rls:prod` on production Supabase after merge
+- Upload real PDF via admin Edit Chapter form → new file should render
+
+---
