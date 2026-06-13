@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 
+import { getAdminRole } from '@/actions/book';
 import { db } from '@/db';
 import { eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -7,6 +8,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { canUserReadChapter } from '@/lib/chapters';
 import { createClient, createServiceClient } from '@/lib/supabase/server';
 
+vi.mock('@/actions/book', () => ({
+  getAdminRole: vi.fn(),
+}));
 vi.mock('@/lib/supabase/server');
 vi.mock('@/db');
 vi.mock('@/lib/chapters');
@@ -27,6 +31,7 @@ describe('Viewer Endpoint /api/chapters/[id]/view', () => {
 
     vi.mocked(eq).mockImplementation((col, val) => ({ col, val }) as never);
 
+    vi.mocked(getAdminRole).mockResolvedValue('user');
     vi.mocked(createClient).mockResolvedValue({
       auth: {
         getUser: vi
@@ -157,5 +162,37 @@ describe('Viewer Endpoint /api/chapters/[id]/view', () => {
     await GET(request, { params: Promise.resolve({ id: 'ch-1' }) });
 
     expect(insertValuesMock).toHaveBeenCalled();
+  });
+
+  it('returns 200 with PDF when admin requests a chapter they cannot normally access', async () => {
+    const { GET } = await import('./route');
+    vi.mocked(getAdminRole).mockResolvedValue('admin');
+    vi.mocked(canUserReadChapter).mockResolvedValue({
+      canRead: false,
+      reason: 'paid',
+    });
+
+    const request = new NextRequest('http://localhost/api/chapters/ch-1/view');
+    const response = await GET(request, {
+      params: Promise.resolve({ id: 'ch-1' }),
+    });
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('Content-Type')).toBe('application/pdf');
+  });
+
+  it('returns 403 when non-admin requests a chapter they cannot read', async () => {
+    const { GET } = await import('./route');
+    vi.mocked(canUserReadChapter).mockResolvedValue({
+      canRead: false,
+      reason: 'paid',
+    });
+
+    const request = new NextRequest('http://localhost/api/chapters/ch-1/view');
+    const response = await GET(request, {
+      params: Promise.resolve({ id: 'ch-1' }),
+    });
+
+    expect(response.status).toBe(403);
   });
 });

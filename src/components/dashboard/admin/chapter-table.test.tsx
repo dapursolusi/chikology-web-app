@@ -105,4 +105,36 @@ describe('ChapterTable', () => {
       screen.queryByRole('alertdialog', { name: /sembunyikan bab/i })
     ).not.toBeInTheDocument();
   });
+
+  it('renders a Preview link for chapters with a PDF file', () => {
+    render(<ChapterTable chapters={baseChapters} />);
+
+    const previewLinks = screen.getAllByRole('link', {
+      name: /pratinjau|preview/i,
+    });
+    expect(previewLinks).toHaveLength(1);
+    expect(previewLinks[0]).toHaveAttribute(
+      'href',
+      '/dashboard/book/a-uuid?preview=1'
+    );
+  });
+
+  it('opens the Preview link in a new tab', () => {
+    render(<ChapterTable chapters={baseChapters} />);
+
+    const previewLink = screen.getByRole('link', {
+      name: /pratinjau|preview/i,
+    });
+    expect(previewLink).toHaveAttribute('target', '_blank');
+  });
+
+  it('does not render a Preview link for chapters without a PDF file', () => {
+    render(<ChapterTable chapters={baseChapters} />);
+
+    const previewLinks = screen.queryAllByRole('link', {
+      name: /pratinjau|preview/i,
+    });
+    expect(previewLinks).toHaveLength(1);
+    expect(previewLinks[0]?.getAttribute('href')).not.toContain('b-uuid');
+  });
 });

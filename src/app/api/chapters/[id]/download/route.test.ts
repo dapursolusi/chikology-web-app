@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 
+import { getAdminRole } from '@/actions/book';
 import { db } from '@/db';
 import { eq } from 'drizzle-orm';
 import { PDFDocument } from 'pdf-lib';
@@ -8,6 +9,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { canUserReadChapter } from '@/lib/chapters';
 import { createClient, createServiceClient } from '@/lib/supabase/server';
 
+vi.mock('@/actions/book', () => ({
+  getAdminRole: vi.fn(),
+}));
 vi.mock('@/lib/supabase/server');
 vi.mock('@/db');
 vi.mock('@/lib/chapters');
@@ -32,6 +36,7 @@ describe('Download Endpoint /api/chapters/[id]/download', () => {
     vi.clearAllMocks();
     vi.resetModules();
 
+    vi.mocked(getAdminRole).mockResolvedValue('user');
     vi.mocked(eq).mockImplementation((col, val) => ({ col, val }) as never);
     vi.mocked(createClient).mockResolvedValue({
       auth: {
@@ -66,6 +71,60 @@ describe('Download Endpoint /api/chapters/[id]/download', () => {
   });
 
   it('returns 403 when user cannot read chapter', async () => {
+    const { GET } = await import('./route');
+    vi.mocked(canUserReadChapter).mockResolvedValue({
+      canRead: false,
+      reason: 'paid',
+    });
+    vi.mocked(db.insert).mockReturnValue({
+      values: vi.fn().mockResolvedValue([]),
+    } as never);
+
+    const request = new NextRequest(
+      'http://localhost/api/chapters/ch-1/download'
+    );
+    const response = await GET(request, {
+      params: Promise.resolve({ id: 'ch-1' }),
+    });
+
+    expect(response.status).toBe(403);
+  });
+
+  it('returns 200 when admin downloads a chapter they cannot normally access', async () => {
+    const { GET } = await import('./route');
+    const pdfBytes = await createMinimalPdf();
+    vi.mocked(getAdminRole).mockResolvedValue('admin');
+    vi.mocked(canUserReadChapter).mockResolvedValue({
+      canRead: false,
+      reason: 'paid',
+    });
+    const mockStorage = {
+      from: vi.fn(() => ({
+        download: vi.fn().mockResolvedValue({
+          data: createMockFileData(pdfBytes),
+          error: null,
+        }),
+      })),
+    };
+    vi.mocked(createServiceClient).mockReturnValue({
+      storage: mockStorage,
+    } as never);
+    vi.mocked(db.insert).mockReturnValue({
+      values: vi.fn().mockResolvedValue([]),
+    } as never);
+
+    const request = new NextRequest(
+      'http://localhost/api/chapters/ch-1/download'
+    );
+    const response = await GET(request, {
+      params: Promise.resolve({ id: 'ch-1' }),
+    });
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('Content-Type')).toBe('application/pdf');
+  });
+
+  it('returns 403 when non-admin downloads a chapter they cannot read', async () => {
     const { GET } = await import('./route');
     vi.mocked(canUserReadChapter).mockResolvedValue({
       canRead: false,

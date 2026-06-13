@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { getAdminRole } from '@/actions/book';
 import { db } from '@/db';
 import { bookChapters, chapterAccessLogs } from '@/db/schema';
 import { eq } from 'drizzle-orm';
@@ -30,6 +31,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id: chapterId } = await params;
+
   const supabase = await createClient();
   const {
     data: { user },
@@ -39,17 +41,21 @@ export async function GET(
     return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
   }
 
-  const access = await canUserReadChapter(user.id, chapterId);
+  const isAdmin = (await getAdminRole()) === 'admin';
 
-  if (access.canRead === false) {
-    await db.insert(chapterAccessLogs).values({
-      userId: user.id,
-      chapterId,
-      eventType: 'access_denied',
-      metadata: { reason: access.reason },
-    });
+  if (!isAdmin) {
+    const access = await canUserReadChapter(user.id, chapterId);
 
-    return NextResponse.json({ error: 'Access denied' }, { status: 403 });
+    if (access.canRead === false) {
+      await db.insert(chapterAccessLogs).values({
+        userId: user.id,
+        chapterId,
+        eventType: 'access_denied',
+        metadata: { reason: access.reason },
+      });
+
+      return NextResponse.json({ error: 'Access denied' }, { status: 403 });
+    }
   }
 
   const rows = await db
