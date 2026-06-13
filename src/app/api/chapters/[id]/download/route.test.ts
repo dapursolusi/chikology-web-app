@@ -124,6 +124,39 @@ describe('Download Endpoint /api/chapters/[id]/download', () => {
     expect(response.headers.get('Content-Type')).toBe('application/pdf');
   });
 
+  it('sets Cache-Control to a short max-age to prevent stale PDF caching', async () => {
+    const { GET } = await import('./route');
+    const pdfBytes = await createMinimalPdf();
+    vi.mocked(canUserReadChapter).mockResolvedValue({
+      canRead: true,
+      reason: 'owned',
+    });
+    const mockStorage = {
+      from: vi.fn(() => ({
+        download: vi.fn().mockResolvedValue({
+          data: createMockFileData(pdfBytes),
+          error: null,
+        }),
+      })),
+    };
+    vi.mocked(createServiceClient).mockReturnValue({
+      storage: mockStorage,
+    } as never);
+    vi.mocked(db.insert).mockReturnValue({
+      values: vi.fn().mockResolvedValue([]),
+    } as never);
+
+    const request = new NextRequest(
+      'http://localhost/api/chapters/ch-1/download'
+    );
+    const response = await GET(request, {
+      params: Promise.resolve({ id: 'ch-1' }),
+    });
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('Cache-Control')).toBe('private, max-age=60');
+  });
+
   it('returns 403 when non-admin downloads a chapter they cannot read', async () => {
     const { GET } = await import('./route');
     vi.mocked(canUserReadChapter).mockResolvedValue({

@@ -125,6 +125,17 @@ describe('Viewer Endpoint /api/chapters/[id]/view', () => {
     );
   });
 
+  it('sets Cache-Control to a short max-age to prevent stale PDF caching', async () => {
+    const { GET } = await import('./route');
+
+    const request = new NextRequest('http://localhost/api/chapters/ch-1/view');
+    const response = await GET(request, {
+      params: Promise.resolve({ id: 'ch-1' }),
+    });
+
+    expect(response.headers.get('Cache-Control')).toBe('private, max-age=60');
+  });
+
   it('supports Range header for byte-range requests', async () => {
     const { GET } = await import('./route');
 
