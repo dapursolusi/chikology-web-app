@@ -1,39 +1,55 @@
-## [Saturday, 13-06-2026 17:56] — Fixed stale PDF cache (browser cached PDF for 1 hour)
+## [Saturday, 13-06-2026 18:31] — PDF cache fix, RLS + bucket setup, mobile edge-to-edge
 
 ### Session Target
 
-- Diagnose why re-uploaded PDF still shows old content.
+- Diagnose stale PDF after re-upload
+- Set up RLS policies + buckets for production
+- Polish mobile PDF viewer
 
 ### Current State
 
-- Status: shipped
-- Scope: `src/app/api/chapters/[id]/view/route.ts`, `src/app/api/chapters/[id]/download/route.ts`, `src/actions/book.ts` + test updates
-- Tests: 304 passed (up from 302), 41 files, 11 skipped
+- Status: in PR (#87), pending merge
+- Branch: `fix/pdf-cache-stale`
+- Tests: 304 passed (41 files, 11 skipped)
 
 ### What Changed
 
-- **Root cause**: `Cache-Control: private, max-age=3600` on both view and download API routes told the browser to cache the PDF response for 1 hour. After re-uploading a new PDF, the browser served the cached old PDF without even hitting the server.
+**1. PDF cache fix** — `Cache-Control: private, max-age=3600` → `60`
 
-- **Additional finding**: Both files in Supabase Storage (`1-1781347386094.pdf` and `1-1781347435044.pdf`) had identical SHA-256 hashes — the second upload via admin form sent the same random content.
+- `src/app/api/chapters/[id]/view/route.ts` — max-age 3600 → 60
+- `src/app/api/chapters/[id]/download/route.ts` — same
+- `src/actions/book.ts` — added `cacheControl: 'max-age=60'` on upload
+- Both route test files — new Cache-Control assertions
 
-- `src/app/api/chapters/[id]/view/route.ts:96` — `max-age=3600` → `max-age=60`
-- `src/app/api/chapters/[id]/download/route.ts:135` — `max-age=3600` → `max-age=60`
-- `src/actions/book.ts` — Added `cacheControl: 'max-age=60'` to both `createChapter` and `updateChapter` Supabase Storage upload calls
-- `src/app/api/chapters/[id]/view/route.test.ts` — New test: `sets Cache-Control to a short max-age to prevent stale PDF caching`
-- `src/app/api/chapters/[id]/download/route.test.ts` — New test: same
+**2. Comprehensive RLS + buckets** — `drizzle/rls_and_buckets.sql`
+
+- New superseding `book_chapter_rls_and_bucket.sql` (deleted)
+- Now covers all 9 tables: users, book_chapters, chapter_purchases,
+  payment_proofs, journal_entries, questionnaire_responses, scan_usage,
+  app_settings, chapter_access_logs
+- 2 storage buckets: book-chapters, payment-proofs
+- `package.json` — new `db:rls`, `db:rls:prod`, `db:setup`, `db:setup:prod` scripts
+
+**3. Mobile edge-to-edge** — `ReaderClient.tsx`
+
+- Container padding: `p-4 pt-0 md:p-6` → `px-0 pt-0 md:p-6`
+- PDF fills full screen width on mobile, normal padding on desktop
 
 ### Verification
 
-- `bun run test` — 304 passed (41 files, 11 skipped)
+- `bun run test` — 304 passed
 - `bun run build` — Passed
 
 ### Known Issues / Risks
 
-- `max-age=60` means users get a potentially stale PDF for up to 1 minute after upload. Acceptable for admin preview; if longer cache needed, implement ETag support with conditional 304 responses.
+- `max-age=60` means stale PDF possible for ≤1 minute after upload
+- RLS must be re-applied after any migration that creates a new table
+  (Drizzle never drops RLS, but new tables start RLS-disabled)
 
 ### Next Steps
 
-- Upload the real PDF via admin Edit Chapter form → wait 60s → refresh → new PDF should render
-- Fix the identical-hash issue separately if the admin form re-submits the wrong file
+- Merge PR #87 after review
+- Run `bun run db:rls:prod` on production Supabase after merge
+- Upload real PDF via admin Edit Chapter form → new file should render
 
 ---
