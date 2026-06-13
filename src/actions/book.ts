@@ -69,6 +69,10 @@ export async function createChapter(
         cacheControl: 'max-age=60',
       });
     if (uploadError) {
+      console.error(
+        '[DEBUG-b1c3] createChapter upload error:',
+        JSON.stringify(uploadError)
+      );
       return { error: 'Gagal mengunggah file PDF' };
     }
     pdfPath = objectPath;
@@ -129,6 +133,10 @@ export async function updateChapter(
         cacheControl: 'max-age=60',
       });
     if (uploadError) {
+      console.error(
+        '[DEBUG-b1c3] updateChapter upload error:',
+        JSON.stringify(uploadError)
+      );
       return { error: 'Gagal mengunggah file PDF' };
     }
     pdfPath = objectPath;

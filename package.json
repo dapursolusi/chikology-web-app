@@ -12,8 +12,8 @@
     "db:migrate": "bunx --bun drizzle-kit migrate",
     "db:generate:prod": "export $(grep -v '^#' .env.production | xargs) && bunx --bun drizzle-kit generate",
     "db:migrate:prod": "export $(grep -v '^#' .env.production | xargs) && bunx --bun drizzle-kit migrate",
-    "db:rls": "psql \"$DATABASE_URL\" -f drizzle/rls_and_buckets.sql",
-    "db:rls:prod": "export $(grep -v '^#' .env.production | xargs) && psql \"$DATABASE_URL\" -f drizzle/rls_and_buckets.sql",
+    "db:rls": "bun run scripts/run-rls.mjs",
+    "db:rls:prod": "export $(grep -v '^#' .env.production | xargs) && bun run scripts/run-rls.mjs",
     "db:setup": "bun run db:migrate && bun run db:rls",
     "db:setup:prod": "bun run db:migrate:prod && bun run db:rls:prod",
     "prepare": "husky"
