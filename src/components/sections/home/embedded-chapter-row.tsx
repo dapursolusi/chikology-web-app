@@ -3,12 +3,7 @@ import Link from 'next/link';
 import { Lock } from 'lucide-react';
 
 import type { ChapterWithState } from '@/lib/chapters';
-
-const idrFormatter = new Intl.NumberFormat('id-ID', {
-  style: 'currency',
-  currency: 'IDR',
-  maximumFractionDigits: 0,
-});
+import { idrFormatter } from '@/lib/currency';
 
 const baseButtonClass =
   'inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg border-2 px-3 py-2 text-sm font-medium transition-colors';

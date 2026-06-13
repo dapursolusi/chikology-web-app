@@ -18,6 +18,8 @@ import {
 } from '@/components/ui/dialog';
 
 import type { ChapterWithState } from '@/lib/chapters';
+import { idrFormatter } from '@/lib/currency';
+import { ALLOWED_IMAGE_TYPES, MAX_IMAGE_SIZE_BYTES } from '@/lib/validators';
 
 type Props = {
   open: boolean;
@@ -25,15 +27,6 @@ type Props = {
   chapter: ChapterWithState | null;
   onSuccess?: (chapter: ChapterWithState) => void;
 };
-
-const idrFormatter = new Intl.NumberFormat('id-ID', {
-  style: 'currency',
-  currency: 'IDR',
-  maximumFractionDigits: 0,
-});
-
-const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
-const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
 export function PurchaseModal({
   open,
@@ -93,11 +86,15 @@ export function PurchaseModal({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (!ALLOWED_TYPES.includes(file.type)) {
+    if (
+      !ALLOWED_IMAGE_TYPES.includes(
+        file.type as (typeof ALLOWED_IMAGE_TYPES)[number]
+      )
+    ) {
       setError('Format file harus JPEG, PNG, atau WebP');
       return;
     }
-    if (file.size > MAX_FILE_SIZE) {
+    if (file.size > MAX_IMAGE_SIZE_BYTES) {
       setError('Ukuran file maksimal 5MB');
       return;
     }

@@ -1,6 +1,6 @@
 'use client';
 
-import { Mood } from '@/actions/journal';
+import { type Mood } from '@/data/stressLevels';
 
 interface MoodSelectorProps {
   value?: Mood;

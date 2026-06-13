@@ -12,22 +12,18 @@ import {
 } from '@/db/schema';
 import { and, eq } from 'drizzle-orm';
 
-import { createClient, createServiceClient } from '@/lib/supabase/server';
-
-const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
-const MAX_FILE_SIZE = 5 * 1024 * 1024;
+import {
+  createClient,
+  createServiceClient,
+  getAuthUser,
+} from '@/lib/supabase/server';
+import { ALLOWED_IMAGE_TYPES, MAX_IMAGE_SIZE_BYTES } from '@/lib/validators';
 
 export async function submitPaymentProof(
   formData: FormData
 ): Promise<{ success: true } | { error: string }> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return { error: 'Not authenticated' };
-  }
+  const user = await getAuthUser();
+  if (!user) return { error: 'Not authenticated' };
 
   const chapterId = formData.get('chapterId');
   if (!chapterId || typeof chapterId !== 'string') {
@@ -71,11 +67,15 @@ export async function submitPaymentProof(
     return { error: 'File bukti pembayaran diperlukan' };
   }
 
-  if (!ALLOWED_TYPES.includes(file.type)) {
+  if (
+    !ALLOWED_IMAGE_TYPES.includes(
+      file.type as (typeof ALLOWED_IMAGE_TYPES)[number]
+    )
+  ) {
     return { error: 'Format file harus JPEG, PNG, atau WebP' };
   }
 
-  if (file.size > MAX_FILE_SIZE) {
+  if (file.size > MAX_IMAGE_SIZE_BYTES) {
     return { error: 'Ukuran file maksimal 5MB' };
   }
 
@@ -83,6 +83,7 @@ export async function submitPaymentProof(
   const timestamp = Date.now();
   const proofPath = `${user.id}/${chapterId}-${timestamp}.${ext}`;
 
+  const supabase = await createClient();
   const { error: uploadError } = await supabase.storage
     .from('payment-proofs')
     .upload(proofPath, file, { contentType: file.type });
@@ -147,10 +148,7 @@ export async function verifyPaymentProof(
   if (role !== 'admin')
     return { error: 'Hanya admin yang dapat memverifikasi pembayaran' };
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthUser();
 
   if (action === 'approve') {
     const [proof] = await db

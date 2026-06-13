@@ -80,15 +80,25 @@ vi.mock('next/cache', () => ({
   revalidatePath: vi.fn(),
 }));
 
-vi.mock('@/lib/supabase/server', () => ({
-  createClient: vi.fn(() => ({
+vi.mock('@/lib/supabase/server', () => {
+  const createClient = vi.fn(() => ({
     auth: { getUser: mockGetUser },
     storage: { from: mockStorageFrom },
-  })),
-  createServiceClient: vi.fn(() => ({
-    storage: { from: mockServiceStorageFrom },
-  })),
-}));
+  }));
+  return {
+    createClient,
+    createServiceClient: vi.fn(() => ({
+      storage: { from: mockServiceStorageFrom },
+    })),
+    getAuthUser: async () => {
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      return user;
+    },
+  };
+});
 
 vi.mock('drizzle-orm', async (importOriginal) => {
   const actual = await importOriginal<typeof import('drizzle-orm')>();

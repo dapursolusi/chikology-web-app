@@ -14,17 +14,12 @@ import {
 import { Button } from '@/components/ui/button';
 
 import type { ChapterWithState } from '@/lib/chapters';
+import { idrFormatter } from '@/lib/currency';
 
 type Props = {
   chapters: ChapterWithState[];
   onPurchase: (chapter: ChapterWithState) => void;
 };
-
-const idrFormatter = new Intl.NumberFormat('id-ID', {
-  style: 'currency',
-  currency: 'IDR',
-  maximumFractionDigits: 0,
-});
 
 export function ChapterList({ chapters, onPurchase }: Props) {
   if (chapters.length === 0) {

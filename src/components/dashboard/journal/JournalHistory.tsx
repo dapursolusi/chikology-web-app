@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react';
 
-import { type Mood, deleteJournalEntry } from '@/actions/journal';
-import { stressLevels } from '@/data/stressLevels';
+import { deleteJournalEntry } from '@/actions/journal';
+import { MOOD_EMOJI, type Mood, stressLevels } from '@/data/stressLevels';
 import { ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -33,14 +33,6 @@ interface JournalEntry {
 interface JournalHistoryProps {
   entries: JournalEntry[];
 }
-
-const MOOD_EMOJI: Record<string, string> = {
-  very_calm: '😌',
-  calm: '😊',
-  neutral: '😐',
-  stressed: '😟',
-  very_stressed: '😰',
-};
 
 export function JournalHistory({ entries }: JournalHistoryProps) {
   const [deletingId, setDeletingId] = useState<string | null>(null);

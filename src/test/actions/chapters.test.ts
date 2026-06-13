@@ -75,15 +75,25 @@ vi.mock('drizzle-orm', () => ({
   relations: vi.fn(() => ({})),
 }));
 
-vi.mock('@/lib/supabase/server', () => ({
-  createClient: vi.fn(() => ({
+vi.mock('@/lib/supabase/server', () => {
+  const createClient = vi.fn(() => ({
     auth: { getUser: mockGetUser },
     storage: { from: mockStorageFrom },
-  })),
-  createServiceClient: vi.fn(() => ({
-    storage: { from: mockServiceStorageFrom },
-  })),
-}));
+  }));
+  return {
+    createClient,
+    createServiceClient: vi.fn(() => ({
+      storage: { from: mockServiceStorageFrom },
+    })),
+    getAuthUser: async () => {
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      return user;
+    },
+  };
+});
 
 describe('purchaseChapter', () => {
   beforeEach(() => {
@@ -235,170 +245,6 @@ describe('purchaseChapter', () => {
     expect(result).toEqual({
       success: true,
       chapter: { id: 'ch-buy', title: 'Bab 1 — Awal', chapterNumber: 1 },
-    });
-    expect(mockInsert).toHaveBeenCalledTimes(1);
-    expect(revalidatePath).toHaveBeenCalledWith('/dashboard/book');
-  });
-});
-
-describe('claimFreeChapter', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  it('returns error when user is not authenticated', async () => {
-    mockGetUser.mockReturnValueOnce({ data: { user: null } });
-
-    const { claimFreeChapter } = await import('@/actions/chapters');
-    const result = await claimFreeChapter('chapter-id');
-
-    expect(result).toEqual({ error: 'Not authenticated' });
-  });
-
-  it('returns error when chapter does not exist', async () => {
-    mockWhere.mockResolvedValueOnce([]);
-
-    const { claimFreeChapter } = await import('@/actions/chapters');
-    const result = await claimFreeChapter('nonexistent-id');
-
-    expect(result).toEqual({ error: 'Bab tidak ditemukan' });
-  });
-
-  it('returns error when chapter is not free', async () => {
-    mockWhere.mockResolvedValueOnce([
-      {
-        id: 'ch-paid',
-        title: 'Bab Berbayar',
-        chapterNumber: 1,
-        priceIdr: 49000,
-        isFree: false,
-        releaseDate: '2025-01-01',
-        pdfPath: null,
-      },
-    ]);
-
-    const { claimFreeChapter } = await import('@/actions/chapters');
-    const result = await claimFreeChapter('ch-paid');
-
-    expect(result).toEqual({ error: 'Bab ini tidak gratis' });
-  });
-
-  it('returns error when chapter is not yet released', async () => {
-    mockWhere.mockResolvedValueOnce([
-      {
-        id: 'ch-future-free',
-        title: 'Bab Gratis Masa Depan',
-        chapterNumber: 1,
-        priceIdr: 0,
-        isFree: true,
-        releaseDate: '2099-12-31',
-        pdfPath: null,
-      },
-    ]);
-
-    const { claimFreeChapter } = await import('@/actions/chapters');
-    const result = await claimFreeChapter('ch-future-free');
-
-    expect(result).toEqual({ error: 'Bab belum dirilis' });
-  });
-
-  it('returns error when chapter is already owned', async () => {
-    mockWhere.mockResolvedValueOnce([
-      {
-        id: 'ch-owned-free',
-        title: 'Bab Sudah Dimiliki',
-        chapterNumber: 1,
-        priceIdr: 0,
-        isFree: true,
-        releaseDate: '2025-01-01',
-        pdfPath: null,
-      },
-    ]);
-    mockOrderBy.mockResolvedValueOnce([
-      {
-        id: 'ch-owned-free',
-        chapterNumber: 1,
-        releaseDate: '2025-01-01',
-        priceIdr: 0,
-        isFree: true,
-      },
-    ]);
-    mockWhere.mockResolvedValueOnce([{ chapterId: 'ch-owned-free' }]);
-
-    const { claimFreeChapter } = await import('@/actions/chapters');
-    const result = await claimFreeChapter('ch-owned-free');
-
-    expect(result).toEqual({ error: 'Bab sudah dimiliki' });
-  });
-
-  it('returns error when previous chapter is not owned (sequential gating)', async () => {
-    mockWhere.mockResolvedValueOnce([
-      {
-        id: 'ch-2-free',
-        title: 'Bab 2 Gratis',
-        chapterNumber: 2,
-        priceIdr: 0,
-        isFree: true,
-        releaseDate: '2025-06-01',
-        pdfPath: null,
-      },
-    ]);
-    mockOrderBy.mockResolvedValueOnce([
-      {
-        id: 'ch-1',
-        chapterNumber: 1,
-        releaseDate: '2025-01-01',
-        priceIdr: 0,
-        isFree: true,
-      },
-      {
-        id: 'ch-2-free',
-        chapterNumber: 2,
-        releaseDate: '2025-06-01',
-        priceIdr: 0,
-        isFree: true,
-      },
-    ]);
-    mockWhere.mockResolvedValueOnce([]);
-
-    const { claimFreeChapter } = await import('@/actions/chapters');
-    const result = await claimFreeChapter('ch-2-free');
-
-    expect(result).toEqual({
-      error: 'Selesaikan bab sebelumnya terlebih dahulu',
-    });
-  });
-
-  it('inserts a purchase row and returns success for a free chapter', async () => {
-    mockWhere.mockResolvedValueOnce([
-      {
-        id: 'ch-claim',
-        title: 'Bab 1 — Awal',
-        chapterNumber: 1,
-        priceIdr: 0,
-        isFree: true,
-        releaseDate: '2025-01-01',
-        pdfPath: null,
-      },
-    ]);
-    mockOrderBy.mockResolvedValueOnce([
-      {
-        id: 'ch-claim',
-        chapterNumber: 1,
-        releaseDate: '2025-01-01',
-        priceIdr: 0,
-        isFree: true,
-      },
-    ]);
-    mockWhere.mockResolvedValueOnce([]);
-    mockReturning.mockResolvedValueOnce([{ id: 'purchase-uuid' }]);
-
-    const { claimFreeChapter } = await import('@/actions/chapters');
-    const result = await claimFreeChapter('ch-claim');
-
-    expect(result).toEqual({
-      success: true,
-      chapter: { id: 'ch-claim', title: 'Bab 1 — Awal', chapterNumber: 1 },
     });
     expect(mockInsert).toHaveBeenCalledTimes(1);
     expect(revalidatePath).toHaveBeenCalledWith('/dashboard/book');

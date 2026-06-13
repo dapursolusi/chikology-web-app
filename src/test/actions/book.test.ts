@@ -68,12 +68,22 @@ const mockGetUser = vi.fn<() => { data: { user: MockUser } }>(() => ({
   data: { user: { id: 'test-user-id', email: 'test@test.com' } },
 }));
 
-vi.mock('@/lib/supabase/server', () => ({
-  createClient: vi.fn(() => ({
+vi.mock('@/lib/supabase/server', () => {
+  const createClient = vi.fn(() => ({
     auth: { getUser: mockGetUser },
     storage: { from: mockStorageFrom },
-  })),
-}));
+  }));
+  return {
+    createClient,
+    getAuthUser: async () => {
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      return user;
+    },
+  };
+});
 
 function makeFormData(values: Record<string, string | File>): FormData {
   const fd = new FormData();

@@ -62,11 +62,21 @@ const mockGetUser = vi.fn<() => { data: { user: MockUser } }>(() => ({
   data: { user: { id: 'admin-user-id', email: 'a@t.com' } },
 }));
 
-vi.mock('@/lib/supabase/server', () => ({
-  createClient: vi.fn(() => ({
+vi.mock('@/lib/supabase/server', () => {
+  const createClient = vi.fn(() => ({
     auth: { getUser: mockGetUser },
-  })),
-}));
+  }));
+  return {
+    createClient,
+    getAuthUser: async () => {
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      return user;
+    },
+  };
+});
 
 function adminAuth() {
   mockGetUser.mockReturnValueOnce({

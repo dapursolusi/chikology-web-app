@@ -2,33 +2,22 @@
 
 import { revalidatePath } from 'next/cache';
 
+import { type Mood } from '@/data/stressLevels';
 import { db } from '@/db';
 import { journalEntries } from '@/db/schema';
 import { and, desc, eq, isNull } from 'drizzle-orm';
 
-import { createClient } from '@/lib/supabase/server';
+import { getAuthUser } from '@/lib/supabase/server';
 
-export type Mood =
-  | 'very_calm'
-  | 'calm'
-  | 'neutral'
-  | 'stressed'
-  | 'very_stressed';
-
+export { type Mood };
 export async function saveJournalEntry(data: {
   mood: Mood;
   content?: string;
   stressTier?: number;
   recommendation?: string;
 }): Promise<{ success: true; entryId: string } | { error: string }> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return { error: 'Not authenticated' };
-  }
+  const user = await getAuthUser();
+  if (!user) return { error: 'Not authenticated' };
 
   if (!data.mood) {
     return { error: 'Mood is required' };
@@ -66,11 +55,7 @@ export async function saveJournalEntry(data: {
 }
 
 export async function getJournalEntries() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+  const user = await getAuthUser();
   if (!user) return [];
 
   const entries = await db
@@ -92,14 +77,8 @@ export async function getJournalEntries() {
 }
 
 export async function deleteJournalEntry(id: string) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return { error: 'Not authenticated' };
-  }
+  const user = await getAuthUser();
+  if (!user) return { error: 'Not authenticated' };
 
   await db
     .update(journalEntries)
