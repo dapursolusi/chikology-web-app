@@ -3,9 +3,9 @@
 -- =====================================================================
 -- Phase 3 Slice 6D — pg_cron job to auto-flip EBOOK_LIVE feature flag.
 --
--- Target:  2026-06-16 00:00:00+07 (Asia/Jakarta)
---         = 2026-06-15 17:00:00 UTC
--- Cron:    "0 17 15 6 *"  (min=0, hour=17 UTC, dom=15, mon=6, dow=*)
+-- Target:  2026-06-16 10:00:00+07 (Asia/Jakarta)
+--         = 2026-06-16 03:00:00 UTC
+-- Cron:    "0 3 16 6 *"  (min=0, hour=3 UTC, dom=16, mon=6, dow=*)
 -- Behavior: One-shot. The command body sets ebook_live='true' and then
 --           calls cron.unschedule() on itself, so the job disappears
 --           after firing — no annual re-flip, no leftover schedule.
@@ -54,7 +54,7 @@ $guard$;
 -- PL/pgSQL way to call a function and discard the result.
 SELECT cron.schedule(
   'flip-ebook-live-2026-06-16',
-  '0 17 15 6 *',
+  '0 3 16 6 *',
   $cmd$
     DO $do$
     BEGIN

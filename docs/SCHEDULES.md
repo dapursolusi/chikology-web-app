@@ -169,7 +169,7 @@
 | —     | #44   | Admin nav items visibility in sidebar                                            | #51      | ✅ Merged Jun 9  |
 | —     | #42   | PDF signed URL generation fix for chapter reader                                 | #42      | ✅ Merged Jun 9  |
 | —     | #49   | PDF Protection: PDF.js viewer + watermarking + audit logs                        | #50      | ✅ Merged Jun 9  |
-| —     | #85   | Admin Preview: preview chapter before release (bypass ebook_live + state checks) | —        | ✅ Merged Jun 13 |
+| —     | #85   | Admin Preview: preview chapter before release (bypass ebook_live + state checks) | #86      | ✅ Merged Jun 13 |
 
 **All core e-book infrastructure is complete and deployed.**
 
@@ -250,7 +250,7 @@ Scanner + Journal + Landing Page live. E-book = countdown to June 16.
 
 ### 🚀 Monday, Jun 16: FULL LAUNCH
 
-E-book unlocks. Chapter buttons live. Countdown removed. `EBOOK_LIVE=true` (auto-flip via pg_cron).
+E-book unlocks. Chapter buttons live. Countdown removed. `EBOOK_LIVE=true` (auto-flip via pg_cron at 10:00 WIB).
 Payment system + analytics dashboard in parallel.
 
 ---

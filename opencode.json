@@ -11,6 +11,7 @@
       },
       "models": {
         "deepseek-v4-pro": { "name": "DeepSeek V4 Pro" },
+        "mimo-v2.5-pro": { "name": "Mimo V2.5 Pro" },
         "MiniMax-M3": { "name": "MiniMax M3" },
         "MiniMax-M2.7-highspeed": { "name": "MiniMax M2.7 Highspeed" },
         "kimi-k2.6": { "name": "Kimi K2.6" },
