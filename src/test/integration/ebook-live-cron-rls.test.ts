@@ -23,12 +23,12 @@ describe.skipIf(!HAS_DB)(
         expect(rows).toHaveLength(1);
       });
 
-      it('is scheduled for "0 17 15 6 *" (17:00 UTC Jun 15 = 00:00+07 Jun 16)', async () => {
+      it('is scheduled for "0 3 16 6 *" (03:00 UTC Jun 16 = 10:00+07 Jun 16)', async () => {
         const rows = await sql<{ schedule: string }[]>`
         SELECT schedule FROM cron.job WHERE jobname = 'flip-ebook-live-2026-06-16'
       `;
         expect(rows).toHaveLength(1);
-        expect(rows[0].schedule).toBe('0 17 15 6 *');
+        expect(rows[0].schedule).toBe('0 3 16 6 *');
       });
 
       it('command body, when executed, sets app_settings.ebook_live to "true" and self-unschedules (rolled back in tx)', async () => {
