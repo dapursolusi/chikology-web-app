@@ -1,5 +1,7 @@
 'use client';
 
+import { useState } from 'react';
+
 import Link from 'next/link';
 
 import { ArrowLeft, Download } from 'lucide-react';
@@ -12,6 +14,15 @@ import type { NextChapterAction } from '@/lib/chapters';
 const WA_LINK = 'https://wa.me/6287853186759';
 const PDFJS_VIEWER = '/pdfjs/web/viewer.html';
 
+function useIsSafari() {
+  const [isSafari] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    const ua = navigator.userAgent;
+    return /Safari/.test(ua) && !/Chrome|Chromium|Edg|OPR/.test(ua);
+  });
+  return isSafari;
+}
+
 export function ReaderClient({
   chapter,
   nextAction,
@@ -21,6 +32,7 @@ export function ReaderClient({
   nextAction: NextChapterAction;
   isPreview?: boolean;
 }) {
+  const isSafari = useIsSafari();
   const viewerUrl = `${PDFJS_VIEWER}?file=${encodeURIComponent(`/api/chapters/${chapter.id}/view`)}`;
   const downloadUrl = `/api/chapters/${chapter.id}/download`;
 
@@ -49,6 +61,22 @@ export function ReaderClient({
           </a>
         </div>
       </header>
+
+      {isSafari && (
+        <div className="rounded-md border border-yellow-300 bg-yellow-50 px-4 py-3 text-sm text-yellow-800">
+          Jika dokumen tidak bisa dibuka atau tidak muncul di browser anda,
+          silahkan buka dengan{' '}
+          <a
+            href="https://www.google.com/chrome/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-semibold underline"
+          >
+            Google Chrome
+          </a>
+          .
+        </div>
+      )}
 
       <iframe
         title={`PDF ${chapter.title}`}
