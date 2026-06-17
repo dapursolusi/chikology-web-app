@@ -90,7 +90,7 @@ describe('POST /api/analyze-face', () => {
 
     expect(response.status).toBe(200);
     const body = await response.json();
-    expect(body).toEqual({ tier: 3 });
+    expect(body).toEqual({ tier: 3, cues: '', confidence: 'medium' });
   });
 
   it('falls back to SumoPod when OpenRouter fails, returns tier', async () => {
@@ -119,7 +119,7 @@ describe('POST /api/analyze-face', () => {
 
     expect(response.status).toBe(200);
     const body = await response.json();
-    expect(body).toEqual({ tier: 4 });
+    expect(body).toEqual({ tier: 4, cues: '', confidence: 'medium' });
     expect(warnSpy).toHaveBeenCalledWith(
       'OpenRouter failed, falling back to SumoPod'
     );
@@ -142,5 +142,34 @@ describe('POST /api/analyze-face', () => {
     expect(response.status).toBe(502);
     const body = await response.json();
     expect(body.error).toBe('terjadi kesalahan dari server AI');
+  });
+
+  it('extracts cues and confidence when AI returns them', async () => {
+    const { OpenAI } = await import('openai');
+
+    const mockCreate = vi.fn().mockResolvedValue({
+      choices: [
+        {
+          message: {
+            content:
+              '{"tier": 3, "cues": "rahang kaku, alis mengerut ringan", "confidence": "high"}',
+          },
+        },
+      ],
+    });
+    vi.mocked(OpenAI).mockImplementation(function () {
+      return { chat: { completions: { create: mockCreate } } };
+    } as never);
+
+    const { POST } = await import('./route');
+    const response = await POST(makeRequest());
+
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body).toEqual({
+      tier: 3,
+      cues: 'rahang kaku, alis mengerut ringan',
+      confidence: 'high',
+    });
   });
 });
