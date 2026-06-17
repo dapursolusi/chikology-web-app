@@ -125,7 +125,7 @@ export function PreScanQuestionnaire({ onSubmit }: PreScanQuestionnaireProps) {
     onSubmit({});
   };
 
-  const isValid = questions.every((q) => {
+  const isValid = questions.some((q) => {
     const answer = answers[q.id];
     if (!answer) return false;
 

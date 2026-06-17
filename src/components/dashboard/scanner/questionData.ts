@@ -10,7 +10,7 @@ export interface Question {
 export const questions: Question[] = [
   {
     id: 'q1',
-    text: 'Apa yang membuat pikiranmu terasa berat hari ini? (bisa pilih lebih dari satu untuk menentukan tingkat stres)',
+    text: 'Apa yang membuat pikiranmu terasa berat hari ini? (bisa pilih lebih dari satu)',
     options: [
       'Pekerjaan',
       'Keluarga (Pasangan, Anak, Orang Tua)',
