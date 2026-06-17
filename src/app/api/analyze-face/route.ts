@@ -43,7 +43,7 @@ async function callAIModel(
           },
         ],
         temperature: 0.2,
-        max_tokens: 300,
+        max_tokens: 1024,
         ...(providerName === 'OpenRouter'
           ? { provider: { allow_fallbacks: false } }
           : {}),
