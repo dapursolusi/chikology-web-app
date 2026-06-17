@@ -12,6 +12,7 @@ import { StressResultCard } from '@/components/dashboard/scanner/StressResultCar
 import { Button } from '@/components/ui/button';
 
 import { PreScanQuestionnaire } from './PreScanQuestionnaire';
+import type { QuestionnaireAnswers } from './questionData';
 
 type FlowState = 'form' | 'consent' | 'camera' | 'result';
 
@@ -19,14 +20,14 @@ export function ScannerFlow() {
   const router = useRouter();
   const [flowState, setFlowState] = useState<FlowState>('form');
   const [questionnaireAnswers, setQuestionnaireAnswers] = useState<
-    Record<string, string> | undefined
+    QuestionnaireAnswers | undefined
   >(undefined);
   const [result, setResult] = useState<StressLevel | null>(null);
   const [consentChecked, setConsentChecked] = useState(false);
   const [, startFormTransition] = useTransition();
 
   const handleQuestionnaireSubmit = useCallback(
-    (answers: Record<string, string>) => {
+    (answers: QuestionnaireAnswers) => {
       startFormTransition(async () => {
         await saveQuestionnaireResponse({ answers });
         setQuestionnaireAnswers(answers);

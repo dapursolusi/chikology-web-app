@@ -21,8 +21,10 @@ import {
   analyzeFace,
 } from '@/lib/scanner/pipeline';
 
+import type { QuestionnaireAnswers } from './questionData';
+
 interface FaceScannerProps {
-  questionnaireAnswers?: Record<string, string>;
+  questionnaireAnswers?: QuestionnaireAnswers;
   onResult: (result: StressLevel) => void;
 }
 

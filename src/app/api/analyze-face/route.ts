@@ -2,29 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { ensureUserRecord } from '@/actions/auth';
 import { db } from '@/db';
-import { scanUsage } from '@/db/schema';
+import { scanResults, scanUsage } from '@/db/schema';
 import { and, eq, sql } from 'drizzle-orm';
 import { OpenAI } from 'openai';
 
+import type { QuestionnaireAnswers } from '@/components/dashboard/scanner/questionData';
+
 import { checkBurst, getBurstState, recordBurst } from '@/lib/rate-limiter';
+import { buildPrompt } from '@/lib/scanner/prompt';
 import { createClient } from '@/lib/supabase/server';
-
-const STRESS_PROMPT = `Analyze facial expression for stress in detail. Rate 1-5.
-
-RULES:
-- 1: Relaxed. Soft face, gentle eyes, zero muscle tension. Smile or calm-neutral.
-- 2: Mild. Very subtle tension in 1 area (brow or mouth). Still appears mostly relaxed.
-- 3: Moderate. Visible tension in 2+ areas. Flat affect with tight jaw or furrowed brow. WARNING: Do NOT default here.
-- 4: High. Hard expression, obvious clenching, compressed lips, tight eyes.
-- 5: Severe. Extreme tension, grimacing, distress.
-
-CRITICAL:
-- A neutral face with NO tension = 1 (not 3). Calm neutral is relaxed.
-- A neutral face with TENSE features (tight jaw, furrowed brow) = 3+.
-- If totally ambiguous with zero tension cues = 2 (not 3).
-- Only use 3 when you clearly see tension in multiple zones.
-
-Return {"tier": <1-5>}. JSON only.`;
 
 const DAILY_LIMIT = 5;
 const MAX_IMAGE_BYTES = 5_000_000;
@@ -57,7 +43,10 @@ async function callAIModel(
           },
         ],
         temperature: 0.2,
-        max_tokens: 300,
+        max_tokens: 1024,
+        ...(providerName === 'OpenRouter'
+          ? { provider: { allow_fallbacks: false } }
+          : {}),
       });
       content = response.choices?.[0]?.message?.content;
     } catch (e) {
@@ -125,9 +114,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const promptWithContext = questionnaire
-      ? `${STRESS_PROMPT}\n\n[Questionnaire Answers]\n${JSON.stringify(questionnaire, null, 2)}`
-      : STRESS_PROMPT;
+    const promptWithContext = buildPrompt(
+      questionnaire as QuestionnaireAnswers | undefined
+    );
 
     const openrouterKey = process.env.OPENROUTER_API_KEY;
     if (!openrouterKey) {
@@ -180,10 +169,14 @@ export async function POST(request: NextRequest) {
     }
 
     let tier: number;
+    let cues = '';
+    let confidence = 'medium';
 
     try {
       const parsed = JSON.parse(content);
       tier = parsed.tier ?? Math.round(parsed);
+      cues = parsed.cues ?? '';
+      confidence = parsed.confidence ?? 'medium';
     } catch {
       const match = content.match(/\{[\s\S]*?"tier"\s*:\s*(\d+)/);
       tier = match ? Number(match[1]) : NaN;
@@ -208,6 +201,14 @@ export async function POST(request: NextRequest) {
       });
 
     recordBurst(burstState);
+
+    await db.insert(scanResults).values({
+      userId: user.id,
+      tier,
+      cues,
+      confidence,
+      questionnaireAnswers: questionnaire ?? null,
+    });
 
     return NextResponse.json({ tier });
   } catch (error) {

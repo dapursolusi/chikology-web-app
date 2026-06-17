@@ -124,6 +124,20 @@ export const scanUsage = pgTable(
   (table) => [unique().on(table.userId, table.scanDate)]
 );
 
+export const scanResults = pgTable('scan_results', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id')
+    .notNull()
+    .references(() => users.id),
+  tier: integer('tier').notNull(),
+  cues: text('cues').notNull().default(''),
+  confidence: text('confidence').notNull().default('medium'),
+  questionnaireAnswers: jsonb('questionnaire_answers'),
+  createdAt: timestamp('created_at', { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
+
 export const appSettings = pgTable('app_settings', {
   key: text('key').primaryKey(),
   value: text('value').notNull(),

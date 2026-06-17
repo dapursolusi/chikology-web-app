@@ -143,4 +143,67 @@ describe('POST /api/analyze-face', () => {
     const body = await response.json();
     expect(body.error).toBe('terjadi kesalahan dari server AI');
   });
+
+  it('extracts cues and confidence when AI returns them', async () => {
+    const { OpenAI } = await import('openai');
+
+    const mockCreate = vi.fn().mockResolvedValue({
+      choices: [
+        {
+          message: {
+            content:
+              '{"tier": 3, "cues": "rahang kaku, alis mengerut ringan", "confidence": "high"}',
+          },
+        },
+      ],
+    });
+    vi.mocked(OpenAI).mockImplementation(function () {
+      return { chat: { completions: { create: mockCreate } } };
+    } as never);
+
+    const { POST } = await import('./route');
+    const response = await POST(makeRequest());
+
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body).toEqual({ tier: 3 });
+  });
+
+  it('auto-saves scan result after successful analysis', async () => {
+    const { OpenAI } = await import('openai');
+    const { scanResults } = await import('@/db/schema');
+
+    const mockCreate = vi.fn().mockResolvedValue({
+      choices: [
+        {
+          message: {
+            content: '{"tier": 3, "cues": "rahang kaku", "confidence": "high"}',
+          },
+        },
+      ],
+    });
+    vi.mocked(OpenAI).mockImplementation(function () {
+      return { chat: { completions: { create: mockCreate } } };
+    } as never);
+
+    const { db } = await import('@/db');
+    const insertSpy = vi.mocked(db.insert);
+    insertSpy.mockImplementation(() => {
+      const chain = {
+        values: vi.fn(() => ({
+          onConflictDoUpdate: vi.fn().mockResolvedValue([]),
+        })),
+      };
+      return chain as never;
+    });
+
+    const { POST } = await import('./route');
+    const response = await POST(makeRequest());
+
+    expect(response.status).toBe(200);
+    expect(insertSpy).toHaveBeenCalledTimes(2);
+
+    const secondCallArgs = insertSpy.mock.calls[1];
+    expect(secondCallArgs[0]).toBe(scanResults);
+  });
 });

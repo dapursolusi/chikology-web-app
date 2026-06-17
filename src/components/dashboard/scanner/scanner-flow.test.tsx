@@ -37,10 +37,10 @@ vi.mock('@/components/dashboard/scanner/PreScanQuestionnaire', () => ({
   PreScanQuestionnaire: ({
     onSubmit,
   }: {
-    onSubmit: (answers: Record<string, string>) => void;
+    onSubmit: (answers: Record<string, string | string[]>) => void;
   }) => (
     <div data-testid="questionnaire">
-      <button onClick={() => onSubmit({ q1: 'Baik' })}>
+      <button onClick={() => onSubmit({ q1: ['Pekerjaan'], q2: 'Baik' })}>
         Submit Questionnaire
       </button>
     </div>
@@ -51,7 +51,7 @@ vi.mock('@/components/dashboard/scanner/FaceScanner', () => ({
   default: ({
     questionnaireAnswers,
   }: {
-    questionnaireAnswers?: Record<string, string>;
+    questionnaireAnswers?: Record<string, string | string[]>;
   }) => (
     <div data-testid="facescanner">
       scanner {questionnaireAnswers ? 'with answers' : 'without answers'}

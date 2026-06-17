@@ -1,50 +1,44 @@
-## [Saturday, 13-06-2026 20:47] — Diagnosed PDF upload failure in production
+## [Wednesday, 17-06-2026 10:38] — Extract shared question data + multi-select UI for q1
 
 ### Session Target
 
-- Diagnose and fix: "Gagal mengunggah file PDF" when uploading PDF as admin in production
+- Extract shared question data module + implement multi-select UI for q1 (issue #97)
 
 ### Current State
 
 - Status: shipped
-- Scope: `src/actions/book.ts`, `src/test/actions/book.test.ts`
-- Tests: 304 passed (41 files, 11 skipped)
+- Scope: scanner domain (questionnaire, flow, pipeline, action)
 
 ### What Changed
 
-**Root cause:** Two-layered failure.
-
-1. The authenticated anon-key Supabase client (`createClient()`) returned `503 — The database schema is invalid or incompatible` when uploading to storage. This is a Supabase platform issue with the anon-key client's storage access in production.
-
-2. After switching to `createServiceClient()`, the upload returned `403 — signature verification failed`. The `SUPABASE_SERVICE_ROLE_KEY` in Vercel's **Production** environment was stale/incorrect (likely a Vercel env var UX issue where the environment selector defaults to "Production + Preview" together, causing accidental misconfiguration).
-
-**Fix:**
-
-- `src/actions/book.ts` — Switched storage uploads from `createClient()` (authenticated user) to `createServiceClient()` (service role). Safe because `getAdminRole()` already gates on admin role before upload.
-- User updated `SUPABASE_SERVICE_ROLE_KEY` in Vercel Production environment to match current Supabase dashboard value.
-
-**Files changed:**
-
-- `src/actions/book.ts` — `createClient()` → `createServiceClient()` for storage uploads in both `createChapter` and `updateChapter`
-- `src/test/actions/book.test.ts` — Added `createServiceClient` to the `@/lib/supabase/server` mock
+- `src/components/dashboard/scanner/questionData.ts` — **NEW** shared data module with `questions` array (id, text, options, type) and `QuestionnaireAnswers` type alias (`Record<string, string | string[]>`)
+- `src/components/dashboard/scanner/PreScanQuestionnaire.tsx` — Rewrote to use shared data module; q1 now renders checkboxes (multi-select), q2/q3 render radio buttons (single-select); "Lainnya..." appended by component, stored as `"Lainnya: <text>"` in answer array; validation enforces non-empty textarea when "Lainnya" checked
+- `src/components/dashboard/scanner/ScannerFlow.tsx` — Type updated from `Record<string, string>` to `QuestionnaireAnswers` import
+- `src/components/dashboard/scanner/FaceScanner.tsx` — Type updated from `Record<string, string>` to `QuestionnaireAnswers` import
+- `src/lib/scanner/pipeline.ts` — Type updated from `Record<string, string>` to `QuestionnaireAnswers` import
+- `src/actions/questionnaire.ts` — Type updated from `Record<string, string>` to `QuestionnaireAnswers` import
+- `src/components/dashboard/scanner/pre-scan-questionnaire.test.tsx` — Added 4 new tests: q1 checkboxes, q2/q3 radios, multi-select array output, skip submits `{}`
+- `src/components/dashboard/scanner/scanner-flow.test.tsx` — Updated mock types to `Record<string, string | string[]>`
 
 ### Verification
 
-- `bun run test` — 304 passed
-- `bun run build` — Passed
-- Production upload tested and confirmed working by user
+- Commands run: `bun run test -- --run src/components/dashboard/scanner/`, `bunx tsc --noEmit`, `bun run lint`
+- Results: 15/15 tests pass, 0 type errors, 0 lint errors (9 pre-existing warnings)
 
 ### Decisions
 
-- D-001: Use service client for storage uploads — The anon-key client has Supabase platform issues with storage in production. Service client bypasses RLS (which is fine since the server action already checks admin role). Tradeoff: storage uploads no longer use the authenticated user's session, but this is acceptable since the admin role check happens before the upload.
+- D-001: "Lainnya..." NOT in data file — appended by component per spec, keeps data clean
+- D-002: `QuestionnaireAnswers` type exported from `questionData.ts` — single source of truth for the answer shape across all consumers
 
 ### Known Issues / Risks
 
-- Storage RLS policies on `book-chapters` bucket are effectively bypassed by using service client. The admin role gate in the server action is the only protection. This is acceptable for a solo admin tool but should be revisited if multi-admin support is added.
-- The original 503 error from the anon-key client remains unexplained — it may be a Supabase platform bug specific to this project or version.
+- DB column is `jsonb` so no migration needed for the new array shape
+- `analyzeFace` in pipeline passes `questionnaireAnswers` directly to JSON body — arrays serialize correctly
 
-### Next Steps
+### Next Steps (ordered)
 
-- None — PDF upload works in production
+1. Close issue #97
 
----
+### Blockers
+
+- none
