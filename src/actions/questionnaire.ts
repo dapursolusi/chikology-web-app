@@ -5,10 +5,12 @@ import { revalidatePath } from 'next/cache';
 import { db } from '@/db';
 import { questionnaireResponses } from '@/db/schema';
 
+import type { QuestionnaireAnswers } from '@/components/dashboard/scanner/questionData';
+
 import { getAuthUser } from '@/lib/supabase/server';
 
 export async function saveQuestionnaireResponse(data: {
-  answers: Record<string, string> | null;
+  answers: QuestionnaireAnswers | null;
 }) {
   const user = await getAuthUser();
   if (!user) return { error: 'Not authenticated' };

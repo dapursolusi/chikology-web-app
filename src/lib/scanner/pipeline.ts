@@ -1,6 +1,8 @@
 import { stressLevels } from '@/data/stressLevels';
 import type Webcam from 'react-webcam';
 
+import type { QuestionnaireAnswers } from '@/components/dashboard/scanner/questionData';
+
 import { cropImage } from './crop';
 
 export class CameraError extends Error {
@@ -34,7 +36,7 @@ export async function waitForVideoReady(
 
 export async function analyzeFace(
   webcamRef: React.RefObject<Webcam | null>,
-  questionnaireAnswers?: Record<string, string>
+  questionnaireAnswers?: QuestionnaireAnswers
 ): Promise<(typeof stressLevels)[1]> {
   const video = webcamRef.current?.video ?? null;
   await waitForVideoReady(video ?? undefined);
