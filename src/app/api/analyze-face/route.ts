@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { ensureUserRecord } from '@/actions/auth';
 import { db } from '@/db';
-import { scanUsage } from '@/db/schema';
+import { scanResults, scanUsage } from '@/db/schema';
 import { and, eq, sql } from 'drizzle-orm';
 import { OpenAI } from 'openai';
 
@@ -199,7 +199,15 @@ export async function POST(request: NextRequest) {
 
     recordBurst(burstState);
 
-    return NextResponse.json({ tier, cues, confidence });
+    await db.insert(scanResults).values({
+      userId: user.id,
+      tier,
+      cues,
+      confidence,
+      questionnaireAnswers: questionnaire ?? null,
+    });
+
+    return NextResponse.json({ tier });
   } catch (error) {
     console.error('API Error:', error);
     return NextResponse.json(
