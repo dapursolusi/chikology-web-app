@@ -44,6 +44,9 @@ async function callAIModel(
         ],
         temperature: 0.2,
         max_tokens: 300,
+        ...(providerName === 'OpenRouter'
+          ? { provider: { allow_fallbacks: false } }
+          : {}),
       });
       content = response.choices?.[0]?.message?.content;
     } catch (e) {
