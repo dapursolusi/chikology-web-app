@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { getUserRole } from '@/actions/auth';
 
 import { AppSidebar } from '@/components/app-sidebar';
+import AnnouncementBanner from '@/components/layout/announcement-banner';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 
 import { getEbookLive, getServerTimestamp } from '@/lib/feature-flags';
@@ -36,6 +37,7 @@ export default async function DashboardLayout({
         initialNow={now}
       />
       <SidebarInset className="h-screen flex-col">
+        <AnnouncementBanner />
         <DashboardHeader />
         <div className="w-full flex-1 bg-muted/30 p-4">{children}</div>
       </SidebarInset>

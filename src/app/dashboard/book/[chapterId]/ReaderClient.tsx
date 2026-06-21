@@ -11,7 +11,6 @@ import { Button } from '@/components/ui/button';
 
 import type { NextChapterAction } from '@/lib/chapters';
 
-const WA_LINK = 'https://wa.me/6287853186759';
 const PDFJS_VIEWER = '/pdfjs/web/viewer.html';
 
 function useIsSafari() {
@@ -93,15 +92,6 @@ export function ReaderClient({
         </Link>
       ) : (
         <>
-          <a
-            href={WA_LINK}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sm text-primary underline-offset-4 hover:underline"
-          >
-            Butuh rekomendasi lebih dalam? Jadwalkan konsultasi dengan Mas Chiko
-          </a>
-
           <NextChapterButton action={nextAction} />
         </>
       )}
