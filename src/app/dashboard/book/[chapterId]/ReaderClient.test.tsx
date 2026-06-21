@@ -67,14 +67,6 @@ describe('ReaderClient', () => {
     expect(downloadLink).toHaveAttribute('href', '/api/chapters/ch-1/download');
   });
 
-  it('renders a consultation CTA linking to wa.me/6287853186759', () => {
-    render(<ReaderClient chapter={chapter} nextAction={nextAction} />);
-    const cta = screen.getByRole('link', {
-      name: /konsultasi|mas chiko|whatsapp/i,
-    });
-    expect(cta).toHaveAttribute('href', 'https://wa.me/6287853186759');
-  });
-
   it('renders the NextChapterButton with the passed action', () => {
     const action: NextChapterAction = {
       kind: 'navigate',

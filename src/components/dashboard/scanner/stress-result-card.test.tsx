@@ -49,16 +49,6 @@ const mockResult = {
 };
 
 describe('StressResultCard', () => {
-  it('renders consultation CTA with WhatsApp link', () => {
-    render(<StressResultCard result={mockResult} />);
-
-    const cta = screen.getByRole('link', {
-      name: /Konsultasi dengan Mas Chiko/i,
-    });
-    expect(cta).toBeInTheDocument();
-    expect(cta).toHaveAttribute('href', 'https://wa.me/6287853186759');
-  });
-
   it('renders privacy tagline', () => {
     render(<StressResultCard result={mockResult} />);
 

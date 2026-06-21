@@ -1,7 +1,5 @@
 'use client';
 
-import Link from 'next/link';
-
 import { StressLevel } from '@/data/stressLevels';
 
 import { Button } from '@/components/ui/button';
@@ -112,17 +110,6 @@ export function StressResultCard({
               {result.messages[0]}
             </p>
           </div>
-
-          <Link
-            href="https://wa.me/6287853186759"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="block"
-          >
-            <Button variant="secondary" className="w-full" size="lg">
-              Konsultasi dengan Mas Chiko
-            </Button>
-          </Link>
 
           <div className="flex gap-2">
             {onSave && (
