@@ -32,6 +32,26 @@ ON CONFLICT (id) DO NOTHING;
 
 
 -- =====================================================================
+-- HELPERS
+-- =====================================================================
+-- SECURITY DEFINER so the role lookup bypasses RLS. Without this, any
+-- policy that queries `users` from inside a `users` policy recurses
+-- ("infinite recursion detected in policy for relation users").
+CREATE OR REPLACE FUNCTION public.is_admin()
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.users
+    WHERE id = (SELECT auth.uid()) AND role = 'admin'
+  );
+$$;
+
+
+-- =====================================================================
 -- TABLE: users
 -- =====================================================================
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
@@ -43,13 +63,13 @@ CREATE POLICY "Users can read own row" ON users
 DROP POLICY IF EXISTS "Admins can read all users" ON users;
 CREATE POLICY "Admins can read all users" ON users
   FOR SELECT USING (
-    EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role = 'admin')
+    public.is_admin()
   );
 
 DROP POLICY IF EXISTS "Admins can update users" ON users;
 CREATE POLICY "Admins can update users" ON users
   FOR UPDATE USING (
-    EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role = 'admin')
+    public.is_admin()
   );
 
 
@@ -65,19 +85,19 @@ CREATE POLICY "Public can read book_chapters" ON book_chapters
 DROP POLICY IF EXISTS "Admins can insert book_chapters" ON book_chapters;
 CREATE POLICY "Admins can insert book_chapters" ON book_chapters
   FOR INSERT WITH CHECK (
-    EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role = 'admin')
+    public.is_admin()
   );
 
 DROP POLICY IF EXISTS "Admins can update book_chapters" ON book_chapters;
 CREATE POLICY "Admins can update book_chapters" ON book_chapters
   FOR UPDATE USING (
-    EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role = 'admin')
+    public.is_admin()
   );
 
 DROP POLICY IF EXISTS "Admins can delete book_chapters" ON book_chapters;
 CREATE POLICY "Admins can delete book_chapters" ON book_chapters
   FOR DELETE USING (
-    EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role = 'admin')
+    public.is_admin()
   );
 
 
@@ -93,7 +113,7 @@ CREATE POLICY "Users can read own purchases" ON chapter_purchases
 DROP POLICY IF EXISTS "Admins can read all purchases" ON chapter_purchases;
 CREATE POLICY "Admins can read all purchases" ON chapter_purchases
   FOR SELECT USING (
-    EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role = 'admin')
+    public.is_admin()
   );
 
 DROP POLICY IF EXISTS "Users can insert own purchases" ON chapter_purchases;
@@ -113,7 +133,7 @@ CREATE POLICY "Users can read own payment proofs" ON payment_proofs
 DROP POLICY IF EXISTS "Admins can read all payment proofs" ON payment_proofs;
 CREATE POLICY "Admins can read all payment proofs" ON payment_proofs
   FOR SELECT USING (
-    EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role = 'admin')
+    public.is_admin()
   );
 
 DROP POLICY IF EXISTS "Users can insert own payment proofs" ON payment_proofs;
@@ -123,7 +143,7 @@ CREATE POLICY "Users can insert own payment proofs" ON payment_proofs
 DROP POLICY IF EXISTS "Admins can update payment proofs" ON payment_proofs;
 CREATE POLICY "Admins can update payment proofs" ON payment_proofs
   FOR UPDATE USING (
-    EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role = 'admin')
+    public.is_admin()
   );
 
 
@@ -210,13 +230,13 @@ CREATE POLICY "Public can read app_settings" ON app_settings
 DROP POLICY IF EXISTS "Admins can insert app_settings" ON app_settings;
 CREATE POLICY "Admins can insert app_settings" ON app_settings
   FOR INSERT WITH CHECK (
-    EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role = 'admin')
+    public.is_admin()
   );
 
 DROP POLICY IF EXISTS "Admins can update app_settings" ON app_settings;
 CREATE POLICY "Admins can update app_settings" ON app_settings
   FOR UPDATE USING (
-    EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role = 'admin')
+    public.is_admin()
   );
 
 
@@ -232,7 +252,7 @@ DROP POLICY IF EXISTS "Admins can read all access logs"
 CREATE POLICY "Admins can read all access logs"
   ON chapter_access_logs
   FOR SELECT USING (
-    EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role = 'admin')
+    public.is_admin()
   );
 
 
@@ -249,9 +269,7 @@ CREATE POLICY "Admins can upload to book-chapters"
   FOR INSERT TO authenticated
   WITH CHECK (
     bucket_id = 'book-chapters'
-    AND EXISTS (
-      SELECT 1 FROM users WHERE id = auth.uid() AND role = 'admin'
-    )
+    AND public.is_admin()
   );
 
 DROP POLICY IF EXISTS "Admins can update book-chapters"
@@ -261,9 +279,7 @@ CREATE POLICY "Admins can update book-chapters"
   FOR UPDATE TO authenticated
   USING (
     bucket_id = 'book-chapters'
-    AND EXISTS (
-      SELECT 1 FROM users WHERE id = auth.uid() AND role = 'admin'
-    )
+    AND public.is_admin()
   );
 
 DROP POLICY IF EXISTS "Admins can delete from book-chapters"
@@ -273,20 +289,25 @@ CREATE POLICY "Admins can delete from book-chapters"
   FOR DELETE TO authenticated
   USING (
     bucket_id = 'book-chapters'
-    AND EXISTS (
-      SELECT 1 FROM users WHERE id = auth.uid() AND role = 'admin'
-    )
+    AND public.is_admin()
   );
 
 -- payment-proofs: users can upload their own proof files; admins can
 -- read/delete all (for verification).
+-- The folder check matters: uploads are stored as <user_id>/<file>, so
+-- a bucket-only check would let any user write into another user's
+-- folder. Permissive policies OR together, so this must be the only
+-- insert policy on this bucket.
 DROP POLICY IF EXISTS "Users can upload payment proofs"
   ON storage.objects;
-CREATE POLICY "Users can upload payment proofs"
+DROP POLICY IF EXISTS "Users can upload their own payment proofs"
+  ON storage.objects;
+CREATE POLICY "Users can upload their own payment proofs"
   ON storage.objects
   FOR INSERT TO authenticated
   WITH CHECK (
     bucket_id = 'payment-proofs'
+    AND (storage.foldername(name))[1] = (SELECT auth.uid())::text
   );
 
 DROP POLICY IF EXISTS "Admins can read payment proofs"
@@ -296,9 +317,7 @@ CREATE POLICY "Admins can read payment proofs"
   FOR SELECT TO authenticated
   USING (
     bucket_id = 'payment-proofs'
-    AND EXISTS (
-      SELECT 1 FROM users WHERE id = auth.uid() AND role = 'admin'
-    )
+    AND public.is_admin()
   );
 
 DROP POLICY IF EXISTS "Admins can delete payment proofs"
@@ -308,7 +327,5 @@ CREATE POLICY "Admins can delete payment proofs"
   FOR DELETE TO authenticated
   USING (
     bucket_id = 'payment-proofs'
-    AND EXISTS (
-      SELECT 1 FROM users WHERE id = auth.uid() AND role = 'admin'
-    )
+    AND public.is_admin()
   );
