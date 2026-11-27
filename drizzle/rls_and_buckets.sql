@@ -185,6 +185,20 @@ CREATE POLICY "Users can update own scan usage" ON scan_usage
 
 
 -- =====================================================================
+-- TABLE: scan_results
+-- =====================================================================
+ALTER TABLE scan_results ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users can read own scan results"
+  ON scan_results;
+
+CREATE POLICY "Users can read own scan results"
+  ON scan_results
+  FOR SELECT TO authenticated
+  USING (user_id = (SELECT auth.uid()));
+
+
+-- =====================================================================
 -- TABLE: app_settings
 -- =====================================================================
 ALTER TABLE app_settings ENABLE ROW LEVEL SECURITY;
